@@ -1,0 +1,42 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@geoman-io/leaflet-geoman-free": "^2.10.0",
+    "axios": "^0.25.0",
+    "bootstrap": "^4.4.1",
+    "core-js": "^2.6.11",
+    "d3": "^3.5.17",
+    "d3-lasso": "0.0.5",
+    "element-ui": "^2.14.1",
+    "heatmap.js": "^2.0.5",
+    "jquery": "^3.4.1",
+    "leaflet": "^1.7.1",
+    "leaflet-canvas-marker": "^0.2.0",
+    "leaflet-curve": "^1.0.0",
+    "leaflet-lasso": "^2.2.4",
+    "leaflet.markercluster": "^1.5.0",
+    "lodash": "^4.17.15",
+    "popper.js": "^1.16.1",
+    "tabulator-tables": "^4.5.3",
+    "video.js": "^7.18.0",
+    "vue": "^2.6.11",
+    "vue-resource": "^1.5.1",
+    "vue2-leaflet": "^2.6.0",
+    "vuex": "^3.1.2"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.12.1",
+    "@vue/cli-service": "^4.1.2",
+    "vue-template-compiler": "^2.6.11"
+  }
+}
