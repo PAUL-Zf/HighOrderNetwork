@@ -20,14 +20,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="281f4bee-00a6-4f00-a53d-a57974d328af" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/HighOrderNetwork" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/FaceView/MovingMarker.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/FaceView/FaceView.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/FaceView/FaceView.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/FaceView/FaceView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/FaceView/FaceView.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/TextView/TextView.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/TextView/TextView.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,6 +57,7 @@
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
@@ -105,6 +99,7 @@
       <workItem from="1642817465724" duration="13132000" />
       <workItem from="1642943592128" duration="10286000" />
       <workItem from="1642987973254" duration="1287000" />
+      <workItem from="1643112371518" duration="1920000" />
     </task>
     <servers />
   </component>
@@ -152,6 +147,10 @@
     <state width="1900" height="188" key="GridCell.Tab.0.right/0.0.1920.1080/-3840.3.1707.960@0.0.1920.1080" timestamp="1642960310425" />
     <state width="952" height="188" key="GridCell.Tab.0.right/0.0.1920.1080/-3840.3.1920.1080@0.0.1920.1080" timestamp="1643019436414" />
     <state width="1899" height="188" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1642964625289" />
+    <state x="922" y="184" key="SettingsEditor" timestamp="1643112391919">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="922" y="184" key="SettingsEditor/0.0.1920.1080/-2560.3.1707.1067@0.0.1920.1080" timestamp="1643112391919" />
     <state x="623" y="235" width="672" height="678" key="search.everywhere.popup" timestamp="1642510591013">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
