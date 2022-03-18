@@ -20,7 +20,6 @@ export default {
     watch: {
         content(val) {
             let svg = this.svg;
-
             if (this.number === 1) {
                 this.compute();
                 // update sankey
@@ -28,7 +27,6 @@ export default {
                 this.drawSankey(this.index, this.width, this.height);
             } else if (this.number === 2) {
                 this.compute();
-
                 // 先把index对应的svg删除，再重新构建新的
                 this.update(this.index)
                 this.drawSankey(this.index, this.width / 2, this.height)
@@ -86,15 +84,15 @@ export default {
             let y = Math.floor(index / 2) * height;
 
             // sankey
-            let leftMargin = 10;
-            let topMargin = 10;
+            let leftMargin = (this.number === 1) ? 20 : 10;
+            let topMargin = (this.number === 1) ? 50 : 10;
             let columnNum = this.column;
             let rowNum = this.row;
             let linkWidth = 5 - this.number;
 
             // rect
             let rects = this.rects;
-            let rectWidth = (this.number === 0) ? 20 : 10;
+            let rectWidth = (this.number === 1) ? 20 : 10;
             let rectHeight = (height - topMargin * 2) / rowNum * 4 / 3;
             let columnPadding = (width - leftMargin * 2) / columnNum;
             let rowPadding = rectHeight * 3 / 4;
@@ -104,7 +102,7 @@ export default {
 
             // glyph
             let outerRadius = rectHeight / 2 - 2;
-            let innerRadius = (this.number === 0) ? (outerRadius - 10) : (outerRadius - 5);
+            let innerRadius = (this.number === 1) ? (outerRadius - 10) : (outerRadius - 5);
 
             //links
             let links = this.links;
