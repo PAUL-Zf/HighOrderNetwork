@@ -74,6 +74,50 @@ function display(userId, date, callback){
     request(url, params, GET_REQUEST, callback)
 }
 
+/*
+     Pass start time and time length to the backend
+     start: the slot index of start time (int)
+     time length: the slots number of time period (int)
+*/
+function getHighOrder (start, period, region, type, callback) {
+    const url = `${dataServerUrl}/getHighOrder/${start}/${period}/${region}/${type}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 取 VanAreasMap geoJson数据
+function getVanAreasMap(entropy, callback){
+    const url = `${dataServerUrl}/getVanAreasMap/${entropy}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 取 map geoJson数据
+function getMap(callback){
+    const url = `${dataServerUrl}/getMap`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 取 map region flow数据
+function getRegionFlow(date, callback){
+    const url = `${dataServerUrl}/getRegionFlow/${date}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+function getOverview(type, callback){
+    const url = `${dataServerUrl}/getOverview/${type}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 根据 date和region 获取对应region的 in and out流量数据
+function getRegionInOut(date, region, callback){
+    const url = `${dataServerUrl}/getRegionInOut/${date}/${region}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
 
 function audioData(videoId, interval, sliding_speed, callback) {
     const url = `${dataServerUrl}/audio/${videoId}/${interval}/${sliding_speed}`
@@ -166,5 +210,11 @@ export default {
     // new project
     getAllUsers,
     getDatesByUser,
-    display
+    display,
+    getHighOrder,
+    getVanAreasMap,
+    getOverview,
+    getRegionFlow,
+    getRegionInOut,
+    getMap
 }

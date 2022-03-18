@@ -2,7 +2,19 @@
     <div class="card">
         <div class="card-header">
             <div style="float: left; margin-right:40px">
-                <h6 style="display: inline; user-select: none">Map View </h6>
+                <h6 style="display: inline; user-select: none">Map View</h6>
+                <el-switch v-model="mode" style="padding-left: 10px" active-color="#007979" inactive-color="#d0d0d0"></el-switch>
+                <el-select v-model="number" filterable placeholder="Please select" size="mini"
+                           style="width: 70px;padding-left: 10px">
+                    <el-option
+                            v-for="item in choice"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+                <el-input-number v-model="entropy" @change="handleChange" :min="1" :max="3" label="Entropy" size="mini"
+                                 style="width: 90px"></el-input-number>
             </div>
         </div>
         <div class="card-block" id="faceContainer">

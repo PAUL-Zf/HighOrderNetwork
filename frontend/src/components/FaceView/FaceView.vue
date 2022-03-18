@@ -4,6 +4,7 @@
 
 
 <script type="text/javascript" src="MovingMarker.js"></script>
+<script src="leaflet-providers.js"></script>
 <script src='./FaceView.js'></script>
 
 
@@ -33,7 +34,7 @@
 
     #faceContainer {
         /* height: 243px; */
-        height: 300px;
+        height: 780px;
     }
 
     #mapDiv {

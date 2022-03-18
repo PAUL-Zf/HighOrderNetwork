@@ -1,20 +1,13 @@
 <div id="textview">
     <div class="card">
         <div class="card-header">
-            <div style="float: left; margin-right:40px">
-                <h6 style="display: inline; user-select: none">Select View</h6>
+            <div style="float: left; margin-left:0px; margin-top:0px;">
+                <h6 style="display: inline; user-select: none">Temporal View</h6>
             </div>
-<!--            <div style="float: right;">-->
-<!--                <input class="search" placeholder="Search and Filter"/>-->
-<!--            </div>-->
         </div>
-        <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/4.2.7/css/bootstrap/tabulator_bootstrap.min.css" rel="stylesheet"> -->
-        <div id="weakword-table"></div>
+
         <div class="card-block" id="textContainer">
-            <ul>
-                <li v-for="node in content">Time: {{node[1]}} </br> ({{node[2]}}, {{node[3]}})</li>
-            </ul>
-<!--            <svg id = 'MDSLasso_svg' height="450"></svg>-->
+            <svg id = 'timeView'></svg>
         </div>
     </div>
 
