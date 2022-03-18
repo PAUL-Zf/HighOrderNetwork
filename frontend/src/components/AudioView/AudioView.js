@@ -20,7 +20,6 @@ export default {
     watch: {
         content(val) {
             let svg = this.svg;
-
             if (this.number === 1) {
                 this.compute();
                 // update sankey
@@ -28,7 +27,6 @@ export default {
                 this.drawSankey(this.index, this.width, this.height);
             } else if (this.number === 2) {
                 this.compute();
-
                 // 先把index对应的svg删除，再重新构建新的
                 this.update(this.index)
                 this.drawSankey(this.index, this.width / 2, this.height)
@@ -50,6 +48,7 @@ export default {
             region_number: 13,
             column: 0,
             row: 0,
+            entropy: [],
             rects: [],
             links: [],
             hLinks: [],
@@ -73,6 +72,26 @@ export default {
     },
 
     methods: {
+        computeEntropy: function(){
+           this.entropy = [];
+           for(let key in this.content){
+               let dest = this.content[key];
+               let sum = 0;
+               let nonzero_data = [];
+               let entropy = 0;
+
+               for (let i = 0; i < dest.length; i++){
+                   if(dest[i] !== 0) {
+                       nonzero_data.push(dest[i]);
+                       sum += dest[i];
+                   }
+               }
+               for (let i = 0; i < nonzero_data.length; i++){
+                   entropy += (-1) * (nonzero_data[i] / sum) * Math.log(nonzero_data[i] / sum)
+               }
+               this.entropy.push(entropy);
+           }
+        },
         update: function (index) {
             d3.selectAll(".sankey" + index).remove();
             d3.selectAll(".highOrder" + index).remove();
@@ -86,15 +105,15 @@ export default {
             let y = Math.floor(index / 2) * height;
 
             // sankey
-            let leftMargin = 10;
-            let topMargin = 10;
+            let leftMargin = (this.number === 1) ? 20 : 10;
+            let topMargin = (this.number === 1) ? 50 : 10;
             let columnNum = this.column;
             let rowNum = this.row;
             let linkWidth = 5 - this.number;
 
             // rect
             let rects = this.rects;
-            let rectWidth = (this.number === 0) ? 20 : 10;
+            let rectWidth = (this.number === 1) ? 20 : 10;
             let rectHeight = (height - topMargin * 2) / rowNum * 4 / 3;
             let columnPadding = (width - leftMargin * 2) / columnNum;
             let rowPadding = rectHeight * 3 / 4;
@@ -104,7 +123,9 @@ export default {
 
             // glyph
             let outerRadius = rectHeight / 2 - 2;
-            let innerRadius = (this.number === 0) ? (outerRadius - 10) : (outerRadius - 5);
+            let innerRadius = (this.number === 1) ? (outerRadius - 10) : (outerRadius - 5);
+            let focusOuterRadius = height / 8 - 4;
+            let focusInnerRadius = focusOuterRadius - 10;
 
             //links
             let links = this.links;
@@ -136,7 +157,7 @@ export default {
                 .data(links)
                 .enter()
                 .append("path")
-                .attr("class", 'highOrder')
+                .attr("class", d => "link" + d.id)
                 .attr("d", d => {
                     let l = {source: [0, 0], target: [0, 0]};
                     l.source[0] = firstColumn + columnPadding * d.start[0] + 2 * rectWidth + staggered;
@@ -157,7 +178,7 @@ export default {
                 .data(hLinks)
                 .enter()
                 .append("path")
-                .attr("class", 'highOrder')
+                .attr("class", d => 'link' + d.id)
                 .attr("d", d => {
                     let l = {source: [0, 0], target: [0, 0]};
                     if (d.type === 0) {
@@ -185,7 +206,7 @@ export default {
                 .data(nextLinks)
                 .enter()
                 .append("path")
-                .attr("class", 'highOrder')
+                .attr("class", d => "link" + d.id)
                 .attr("d", d => {
                     let l = {source: [0, 0], target: [0, 0]};
                     l.source[0] = firstColumn + columnPadding * d.start[0] + rectWidth
@@ -207,7 +228,7 @@ export default {
                 .data(lastLinks)
                 .enter()
                 .append("path")
-                .attr("class", 'highOrder')
+                .attr("class", d => "link" + d.id)
                 .attr("d", d => {
                     let l = {source: [0, 0], target: [0, 0]};
                     l.source[0] = firstColumn + columnPadding * d.start[0] + 2 * rectWidth + staggered;
@@ -229,12 +250,13 @@ export default {
                 let cy = topMargin + rowPadding * rect.row + rectHeight / 2;
                 if (rect.column === columnNum - 2) {
                     this.cx = cx;
-                    this.drawSingleGlyph(index, rect.regionId, cx + x, height / 2 + y, height / 8 - 14, height / 8 - 4);
+                    this.drawSingleGlyph(index, rect.regionId, cx + x, height / 2 + y, focusInnerRadius, focusOuterRadius);
                 } else {
                     this.drawSingleGlyph(index, rect.regionId, cx + x, cy + y, innerRadius, outerRadius);
                 }
             }
 
+            // 将所有的links作为整体平移
             d3.selectAll(".sankey" + index)
                 .attr("transform", "translate(" + x + "," + y + ")");
 
@@ -257,6 +279,8 @@ export default {
                 .attr("transform", "translate(" + cx + "," + cy + ")")
 
             // set the color map
+            let region_color = ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099cc', '#CC9999', '#FF6666',
+                '#FFFF99', '#CCCCFF', '#CC9966', '#CCCCCC', '#666666', '#99CC66', '#CCCC99'];
             let color = ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099CC', '#CC9999', '#FF6666', '#FFFF99', '#CCCCFF', '#CC9966', '#CCCCCC']
 
             // Compute the position of each group on the pie:
@@ -282,12 +306,45 @@ export default {
                 .style("stroke-width", "0.3px")
                 .style("opacity", 1)
 
-            g.append('circle')
-                .attr("class", "circle")
-                .attr("r", innerRadius)
-                .attr("fill", "white")
-                .attr("stroke", "black")
-                .attr("opacity", 1)
+            if(regionId === this.region){
+                // 计算entropy, 按照entropy比例画扇形
+                this.computeEntropy();
+                let entropy_data = pie(this.entropy);
+
+                g.selectAll('whatever')
+                    .data(entropy_data)
+                    .enter()
+                    .append('path')
+                    .attr('d', d3.arc()
+                        .innerRadius(0)         // This is the size of the donut hole
+                        .outerRadius(innerRadius)
+                    )
+                    .attr('fill', '#D1D1D1')
+                    .attr("stroke", "black")
+                    .style("stroke-width", "0.3px")
+                    .style("opacity", 1)
+                    .on("mouseover", function(d) {
+                        d3.select(this).attr("fill", '#92A9BD');
+                    })
+                    .on("mouseout", function (d){
+                        d3.select(this).attr("fill", '#D1D1D1');
+                        d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'grey');
+                    })
+                    .on("click", function (d){
+                        d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'black');
+                        console.log(d);
+                    })
+
+
+            } else {
+                g.append('circle')
+                    .attr("class", "circle")
+                    .attr("r", innerRadius)
+                    .attr("fill", region_color[regionId])
+                    .attr("stroke", "black")
+                    .attr("stroke-width", "0.3px")
+                    .attr("opacity", 1)
+            }
         },
 
         compute: function () {
@@ -353,6 +410,7 @@ export default {
             }
 
             let total = 0;    //计算通过所研究的region的总流量
+            let id = 0;       // 用于标记entropy分类的轨迹id
             // 统计矩形，赋予列系数，行系数，颜色
             for (let key in this.content) {
                 let t = key.split('_');
@@ -376,14 +434,23 @@ export default {
                     rects.push(rect);
 
                     start = [rect.column, rect.row];
-                    let link = {start: [0, 0], end: [0, 0], outR: 0, inR: 0, flow: 0}
+                    let link = {id: 0, start: [0, 0], end: [0, 0], outR: 0, inR: 0, flow: 0}
                     if (i < t.length - 2) {
+                        link.id = id;
                         link.start = start;
                         link.end = [rect.column + 1, regionIndex[Number(t[i + 1])]]
                         link.flow = flow;
                         link.outR = regionInOut[rect.column][rect.row][1];
+                        // 添加右水平线
+                        if (link.start[1] % 2 === 0) {
+                            hLinks.push({id: id, type: 1, point: link.start, index: link.outR})
+                        }
                         regionInOut[rect.column][rect.row][1]++;
                         link.inR = regionInOut[rect.column + 1][regionIndex[Number(t[i + 1])]][0];
+                        // 添加左水平线
+                        if (link.end[1] % 2 === 1 && link.end[0] !== t.length - 2) {
+                            hLinks.push({id: id, type: 0, point: link.end, index: link.inR})
+                        }
                         regionInOut[rect.column + 1][regionIndex[Number(t[i + 1])]][0]++;
                         if (i === t.length - 3) {
                             lastLine[start[1]].push(link)
@@ -400,17 +467,24 @@ export default {
                         rect.color = colors[rect.row];
                         rects.push(rect);
 
-                        let link = {start: [0, 0], end: [0, 0], outR: 0, inR: 0, flow: 0};
+                        let link = {id: 0, start: [0, 0], end: [0, 0], outR: 0, inR: 0, flow: 0};
+                        link.id = id;
                         link.start = start;
                         link.end = [start[0] + 1, regionIndex[i]];
                         link.flow = this.content[key][i];
                         link.outR = regionInOut[start[0]][start[1]][1];
                         regionInOut[start[0]][start[1]][1]++;
                         link.inR = regionInOut[start[0] + 1][regionIndex[i]][0];
+                        if (link.end[1] % 2 === 1) {
+                            hLinks.push({id: id, type: 0, point: link.end, index: link.inR})
+                        }
                         regionInOut[start[0] + 1][regionIndex[i]][0]++;
                         nextLine[regionIndex[i]].push(link);
                     }
                 }
+
+                // 轨迹id记得每次循环后要加一
+                id++;
             }
 
             let next = [];
@@ -438,28 +512,26 @@ export default {
                 }
             }
             this.lastLinks = last;
-            console.log(last);
-
 
             // 添加水平线
-            for (let i = 0; i < columnNum; i++) {
-                if (i === columnNum - 2)
-                    continue;
-                for (let j = 0; j < regionNum; j++) {
-                    let inOut = regionInOut[i][j];
-                    let inR = inOut[0];
-                    let outR = inOut[1];
-                    if (j % 2 === 0) {
-                        for (let k = 0; k < outR; k++) {
-                            hLinks.push({type: 1, point: [i, j], index: k});
-                        }
-                    } else {
-                        for (let k = 0; k < inR; k++) {
-                            hLinks.push({type: 0, point: [i, j], index: k});
-                        }
-                    }
-                }
-            }
+            // for (let i = 0; i < columnNum; i++) {
+            //     if (i === columnNum - 2)
+            //         continue;
+            //     for (let j = 0; j < regionNum; j++) {
+            //         let inOut = regionInOut[i][j];
+            //         let inR = inOut[0];
+            //         let outR = inOut[1];
+            //         if (j % 2 === 0) {
+            //             for (let k = 0; k < outR; k++) {
+            //                 hLinks.push({type: 1, point: [i, j], index: k});
+            //             }
+            //         } else {
+            //             for (let k = 0; k < inR; k++) {
+            //                 hLinks.push({type: 0, point: [i, j], index: k});
+            //             }
+            //         }
+            //     }
+            // }
 
             this.rects = rects;
             this.links = links;
