@@ -1,12 +1,13 @@
-<template src='./TextView.html'></template>
+/* eslint-disable */
 
+<template src='./TextView.html'></template>
 <script src='./TextView.js'></script>
 
 
-
-<style>
+<style scoped>
     .card {
-        margin-bottom: 1px;
+        margin-bottom: 0px;
+        margin-left: 0px;
         /* height: 400px; */
         border-radius: 5px;
     }
@@ -29,30 +30,8 @@
     }
 
     #textContainer {
-        height: 450px;
-        overflow-y: auto;
-    }
-    #mapDiv {
-      width: 100%;
-      height: 100%;
-    }
-    .lasso path {
-      stroke: rgb(80,80,80);
-      stroke-width:2px;
-    }
-
-    .lasso .drawn {
-      fill-opacity:.05 ;
-    }
-
-    .lasso .loop_close {
-      fill:none;
-      stroke-dasharray: 4,4;
-    }
-
-    .lasso .origin {
-      fill:#3399FF;
-      fill-opacity:.5;
+        height: 410px;
+        /*overflow-y: auto;*/
     }
 
 </style>

@@ -1,33 +1,40 @@
 <div id="videoview">
     <div class="card">
         <div class="card-header">
-            <div style="float: left; margin-left:10px; margin-top:6px;">
-                <h6 style="display: inline; user-select: none">Control View</h6>
+            <div style="float: left; margin-left:0px; margin-top:0px;">
+                <h6 style="display: inline; user-select: none">Overview</h6>
             </div>
         </div>
         <div class="card-block" id="videoPlayerContainer">
             <div class="labelsContainer">
-                <span class="toolName">User Id</span>
-                <el-select v-model="valueOfUser" filterable placeholder="Please select" size="mini">
-                    <el-option
-                            v-for="item in users"
-                            :key="item.value"
-                            :label="item.label"
-                            :value="item.value">
-                    </el-option>
-                </el-select>
-
-                <span class="toolName">Date</span>
-                <el-select v-model="valueOfDate" filterable placeholder="Please select" size="mini">
-                    <el-option
-                            v-for="item in dates"
-                            :key="item.value"
-                            :label="item.label"
-                            :value="item.value">
-                    </el-option>
-                </el-select>
+                <div>
+                    <span class="toolName">Day Types</span>
+                    <el-select v-model="valueOfDate" filterable placeholder="Please select" size="mini">
+                        <el-option
+                                v-for="item in dates"
+                                :key="item"
+                                :label="item"
+                                :value="item">
+                        </el-option>
+                    </el-select>
+                </div>
+                <span class="toolName">Periods</span>
+                <div style="margin-left: 10%; margin-right: 10%">
+                    <div style="height: 10px"></div>
+                    <el-slider
+                            v-model="value"
+                            range
+                            :step="1"
+                            :max="6"
+                            :show-tooltip="false"
+                            :marks="marks">
+                    </el-slider>
+                </div>
                 <div style="height: 20px"></div>
                 <el-button size="mini" type="primary" v-on:click="display">Display</el-button>
+                <div style="height: 10px"></div>
+
+                <div id="my_dataviz"></div>
             </div>
         </div>
     </div>

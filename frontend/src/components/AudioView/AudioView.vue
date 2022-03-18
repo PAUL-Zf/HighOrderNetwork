@@ -4,7 +4,7 @@
 
 <style scoped>
     .card {
-        margin-bottom: 10px;
+        margin-bottom: 0px;
         /* height: 400px; */
         border-radius: 5px;
     }
@@ -28,12 +28,12 @@
 
     #audioContainer {
         /* height: 243px; */
-        height: 450px;
+        height: 332px;
     }
 
     #audioGraph {
         /* height: 243px; */
-        height: 450px;
+        height: 350px;
     }
 
     div.tooltip {
