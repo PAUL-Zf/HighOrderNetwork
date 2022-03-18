@@ -125,7 +125,7 @@ export default {
             let outerRadius = rectHeight / 2 - 2;
             let innerRadius = (this.number === 1) ? (outerRadius - 10) : (outerRadius - 5);
             let focusOuterRadius = height / 8 - 4;
-            let focusInnerRadius = focusOuterRadius - 10;
+            let focusInnerRadius = (this.number === 1) ? (focusOuterRadius - 10) : (focusOuterRadius - 5);
 
             //links
             let links = this.links;
@@ -250,9 +250,9 @@ export default {
                 let cy = topMargin + rowPadding * rect.row + rectHeight / 2;
                 if (rect.column === columnNum - 2) {
                     this.cx = cx;
-                    this.drawSingleGlyph(index, rect.regionId, cx + x, height / 2 + y, focusInnerRadius, focusOuterRadius);
+                    this.drawSingleGlyph(index, true, rect.regionId, cx + x, height / 2 + y, focusInnerRadius, focusOuterRadius);
                 } else {
-                    this.drawSingleGlyph(index, rect.regionId, cx + x, cy + y, innerRadius, outerRadius);
+                    this.drawSingleGlyph(index, false, rect.regionId, cx + x, cy + y, innerRadius, outerRadius);
                 }
             }
 
@@ -270,7 +270,7 @@ export default {
             //     .attr("fill", 'white')
         },
 
-        drawSingleGlyph(index, regionId, cx, cy, innerRadius, outerRadius) {
+        drawSingleGlyph(index, isFocus, regionId, cx, cy, innerRadius, outerRadius) {
             let region = this.regionsFlow[regionId];
             let svg = this.svg;
 
@@ -306,7 +306,7 @@ export default {
                 .style("stroke-width", "0.3px")
                 .style("opacity", 1)
 
-            if(regionId === this.region){
+            if(isFocus){
                 // 计算entropy, 按照entropy比例画扇形
                 this.computeEntropy();
                 let entropy_data = pie(this.entropy);
@@ -448,7 +448,7 @@ export default {
                         regionInOut[rect.column][rect.row][1]++;
                         link.inR = regionInOut[rect.column + 1][regionIndex[Number(t[i + 1])]][0];
                         // 添加左水平线
-                        if (link.end[1] % 2 === 1 && link.end[0] !== t.length - 2) {
+                        if (link.end[1] % 2 === 1 && link.end[0] !== columnNum - 2) {
                             hLinks.push({id: id, type: 0, point: link.end, index: link.inR})
                         }
                         regionInOut[rect.column + 1][regionIndex[Number(t[i + 1])]][0]++;
