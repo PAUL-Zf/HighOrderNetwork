@@ -1,2 +1,2 @@
-# HighOrderNetwork
-This is a system to solve high order network
+# Higher-OrderDependency
+This is a system to extract higher-order pattern
