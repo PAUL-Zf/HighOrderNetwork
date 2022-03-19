@@ -23,7 +23,8 @@
               </TextView>
             </div>
           </div>
-          <AudioView v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
+          <AudioView v-on:conveySelected="conveySelected"
+                     v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
                      v-bind:regionsFlow="regionsFlow"
                      :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></AudioView>
         </div>
@@ -33,7 +34,7 @@
                     v-on:conveyNumber="updateNumber"
                     v-on:conveyRegionFlow="updateRegionFlow"
                     v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
-                    v-bind:highlight="highlight"
+                    v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
                     :videoId="videoId" :videoData="videoData"
                     :dir="dir" v-bind:type="type"
                     @changeData='initdraw'></FaceView>
@@ -90,6 +91,8 @@ export default {
       number: 1,
       regionsFlow: null,
       index: 0,    // 标注temporal view中的时间轴的index
+      selectedData: null,
+      select: null,
 
       // old project
       dir: [],
@@ -109,6 +112,12 @@ export default {
     // new project
     highlightRegion(highlight){
       this.highlight = highlight;
+    },
+
+    conveySelected(select, selectedData){
+      this.select = select;
+      this.selectedData = selectedData;
+      console.log(select);
     },
 
     updateIndex(index) {
