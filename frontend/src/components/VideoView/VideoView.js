@@ -14,9 +14,9 @@ export default {
             users: [],
             dates: ['Weekdays', 'Holidays'],
             valueOfUser: '',
-            valueOfDate: 'Weekdays',
+            valueOfDate: '',
             overview: [],
-            entropy: 1,
+            level: 1,
         }
     },
 
@@ -26,13 +26,12 @@ export default {
     methods: {
         // 向父组件传参：user_id and date
         display: function (event) {
-            this.$emit("conveyData", this.valueOfDate);
-
             dataService.getOverview(this.valueOfDate, response => {
                 this.overview = response.data;
                 // console.log(this.overview);
                 this.drawChord(this.overview[0], this.overview[1], this.overview[2], this.overview[3], this.overview[4]);
             })
+            this.$emit("conveyData", this.valueOfDate, this.level);
         },
 
         drawChord: function (matrix, region_category, extend, variance, maxFlow){

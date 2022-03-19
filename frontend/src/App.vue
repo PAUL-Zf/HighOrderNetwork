@@ -35,6 +35,7 @@
                     v-on:conveyRegionFlow="updateRegionFlow"
                     v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
                     v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
+                    v-bind:level="level"
                     :videoId="videoId" :videoData="videoData"
                     :dir="dir" v-bind:type="type"
                     @changeData='initdraw'></FaceView>
@@ -93,6 +94,7 @@ export default {
       index: 0,    // 标注temporal view中的时间轴的index
       selectedData: null,
       select: null,
+      level: 1,
 
       // old project
       dir: [],
@@ -124,8 +126,9 @@ export default {
       this.index = index;
     },
 
-    updateData(date) {
+    updateData(date, level) {
       this.date = date;
+      this.level = level;
     },
 
     updateRegion(region) {

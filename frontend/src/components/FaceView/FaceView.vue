@@ -32,6 +32,12 @@
         font-size: 14px;
     }
 
+    span {
+      font-weight: bold;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+      font-size: 10px;
+    }
+
     #faceContainer {
         /* height: 243px; */
         height: 780px;

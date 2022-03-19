@@ -29,7 +29,7 @@ export default {
     data() {
         return {
             // new project
-            mode: false,
+            mode: true,
             number: 1,
             choice: [1, 2, 3, 4],
             entropy: 1,
@@ -75,7 +75,7 @@ export default {
 
     // props: ['user', 'date'],
 
-    props: ['date', 'startTime', 'timeLength', 'highlight', 'select','selectedData'],
+    props: ['date', 'startTime', 'timeLength', 'highlight', 'select','selectedData', 'level'],
 
     computed: {
         info() {
@@ -98,8 +98,19 @@ export default {
         },
 
         select(val){
-            if(this.mode){
+            if(!this.mode){
                 this.drawKelp(this.selectedData);
+            }
+        },
+
+        level(val){
+            this.mymap.remove();
+            this.mymap = this.init('mapDiv');
+
+            if (!this.mode) {
+                this.drawGlyph();
+            } else {
+                this.drawSegmentation();
             }
         },
 
@@ -109,14 +120,18 @@ export default {
             dataService.getRegionFlow(this.date, response => {
                 this.regions = response.data;
                 this.$emit("conveyRegionFlow", this.regions);
-                this.drawSegmentation();
+                if (!this.mode) {
+                    this.drawGlyph();
+                } else {
+                    this.drawSegmentation();
+                }
             })
         },
 
         mode(value) {
             this.mymap.remove();
             this.mymap = this.init('mapDiv');
-            if (value) {
+            if (!value) {
                 this.drawGlyph();
             } else {
                 this.drawSegmentation()
@@ -166,7 +181,7 @@ export default {
             this.mymap.remove();
             this.mymap = this.init('mapDiv');
 
-            if (this.mode) {
+            if (!this.mode) {
                 this.drawGlyph();
             } else {
                 this.drawSegmentation();
@@ -407,7 +422,7 @@ export default {
 
         drawSegmentation() {
             let map = this.mymap
-            dataService.getVanAreasMap(this.entropy, response => {
+            dataService.getVanAreasMap(this.level, response => {
                 let VanAreas = response.data;
 
                 let category_map = {'Food': 0,
