@@ -7,13 +7,16 @@ export default {
     data() {
         return {
             // slider
+            dataset: 'NYC',
+            datasets: ['NYC', 'Manhattan'],
             value: [0, 6],
-            marks: {0: '0', 1: '5', 2: '10', 3: '15', 5: '60'},
+            marks: {0: 'min', 1: '5', 2: '10', 3: '15', 5: '60', 6: 'max'},
             users: [],
             dates: ['Weekdays', 'Holidays'],
             valueOfUser: '',
-            valueOfDate: '',
+            valueOfDate: 'Weekdays',
             overview: [],
+            entropy: 1,
         }
     },
 
@@ -41,7 +44,7 @@ export default {
                 .attr("width", 280)
                 .attr("height", 300)
                 .append("g")
-                .attr("transform", "translate(140,130)")
+                .attr("transform", "translate(140,85)")
 
             let maxExtend = 30;
             for(let i = 0; i < extend.length; i++){
@@ -113,8 +116,8 @@ export default {
                 .style("stroke", "black")
                 .style("stroke-width", 0.1)
                 .attr("d", d3.arc()
-                    .innerRadius(75)
-                    .outerRadius(80)
+                    .innerRadius(55)
+                    .outerRadius(60)
                 )
                 .on("mouseover", function (d){
                     d3.select(this).style("fill", "black");
@@ -141,8 +144,8 @@ export default {
                 .style("stroke", "black")
                 .style("stroke-width", 0.1)
                 .attr("d", d3.arc()
-                            .innerRadius(function (d, i){return 90 + extend[i]})
-                            .outerRadius(function (d, i){return 95 + extend[i]})
+                            .innerRadius(function (d, i){return 70 + extend[i]})
+                            .outerRadius(function (d, i){return 75 + extend[i]})
                 )
 
             svg
@@ -158,8 +161,8 @@ export default {
                 .style("stroke", "black")
                 .style("stroke-width", 0.1)
                 .attr("d", d3.arc()
-                    .innerRadius(80)
-                    .outerRadius(function (d, i){return 90 + extend[d.regionId]})
+                    .innerRadius(60)
+                    .outerRadius(function (d, i){return 70 + extend[d.regionId]})
                 )
 
 
@@ -174,7 +177,7 @@ export default {
                 .enter()
                 .append("path")
                 .attr("d", d3.ribbon()
-                    .radius(75)
+                    .radius(55)
                 )
                 .style("fill", function (d) {
                     return (colors[d.source.index])
