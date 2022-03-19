@@ -39,12 +39,12 @@
 .toolName {
   font-weight: bold;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .card-block {
   padding: 0px;
-  position: relative;
+  /*position: relative;*/
 }
 
 text {
@@ -71,9 +71,27 @@ text {
   width: 100%;
 }
 
-span {
+.select {
+  position: relative;
   float: left;
-  width: 300px;
+  width: 50%;
+  height: 15%;
+  /*background-color: #1d68cd;*/
+}
+
+.periods {
+  position: relative;
+  top: 18%;
+  height: 15%;
+  /*background-color: #0f6674;*/
+}
+
+span {
+  position: relative;
+  float: left;
+  left: 13px;
+  top: 10px;
+  /*width: 100px;*/
 }
 
 </style>

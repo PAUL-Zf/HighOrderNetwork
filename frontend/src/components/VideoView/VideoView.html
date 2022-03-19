@@ -7,9 +7,22 @@
         </div>
         <div class="card-block" id="videoPlayerContainer">
             <div class="labelsContainer">
-                <div>
+                <div class="select">
+                    <span class="toolName">Dataset</span>
+                    <el-select v-model="dataset" filterable placeholder="Please select" size="mini"
+                               style="width: 120px; margin-top: 10px">
+                        <el-option
+                                v-for="item in datasets"
+                                :key="item"
+                                :label="item"
+                                :value="item">
+                        </el-option>
+                    </el-select>
+                </div>
+                <div class="select">
                     <span class="toolName">Day Types</span>
-                    <el-select v-model="valueOfDate" filterable placeholder="Please select" size="mini">
+                    <el-select v-model="valueOfDate" filterable placeholder="Please select" size="mini"
+                               style="width: 120px; margin-top: 10px">
                         <el-option
                                 v-for="item in dates"
                                 :key="item"
@@ -18,21 +31,28 @@
                         </el-option>
                     </el-select>
                 </div>
-                <span class="toolName">Periods</span>
-                <div style="margin-left: 10%; margin-right: 10%">
-                    <div style="height: 10px"></div>
+                <span class="toolName" style="top:0%">Time Interval</span>
+                <div class="periods">
                     <el-slider
                             v-model="value"
                             range
                             :step="1"
                             :max="6"
                             :show-tooltip="false"
-                            :marks="marks">
+                            :marks="marks"
+                            style="margin-left: 10%; margin-right: 10%;height: 50px">
                     </el-slider>
                 </div>
-                <div style="height: 20px"></div>
-                <el-button size="mini" type="primary" v-on:click="display">Display</el-button>
-                <div style="height: 10px"></div>
+                <div style="margin-top:20%;">
+                    <span class="toolName" style="margin-left: 1%">Level of Map</span>
+                    <el-input-number v-model="entropy" :min="1" :max="3" label="Entropy" size="mini"
+                                     style="margin-top:10px;margin-left:8%;width: 90px"></el-input-number>
+                    <el-button type="info" plain size="mini" v-on:click="display"
+                               style="margin-left:6%;margin-top:2%;width: 50px">set
+                    </el-button>
+                </div>
+                <el-divider></el-divider>
+
 
                 <div id="my_dataviz"></div>
             </div>
