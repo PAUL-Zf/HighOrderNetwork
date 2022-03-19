@@ -43,6 +43,11 @@ export default {
     },
     data() {
         return {
+            select: 0,          // 用于标记是否有新的点击事件，值递增
+            clickedData: {},    //当前正在点击的data
+            savedData: {},
+            indexMapKey: [],
+            allData: [],    //用来存储最多四个region的所有轨迹数据
             width: 500,
             height: 320,
             region_number: 13,
@@ -69,9 +74,26 @@ export default {
             .attr("height", this.height)
 
         this.svg = svg;
+
+        //初始化 indexMapKey和allData
+        for(let i = 0; i < 4; i++){
+            this.indexMapKey[i] = {};
+            this.allData[i] = {};
+        }
+
     },
 
     methods: {
+        mapIndexToKey: function(){
+            let count = 0;
+            let map = {};
+            for(let key in this.content){
+                map[count] = key;
+                count++;
+            }
+            this.indexMapKey[this.index] = map;
+        },
+
         computeEntropy: function(){
            this.entropy = [];
            for(let key in this.content){
@@ -92,9 +114,15 @@ export default {
                this.entropy.push(entropy);
            }
         },
+
         update: function (index) {
             d3.selectAll(".sankey" + index).remove();
             d3.selectAll(".highOrder" + index).remove();
+
+            // 更新allData数据
+            this.allData[index] = this.content;
+            // 更新indexMapKey
+            this.mapIndexToKey();
         },
 
         drawSankey: function (index, width, height) {
@@ -273,6 +301,7 @@ export default {
         drawSingleGlyph(index, isFocus, regionId, cx, cy, innerRadius, outerRadius) {
             let region = this.regionsFlow[regionId];
             let svg = this.svg;
+            let self = this;
 
             let g = svg.append("g")
                 .attr("class", 'highOrder' + index)
@@ -309,7 +338,24 @@ export default {
             if(isFocus){
                 // 计算entropy, 按照entropy比例画扇形
                 this.computeEntropy();
+                let entropy = this.entropy;
                 let entropy_data = pie(this.entropy);
+
+                let startColor = d3.rgb('#7f2704')
+                let endColor = d3.rgb('#fff5eb') // orange
+                let computeColor = d3.interpolate(startColor, endColor)
+
+                // computer max and min in variance
+                let max = entropy[0];
+                let min = entropy[0];
+                for (let i = 0; i < entropy.length; i++){
+                    max = max > entropy[i] ? max : entropy[i];
+                    min = min < entropy[i] ? min : entropy[i];
+                }
+
+                let linearColor = d3.scaleLinear()
+                    .domain([min, max])
+                    .range([0, 1])
 
                 g.selectAll('whatever')
                     .data(entropy_data)
@@ -319,20 +365,25 @@ export default {
                         .innerRadius(0)         // This is the size of the donut hole
                         .outerRadius(innerRadius)
                     )
-                    .attr('fill', '#D1D1D1')
+                    .attr('fill', function (d, i) {return computeColor(linearColor(entropy[i]))})
                     .attr("stroke", "black")
                     .style("stroke-width", "0.3px")
                     .style("opacity", 1)
                     .on("mouseover", function(d) {
                         d3.select(this).attr("fill", '#92A9BD');
+                        d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'black');
                     })
-                    .on("mouseout", function (d){
-                        d3.select(this).attr("fill", '#D1D1D1');
+                    .on("mouseout", function (d, i){
+                        d3.select(this).attr("fill", computeColor(linearColor(entropy[i])));
                         d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'grey');
                     })
                     .on("click", function (d){
                         d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'black');
-                        console.log(d);
+                        let key = self.indexMapKey[self.index][d.index]
+                        self.savedData[key] = self.allData[self.index][key];
+                        self.$emit("conveySelected", self.select, self.savedData);
+                        self.select++;
+                        console.log(self.savedData);
                     })
 
 

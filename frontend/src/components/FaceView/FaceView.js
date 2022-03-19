@@ -75,7 +75,7 @@ export default {
 
     // props: ['user', 'date'],
 
-    props: ['date', 'startTime', 'timeLength', 'highlight'],
+    props: ['date', 'startTime', 'timeLength', 'highlight', 'select','selectedData'],
 
     computed: {
         info() {
@@ -91,8 +91,15 @@ export default {
                     this.content = response.data;
                     this.$emit("conveyHighOrder", this.content);
                     console.log(this.content)
-                    this.drawKelp();
+                    let data = this.content;
+                    this.drawKelp(data);
                 })
+            }
+        },
+
+        select(val){
+            if(this.mode){
+                this.drawKelp(this.selectedData);
             }
         },
 
@@ -102,7 +109,7 @@ export default {
             dataService.getRegionFlow(this.date, response => {
                 this.regions = response.data;
                 this.$emit("conveyRegionFlow", this.regions);
-                alert(this.date + " data is ready!")
+                this.drawSegmentation();
             })
         },
 
@@ -119,7 +126,9 @@ export default {
                 const overlay = d3.select(map.getPanes().overlayPane);
                 const svg = overlay.select('svg').attr("pointer-events", "auto");
                 this.svg = svg;
-                this.drawKelp();
+
+                let data = this.content;
+                this.drawKelp(data);
             }
         },
 
@@ -150,7 +159,6 @@ export default {
         this.mymap.on('dragend', () => {
             this.bounds = this.mymap.getBounds();
         })
-        this.drawSegmentation();
     },
 
     methods: {
@@ -181,7 +189,7 @@ export default {
             geoJson.setStyle(this.myStyle);
         },
 
-        drawKelp (){
+        drawKelp (data){
             let self = this;
             let map = this.mymap;
             let svg = this.svg;
@@ -193,11 +201,11 @@ export default {
             let count = 0;
             // let color = ['#FF6666', '#FFFF00', '#0066CC', 'green', 'red']
             // let color = ['#9ADCFF', '#FFF89A', '#FFB2A6', '#C1F4C5', '#65C18C']
-            let color = ['#96CEB4', '#EA99D5', '#876445']
-            let radius = [15, 10, 5]
-            let opacity = [0.8, 0.9, 1]
-            let top = 3
-            for (let key in this.content) {
+            let color = ['#8dd3c7', '#ffffb3', '#bebada', '#fb8072']
+            let radius = [16, 12, 8, 4]
+            let opacity = [0.7, 0.8, 0.9, 1]
+            let top = 4
+            for (let key in data) {
                 let points = [];
                 let lines = [];
                 let arrows = [];
@@ -232,8 +240,8 @@ export default {
                     }
                 }
 
-                for (let i = 0; i < this.content[key].length; i++) {
-                    if (this.content[key][i] !== 0) {
+                for (let i = 0; i < data[key].length; i++) {
+                    if (data[key][i] !== 0) {
                         let point = {regionId: 0, coordinate: [0, 0], radius: 0, color: "black"}
                         point.regionId = i;
                         point.coordinate = this.regions_coordinates[i];
@@ -353,34 +361,34 @@ export default {
             // set the color map
             let color = ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099CC', '#CC9999', '#FF6666', '#FFFF99', '#CCCCFF', '#CC9966', '#CCCCCC']
 
-            // Compute the position of each group on the pie:
-            let pie = d3.pie()
-                .value(function (d) {
-                    return d;
-                })
-            let data_ready = pie(region)
-
-            // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
-            g.selectAll('whatever')
-                .data(data_ready)
-                .enter()
-                .append('path')
-                .attr('d', d3.arc()
-                    .innerRadius(innerRadius)         // This is the size of the donut hole
-                    .outerRadius(outerRadius)
-                )
-                .attr('fill', function (d) {
-                    return color[d.index]
-                })
-                .attr("stroke", "black")
-                .style("stroke-width", "0.3px")
-                .style("opacity", 1)
+            // // Compute the position of each group on the pie:
+            // let pie = d3.pie()
+            //     .value(function (d) {
+            //         return d;
+            //     })
+            // let data_ready = pie(region)
+            //
+            // // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+            // g.selectAll('whatever')
+            //     .data(data_ready)
+            //     .enter()
+            //     .append('path')
+            //     .attr('d', d3.arc()
+            //         .innerRadius(innerRadius)         // This is the size of the donut hole
+            //         .outerRadius(outerRadius)
+            //     )
+            //     .attr('fill', function (d) {
+            //         return color[d.index]
+            //     })
+            //     .attr("stroke", "black")
+            //     .style("stroke-width", "0.3px")
+            //     .style("opacity", 1)
 
             g.append('circle')
                 .attr("class", "circle")
                 .attr("r", innerRadius)
-                .attr("fill", "white")
-                .attr("opacity", 0)
+                .attr("fill", "#EF6D6D")
+                .attr("opacity", 1)      // 可以通过设置opacity为0将圆圈隐去
                 .on("click", function () {
                     self.$emit("conveyRegion", regionId);
                     self.regionId = regionId;
