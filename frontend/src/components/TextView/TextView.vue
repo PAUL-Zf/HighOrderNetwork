@@ -34,4 +34,9 @@
         /*overflow-y: auto;*/
     }
 
+    .timeText {
+      font-size: 8px;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+    }
+
 </style>

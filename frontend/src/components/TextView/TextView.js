@@ -193,6 +193,37 @@ export default {
                 .attr("y1", cy + margin)
                 .attr("x2", cx + width / 2)
                 .attr("y2", cy + margin + axisLength)
+            let SLine = svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 1)
+                .attr("x1", cx + width / 2 - 10)
+                .attr("y1", cy + margin)
+                .attr("x2", cx + width / 2 + 10)
+                .attr("y2", cy + margin)
+            let ELine = svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 1)
+                .attr("x1", cx + width / 2 - 10)
+                .attr("y1", cy + margin + axisLength)
+                .attr("x2", cx + width / 2 + 10)
+                .attr("y2", cy + margin + axisLength)
+
+
+            // add text
+            let startTime = svg.append('text')
+                .attr("y", cy + margin - 2)
+                .attr("x", cx + width / 2)
+                .attr('text-anchor', 'middle')
+                .attr("class", 'timeText')
+                .text("00:00")
+                .style("font-size", 10)
+            let endTime = svg.append('text')
+                .attr("y", cy + margin + axisLength + 12)
+                .attr("x", cx + width / 2)
+                .attr('text-anchor', 'middle')
+                .attr("class", 'timeText')
+                .text("24:00")
+                .style("font-size", 10)
 
             // Slide Window
             this.startTime = (slotNum - windowSlotsNum) / 2
