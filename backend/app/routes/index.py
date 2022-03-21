@@ -540,7 +540,7 @@ def _getVanAreasMap(entropy):
         path += "2.2.geojson"
     else:
         path += "2.5.geojson"
-    print(path)
+    path = "app/static/merged_area_threshold_1.0.geojson"
     with open(path, "r") as f:
         info = json.load(f)
     return json.dumps(info)
