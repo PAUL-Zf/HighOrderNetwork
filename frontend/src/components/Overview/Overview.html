@@ -1,0 +1,25 @@
+<div id="Overview">
+    <div class="card">
+        <div class="card-header">
+            <div style="float: left; margin-left:0px; margin-top:0px;">
+                <el-image :src="require('@/assets/overview.jpeg')"
+                          style="width:13%;height:13%;left: -60px;bottom: 3px;"></el-image>
+                <h6 style="display: inline; font-weight: bolder; position: absolute; left: 40px;top: 7px">Overview</h6>
+                <el-select id="chooseNumber" v-model="number" placeholder="" size="mini"
+                           style="width: 100px;height: 30px;left:160px;bottom:12px;padding-left: 15px;padding-bottom: 20px">
+                    <el-option
+                            v-for="item in options"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
+            </div>
+        </div>
+        <div class="card-block" id="OverviewContainer">
+            <div id="labelsContainer">
+                <svg id="sankeyView"></svg>
+            </div>
+        </div>
+    </div>
+</div>

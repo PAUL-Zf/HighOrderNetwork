@@ -67,6 +67,13 @@ function getDatesByUser(userId, callback){
     request(url, params, GET_REQUEST, callback)
 }
 
+// 根据patternId获取pattern hflow数据
+function getPattern(patternId, callback){
+    const url = `${dataServerUrl}/getPattern/${patternId}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
 // 根据 userId和date 显示对应用户在对应日期的所有点
 function display(userId, date, callback){
     const url = `${dataServerUrl}/display/${userId}/${date}`
@@ -85,9 +92,44 @@ function getHighOrder (start, period, region, type, callback) {
     request(url, params, GET_REQUEST, callback)
 }
 
+// 传递参数给 self-organization 算法
+function getSelfOrganization(start, end, callback) {
+    const url = `${dataServerUrl}/getSelfOrganization/${start}/${end}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
 // 取 VanAreasMap geoJson数据
 function getVanAreasMap(entropy, callback){
     const url = `${dataServerUrl}/getVanAreasMap/${entropy}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 取 Boundary geoJson数据
+function getBoundary(callback){
+    const url = `${dataServerUrl}/getBoundary`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 取checkin数据
+function getCheckin(date, callback){
+    const url = `${dataServerUrl}/getCheckin/${date}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 取sankey数据
+function getSankey(date, number, callback){
+    const url = `${dataServerUrl}/getSankey/${date}/${number}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+// 取statistic数据
+function getStatistic(date, region, callback){
+    const url = `${dataServerUrl}/getStatistic/${date}/${region}`
     const params = {}
     request(url, params, GET_REQUEST, callback)
 }
@@ -204,7 +246,6 @@ export default {
     fetchRoadDataPost1,
     fetchRoadDataPost2,
     fetchRoadDataPost3,
-    fetchnode,
     // fetchLassoedDataPost
 
     // new project
@@ -216,5 +257,12 @@ export default {
     getOverview,
     getRegionFlow,
     getRegionInOut,
-    getMap
+    getBoundary,
+    getCheckin,
+    getSankey,
+    getStatistic,
+    getPattern,
+    getMap,
+    getSelfOrganization,
 }
+
