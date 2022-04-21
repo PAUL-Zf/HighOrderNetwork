@@ -1,57 +1,51 @@
 <template>
-  <div id="app" style="width: 1400px">
-<!--    <nav class="navbar sticky-top navbar-dark bg-dark"-->
-<!--         style="padding-top: 1px; padding-bottom: 1px; margin-bottom: 5px;">-->
-<!--      <div style="margin-top:5px; margin-left: 5px;">-->
-<!--        <span style="color:white; font-size:1.25rem; font-weight:500; user-select: none">OD Diagram</span>-->
-<!--      </div>-->
-<!--    </nav>-->
+  <div id="app" style="width: 1500px">
+    <!--    <nav class="navbar sticky-top navbar-dark bg-dark"-->
+    <!--         style="padding-top: 1px; padding-bottom: 1px; margin-bottom: 5px;">-->
+    <!--      <div style="margin-top:5px; margin-left: 5px;">-->
+    <!--        <span style="color:white; font-size:1.25rem; font-weight:500; user-select: none">OD Diagram</span>-->
+    <!--      </div>-->
+    <!--    </nav>-->
     <div class="container-fluid" style="padding-left: 0px; padding-right: 0px">
       <div class="row" style="margin-left: 0px; margin-right: 0px">
-        <div class="col-5 content" style="padding-left: 0px; padding-right: 0px">
+        <div class="col-3 content" style="padding-left: 0px; padding-right: 0px">
+          <ControlView v-on:conveyData="updateData" v-on:highlightRegion="highlightRegion"
+                       :videoList="videoList" :videoId="videoId" :videoData="videoData"
+                       :w="width" :h="height"
+                       @changemap='changemap'></ControlView>
+          <Overview v-on:conveyTimeInterval="conveyTimeInterval" v-bind:date="date" v-bind:region="region"
+                    v-on:conveyPattern="conveyPattern" v-on:conveyPatternId="conveyPatternId"
+          ></Overview>
+        </div>
+        <div class="col-9 content" style="padding-left: 0px; padding-right: 0px">
+          <TemporalView v-on:passTime="updateTime" v-on:conveyIndex="updateIndex" v-on:conveyType="updateType"
+                        v-bind:region="region" v-bind:date="date" v-bind:number="number" v-bind:generate="generate"
+                        v-bind:coords="coords" v-bind:time="time" v-bind:halfInterval="halfInterval" @change="change">
+          </TemporalView>
           <div class="row" style="margin-left: 0px; margin-right: 0px">
-            <div class="col-6 content" style="padding-left: 0px; padding-right: 0px">
-              <VideoView v-on:conveyData="updateData" v-on:highlightRegion="highlightRegion"
-                         :videoList="videoList" :videoId="videoId" :videoData="videoData"
-                         :w="width" :h="height"
-                         @changemap='changemap'></VideoView>
+            <div class="col-9 content" style="padding-left: 0px; padding-right: 0px">
+              <MapView v-on:conveyRegion="updateRegion"
+                       v-on:conveyHighOrder="updateHighOrder"
+                       v-on:conveyNumber="updateNumber"
+                       v-on:conveyRegionFlow="updateRegionFlow"
+                       v-on:conveyGenerate="conveyGenerate"
+                       v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
+                       v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
+                       v-bind:level="level" v-bind:pattern="pattern" v-bind:patternId="patternId"
+                       :videoId="videoId" :videoData="videoData"
+                       :dir="dir" v-bind:type="type"
+                       @changeData='initdraw'></MapView>
             </div>
-            <div class="col-6 content" style="padding-left: 0px; padding-right: 0px">
-              <TextView v-on:passTime="updateTime" v-on:conveyIndex="updateIndex"
-                        v-bind:region="region" v-bind:date="date" v-bind:number="number"
-                        v-bind:coords="coords" @change="change">
-              </TextView>
+            <div class="col-3 content" style="padding-left: 0px; padding-right: 0px">
+              <StatisticView v-bind:date="date" v-bind:region="region"></StatisticView>
             </div>
           </div>
-          <AudioView v-on:conveySelected="conveySelected"
+          <StateView v-on:conveySelected="conveySelected"
                      v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
                      v-bind:regionsFlow="regionsFlow"
-                     :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></AudioView>
+                     :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></StateView>
         </div>
-        <div class="col-7 content" style="padding-left: 0px; padding-right: 0px">
-          <FaceView v-on:conveyRegion="updateRegion"
-                    v-on:conveyHighOrder="updateHighOrder"
-                    v-on:conveyNumber="updateNumber"
-                    v-on:conveyRegionFlow="updateRegionFlow"
-                    v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
-                    v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
-                    v-bind:level="level"
-                    :videoId="videoId" :videoData="videoData"
-                    :dir="dir" v-bind:type="type"
-                    @changeData='initdraw'></FaceView>
-          <!--          <div class="row" style="padding-left: 12px; padding-right: 3px">-->
-          <!--            <div class="col-6 content" style="padding-left: 3px; padding-right: 3px">-->
-          <!--              <TextView v-bind:date="info.date" v-bind:user="info.user_id" :videoId="videoId" :videoData="videoData" v-bind:coords="coords"-->
-          <!--                        @change="change"></TextView>-->
-          <!--            </div>-->
-          <!--            <div class="col-12 content" style="padding-left: 3px; padding-right: 12px">-->
-          <!--              <AudioView :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></AudioView>-->
-          <!--            </div>-->
-          <!--          </div>-->
-        </div>
-        <!--        <div class="col-2 content" style="padding-left: 3px; padding-right: 3px">-->
-        <!--          <FifthView :w="width" :h="height"></FifthView>-->
-        <!--        </div>-->
+
       </div>
     </div>
   </div>
@@ -61,33 +55,40 @@
 import dataService from './service/dataService.js'
 /* global d3 $ _ */
 
-import VideoView from './components/VideoView/VideoView.vue'
-import TextView from './components/TextView/TextView.vue'
-import AudioView from './components/AudioView/AudioView.vue'
-import FaceView from './components/FaceView/FaceView.vue'
-import FifthView from './components/FifthView/FifthView.vue'
+import ControlView from './components/ControlView/ControlView.vue'
+import TemporalView from './components/TemporalView/TemporalView.vue'
+import StateView from './components/StateView/StateView.vue'
+import MapView from './components/MapView/MapView.vue'
+import Overview from './components/Overview/Overview.vue'
+import StatisticView from './components/StatisticView/StatisticView.vue'
 
 export default {
   name: 'app',
   components: {
-    VideoView,
-    TextView,
-    AudioView,
-    FaceView,
-    FifthView
+    ControlView,
+    TemporalView,
+    StateView,
+    MapView,
+    StatisticView,
+    Overview
   },
   data() {
     return {
       // new project
       date: '',
       highlight: null,
-      region: -1,
+      region: 0,
+      time: null,
+      halfInterval: null,
+      pattern: null,
+      patternId: null,
+      generate: null,
       info: {
         user_id: 0,
         date: 2000 - 1 - 22
       },
-      startTime: 0,
-      timeLength: 0,
+      startTime: 9,
+      timeLength: 1,
       content: null,
       number: 1,
       regionsFlow: null,
@@ -95,13 +96,13 @@ export default {
       selectedData: null,
       select: null,
       level: 1,
+      type: null,
 
       // old project
       dir: [],
       width: 0,
       height: 0,
       radius: 0,
-      type: ['球墨铸铁管'],
       videoList: [],
       videoId: 'simon_sinek_why_good_leaders_make_you_feel_safe',
       videoData: {},
@@ -112,14 +113,30 @@ export default {
   },
   methods: {
     // new project
-    highlightRegion(highlight){
+    highlightRegion(highlight) {
       this.highlight = highlight;
     },
 
-    conveySelected(select, selectedData){
+    conveyTimeInterval(time, halfInterval) {
+      this.time = time;
+      this.halfInterval = halfInterval;
+    },
+
+    conveyPatternId(patternId){
+      this.patternId = patternId;
+    },
+
+    conveyPattern(pattern) {
+      this.pattern = pattern;
+    },
+
+    conveySelected(select, selectedData) {
       this.select = select;
       this.selectedData = selectedData;
-      console.log(select);
+    },
+
+    conveyGenerate(generate){
+      this.generate = generate;
     },
 
     updateIndex(index) {
@@ -135,7 +152,11 @@ export default {
       this.region = region;
     },
 
-    updateRegionFlow(regionsFlow){
+    updateType(type) {
+      this.type = type;
+    },
+
+    updateRegionFlow(regionsFlow) {
       this.regionsFlow = regionsFlow;
     },
 
@@ -147,11 +168,10 @@ export default {
       this.number = number;
     },
 
-    updateTime(startTime, timeLength, index) {
+    updateTime(startTime, timeLength) {
       this.timeLength = timeLength;
       this.startTime = startTime;
-      this.index = index;
-      // console.log(this.timeLength + "    " + this.startTime);
+      console.log(this.timeLength + "    " + this.startTime);
     },
 
     // old project

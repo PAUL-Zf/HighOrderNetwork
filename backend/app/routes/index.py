@@ -2,6 +2,7 @@
     The RESTful style api server
 '''
 from pprint import pprint
+from time import time
 
 from app import app
 from app import dataService
@@ -17,6 +18,10 @@ import mimetypes
 import subprocess
 import heapq
 
+import app.routes.Self_Organization as SO
+import app.routes.statistic as st
+import app.routes.getHighOrder as gho
+
 from flask import send_file, request, jsonify, render_template, send_from_directory, Response
 
 LOG = logging.getLogger(__name__)
@@ -24,6 +29,8 @@ LOG = logging.getLogger(__name__)
 MB = 1 << 20
 BUFF_SIZE = 10 * MB
 
+
+# 全局变量
 category_map = {'Food': 0,
                 'Shop & Service': 1,
                 'Outdoors & Recreation': 2,
@@ -34,6 +41,22 @@ category_map = {'Food': 0,
                 'College & University': 7,
                 'Residence': 8,
                 'Event': 9}
+
+slotNum = 48
+entropy_threshold = 1.0
+merged_df_od_duration = {}
+merged_area = {}
+id_pattern = {}
+
+# compute offset point
+
+
+def computeCurvePoint(x, y):
+    x0 = (y[0] - x[0]) / 2
+    y0 = (y[1] - x[1]) / 2
+    x1 = 3 ** 0.5 / 2 * x0 - y0 / 2
+    y1 = 3 ** 0.5 / 2 * y0 + x0 / 2
+    return [x[0] + x1, x[1] + y1]
 
 
 def sum_of_list(flow):
@@ -57,9 +80,22 @@ def transferTime(time, scale):
     return int(hour / scale) + math.floor(minute / (60 * scale))
 
 
+def sort_and_filter(pattern_count, pattern_time, K):
+    sorted_data = sorted(pattern_count.items(),
+                         key=lambda kv: (kv[1], kv[0]), reverse=True)
+    time_temp = {}
+    count_temp = {}
+    for i in range(K):
+        k = sorted_data[i][0]
+        count_temp[k] = pattern_count[k]
+        time_temp[k] = pattern_time[k]
+
+    return count_temp, time_temp
+
+
 def computeLeftTime(checkin_time, duration, scale):
     # check checkin_time + duration to add to out_data
-    time = checkin_time.split()[1]
+    time = checkin_time.split()[1][:-6]
     seconds = int(time.split(':')[0]) * 3600 + \
         int(time.split(':')[1]) * 60 + int(time.split(':')[2])
 
@@ -214,7 +250,7 @@ def _getDatesByUser(user_id):
 @app.route('/display/<user_id>/<date>', methods=['GET'])
 def _display(user_id, date):
     result = []
-    with open(r"app/static/od_data.json", "r") as f:
+    with open("app/static/od_data.json", "r") as f:
         info = json.load(f)
     user = info[user_id]
     for day in user:
@@ -222,232 +258,56 @@ def _display(user_id, date):
             result = day
     return json.dumps(result)
 
+
+# 根据patternId获取对应的Pattern HighOrder数据
+
+
+@app.route('/getPattern/<patternId>', methods=['GET'])
+def _getPattern(patternId):
+    pattern = id_pattern[int(patternId)]
+    centroids = []
+
+    with open("app/static/overview_centroids.json", "r") as f:
+        centroids = json.load(f)
+
+    # 添加圆的信息
+    center_list = []
+    circles = []
+
+    for center in pattern:
+        if center not in center_list:
+            center_list.append(center)
+
+    for id in center_list:
+        circle = {}
+        circle['coordinate'] = centroids[id]
+        circle['id'] = id
+        circles.append(circle)
+
+    # 添加曲线信息
+    lines = []
+    for i in range(len(pattern) - 1):
+        last = centroids[pattern[i]]
+        next = centroids[pattern[i+1]]
+        p = computeCurvePoint(last, next)
+        coordinates = [last, p, next]
+        line = {}
+        line['coordinate'] = coordinates
+        line['id'] = pattern[i]
+        lines.append(line)
+
+    result = {}
+    result['circles'] = circles
+    result['lines'] = lines
+
+    return json.dumps(result)
+
 # 根据startTime和timeLength获取对应的HighOrder数据
 
 
 @app.route('/getHighOrder/<start>/<length>/<region>/<type>', methods=['GET'])
 def _getHighOrder(start, length, region, type):
-    start = int(start)
-    slot_length = int(length)
-    regionId = int(region)
-    date = type
-    slotNum = 24
-
-    scale = 24 / slotNum
-    time_slots = [x for x in range(start, start + slot_length)]
-
-    if (date == 'Weekdays'):
-        od_data = pd.read_csv(r"app/static/weekdays.csv")
-    else:
-        od_data = pd.read_csv(r"app/static/holidays.csv")
-
-    # 根据 checkin_time, (checkin_time + duration), next_hop_checkin_time 初步筛选轨迹
-    trajectory = []
-    for index, row in od_data.iterrows():
-        user_id = row['user_id']
-        checkin_time = row['checkin_time']
-        next_hop_checkin_time = row['next_hop_checkin_time']
-        duration = row['duration']
-        pre_category = row['pre_level_0_category']
-        next_category = row['next_hop_level_0_category']
-        pickup_centroid = row['pickup_centroid']
-        dropoff_centroid = row['dropoff_centroid']
-
-        checkin_slot = transferTime(checkin_time.split()[1], scale)
-        next_hop_checkin_slot = transferTime(
-            next_hop_checkin_time.split()[1], scale)
-        left_slot = computeLeftTime(checkin_time, duration, scale)
-
-        if(pickup_centroid == regionId) and (checkin_slot in time_slots or left_slot in time_slots):
-            trajectory.append(user_id)
-        elif(dropoff_centroid == regionId) and (next_hop_checkin_slot in time_slots):
-            trajectory.append(user_id)
-
-    # 去重
-    temp = []
-    for x in trajectory:
-        if x not in temp:
-            temp.append(x)
-    trajectory = temp
-
-    abstract_data = {}
-    max_order = 4
-    for traj in trajectory:
-        data = od_data[od_data['user_id'] == traj]
-
-        region_traj = []
-        in_region = []
-        count = 0
-
-        high_order = [-1 for x in range(max_order+1)]
-        high_order[max_order - 1] = regionId
-
-        # 抽象出轨迹数据
-        for index, row in data.iterrows():
-            checkin_time = row['checkin_time']
-            duration = row['duration']
-            pickup_centroid = row['pickup_centroid']
-
-            checkin_slot = transferTime(checkin_time.split()[1], scale)
-            next_hop_checkin_slot = transferTime(
-                next_hop_checkin_time.split()[1], scale)
-            left_slot = computeLeftTime(checkin_time, duration, scale)
-
-            region_traj.append(pickup_centroid)
-            if(pickup_centroid == regionId) and (checkin_slot in time_slots or left_slot in time_slots):
-                in_region.append(count)
-            count += 1
-
-            dropoff_centroid = row['dropoff_centroid']
-            next_hop_checkin_time = row['next_hop_checkin_time']
-            region_traj.append(dropoff_centroid)
-            if(dropoff_centroid == regionId) and (next_hop_checkin_slot in time_slots):
-                in_region.append(count)
-            count += 1
-
-        if not in_region:
-            continue
-
-        # 数据清洗
-        start_index = in_region[0]
-        end_index = in_region[-1]
-
-        # 第一个符合条件的数据和最后一个符合条件的数据之间的数据清除(不包括第一个数据，包括最后一个数据)
-        del region_traj[start_index+1:end_index+1]
-
-        # 从 start_index 往后找一个，往前找个
-        for i in range(start_index+1, len(region_traj)):
-            if(region_traj[i] != regionId):
-                high_order[max_order] = region_traj[i]
-                break
-
-        last = regionId
-        current_order = max_order - 2
-        for i in range(start_index-1, -1, -1):
-            if (current_order < 0):
-                break
-            if(region_traj[i] != last):
-                high_order[current_order] = region_traj[i]
-                last = region_traj[i]
-                current_order -= 1
-
-        abstract_data[traj] = high_order
-
-        # 统计一阶数据
-
-        valid_order = {}    # 记录所有有效的路径（KLD < threshold）
-        valid_kld = {}      # 记录所有有效的路径的KLD（KLD < threshold）
-        region_number = 13
-        order_1 = {}
-        threshold = 0.01    # KLD散度的阈值
-
-        # 用于筛选掉没有下一点的轨迹
-        valid = {}
-        for k, v in abstract_data.items():
-            dest = v[max_order]
-            current = v[max_order - 1]
-            path = str(current) + '_'
-            if (dest != -1):
-                valid[k] = v
-                if path not in order_1:
-                    order_1[path] = [0 for x in range(region_number)]
-                order_1[path][dest] += 1
-
-        # 筛选掉没有下一点的轨迹
-        abstract_data = valid
-
-        # 一阶数据默认有效
-        for k, v in order_1.items():
-            valid_order[k] = v
-
-        # 统计二阶数据
-        order_2 = {}
-        for k, v in abstract_data.items():
-            dest = v[max_order]
-            path = ''
-            for i in range(max_order-2, max_order):
-                if(v[i] == -1):
-                    break
-                path += str(v[i]) + '_'
-            if path:
-                if path not in order_2:
-                    order_2[path] = [0 for x in range(region_number)]
-                order_2[path][dest] += 1
-
-        # 计算二阶KLD
-        KLD = {}    # 存储所有路径KLD（未经过阈值筛选）
-        for k, v in order_2.items():
-            pre = k.split('_', 1)[1]
-            if pre in valid_order:
-                KLD[k] = computeKLD(v, valid_order[pre])
-                # 根据KLD更新数据
-                if(KLD[k] > threshold):
-                    valid_order[k] = v
-                    valid_kld[k] = KLD[k]
-
-        # 统计三阶数据
-        order_3 = {}
-        for k, v in abstract_data.items():
-            dest = v[max_order]
-            path = ''
-            for i in range(max_order-3, max_order):
-                if(v[i] == -1):
-                    break
-                path += str(v[i]) + '_'
-            if path:
-                if path not in order_3:
-                    order_3[path] = [0 for x in range(region_number)]
-                order_3[path][dest] += 1
-
-        # 计算三阶KLD
-        for k, v in order_3.items():
-            pre = k.split('_', 1)[1]
-            if pre in valid_order:
-                KLD[k] = computeKLD(v, valid_order[pre])
-                # 根据KLD更新数据
-                if(KLD[k] > threshold):
-                    valid_order[k] = v
-                    valid_kld[k] = KLD[k]
-
-        # 统计四阶数据
-        order_4 = {}
-        for k, v in abstract_data.items():
-            dest = v[max_order]
-            path = ''
-            for i in range(max_order-4, max_order):
-                if(v[i] == -1):
-                    break
-                path += str(v[i]) + '_'
-            if path:
-                if path not in order_4:
-                    order_4[path] = [0 for x in range(region_number)]
-                order_4[path][dest] += 1
-
-        # 计算四阶KLD
-        for k, v in order_4.items():
-            pre = k.split('_', 1)[1]
-            if pre in valid_order:
-                KLD[k] = computeKLD(v, valid_order[pre])
-                # 根据KLD更新数据
-                if(KLD[k] > threshold):
-                    valid_order[k] = v
-                    valid_kld[k] = KLD[k]
-
-        # 遍历 valid_order，计算所有entropy
-        valid_entropy = {}
-        for k, v in valid_order.items():
-            valid_entropy[k] = computeEntropy(v)
-
-        sort_entropy = dict(sorted(valid_entropy.items(), key=lambda e: e[1]))
-
-        result = {}
-        top = 5
-        index = 0
-        for k, v in sort_entropy.items():
-            if(index >= top):
-                break
-            result[k] = valid_order[k]
-            index += 1
+    result = gho.getHighOrder(start, length, region, type)
     return json.dumps(result)
 
 # 取overview数据
@@ -540,17 +400,36 @@ def _getVanAreasMap(entropy):
         path += "2.2.geojson"
     else:
         path += "2.5.geojson"
-    path = "app/static/merged_area_threshold_1.0.geojson"
+    # path = "app/static/merged_area_threshold_1.0.geojson"
     with open(path, "r") as f:
         info = json.load(f)
     return json.dumps(info)
+
+# 获取boundary信息
+
+
+@app.route('/getBoundary', methods=['GET'])
+def _getBoundary():
+    result = {}
+
+    path = "app/static/merged_area_threshold_1.0_clustering.geojson"
+    with open(path, "r") as f:
+        info = json.load(f)
+    with open('app/static/block_to_community.json', "r") as f:
+        belong = json.load(f)
+
+    result['info'] = info
+    result['belong'] = belong
+
+    return json.dumps(result)
+
 
 # 取 map.geoJson数据
 
 
 @app.route('/getMap', methods=['GET'])
 def _getMap():
-    with open(r"app/static/map.geojson", "r") as f:
+    with open("app/static/map.geojson", "r") as f:
         info = json.load(f)
     return json.dumps(info)
 
@@ -589,15 +468,286 @@ def _getRegionFlow(date):
         last_time = next_hop_checkin_time
     return json.dumps(regions)
 
+
+@app.route('/getCheckin/<date>', methods=['GET'])
+def _getCheckin(date):
+    if (date == 'Weekdays'):
+        filename = "app/static/weekdays_checkin_statistic.json"
+    else:
+        filename = "app/static/holidays_checkin_statistic.json"
+
+    with open(filename, 'r') as f:
+        result = json.load(f)
+
+    return json.dumps(result)
+
+
+@app.route('/getSankey/<date>/<number>', methods=['GET'])
+def _getSankey(date, number):
+    if (date == 'Weekdays'):
+        filename = "app/static/weekdays_overview.json"
+    else:
+        filename = "app/static/holidays_overview.json"
+
+    with open(filename, 'r') as f:
+        patterns = json.load(f)
+
+    # 前端传来的参数
+    pattern_number = int(number)
+    community_number = 19
+
+    # 确定二阶轨迹和三阶轨迹的数量
+    order3_num = int(pattern_number / 3)
+    order2_num = pattern_number - order3_num
+
+    order_3 = patterns['order3']
+    order_2 = patterns['order2']
+
+    # 排序并取top k的数据
+    pattern_time = {}
+    pattern_count = {}
+    order3_time = {}
+    order3_count = {}
+
+    # 排序并选取三阶pattern
+    order_time = {}
+    order_count = {}
+    for i in range(len(order_3)):
+        patterns = order_3[i]
+        for p in patterns:
+            pattern = (p[0], p[1], p[2], p[3])
+            count = p[4]
+            if pattern not in order_count:
+                order_count[pattern] = count
+                order_time[pattern] = i + 4
+            else:
+                if count > order_count[pattern]:
+                    order_count[pattern] = count
+                    order_time[pattern] = i + 4
+
+    order3_count, order3_time = sort_and_filter(
+        order_count, order_time, order3_num)
+
+    # 排序并选取二阶pattern
+    order_time = {}
+    order_count = {}
+    for i in range(len(order_2)):
+        patterns = order_2[i]
+        for p in patterns:
+            pattern = (p[0], p[1], p[2])
+            count = p[3]
+            if pattern not in order_count:
+                order_count[pattern] = count
+                order_time[pattern] = i + 4
+            else:
+                if count > order_count[pattern]:
+                    order_count[pattern] = count
+                    order_time[pattern] = i + 4
+
+    pattern_count, pattern_time = sort_and_filter(
+        order_count, order_time, order2_num)
+
+    # 合并字典并排序
+    pattern_count.update(order3_count)
+    pattern_time.update(order3_time)
+    pattern_count, pattern_time = sort_and_filter(
+        pattern_count, pattern_time, pattern_number)
+
+    # 赋予pattern id
+    pattern_id = {}
+    id = 0
+    for key, value in pattern_count.items():
+        pattern_id[key] = id
+        id_pattern[id] = key
+        id += 1
+
+    rect_record = [[{}] * pattern_number for i in range(3)]
+
+    # 计算rects
+    rects = []
+    for i in range(1, 4):
+        coord = 0
+        for key, value in pattern_count.items():
+            if (len(key) > i):
+                rect = {}
+                rect['id'] = pattern_id[key]
+                rect['order'] = i - 1
+                rect['width'] = pattern_count[key]
+                rect['x'] = coord
+                rect['time'] = pattern_time[key]
+                rect['length'] = pattern_count[key] % 3 + 1
+
+                r = {}
+                r['x'] = rect['x'] + rect['width']/2
+                r['index'] = rect['id']
+                rect_record[rect['order']][rect['id']] = r
+
+                rects.append(rect)
+                coord += pattern_count[key]
+
+    # 计算 timeRects
+    timeRects = []
+    coord = 0
+    for key, value in pattern_count.items():
+        timeRect = {}
+        timeRect['id'] = pattern_id[key]
+        timeRect['time'] = pattern_time[key]
+        timeRect['length'] = pattern_count[key] % 3 + 1
+        timeRect['width'] = pattern_count[key]
+        timeRect['x'] = coord
+
+        timeRects.append(timeRect)
+        coord += pattern_count[key]
+
+    # 计算flow_sum
+    flow_sum = 0
+    for value in pattern_count.values():
+        flow_sum += value
+
+    # 计算node位置，按community排列
+
+    node_record = [[{}] * pattern_number for i in range(4)]
+    nodes = []
+
+    for i in range(4):
+        node_count = [[] * community_number for _ in range(community_number)]
+        for c in pattern_count.keys():
+            if(len(c) > i):
+                community = c[i]
+                node_count[community].append(c)
+
+        # 按community顺序添加node
+        index = 0
+        coord = 0
+        for j in range(community_number):
+            community = node_count[j]
+            for c in community:
+                node = {}
+                node['id'] = pattern_id[c]
+                node['order'] = i
+                node['community'] = j
+                node['width'] = pattern_count[c]
+                node['x'] = coord
+                node['index'] = index
+                node['time'] = pattern_time[c]
+                node['length'] = pattern_count[c] % 3 + 1
+
+                n = {}
+                n['x'] = node['x'] + node['width']/2
+                n['index'] = index
+                node_record[node['order']][node['id']] = n
+
+                nodes.append(node)
+                coord += pattern_count[c]
+            if community:
+                index += 1
+
+    # merge all nodes which belong to the same region
+    regions = []
+    last = nodes[0]
+    width = last['width']
+    x = last['x']
+    index = last['index']
+    order = last['order']
+    community = last['community']
+    for i in range(1, len(nodes)):
+        now = nodes[i]
+
+        if(now['index'] != last['index'] or now['order'] != last['order']):
+            r = {}
+            r['index'] = index
+            r['width'] = width
+            r['x'] = x
+            r['order'] = order
+            r['community'] = community
+            regions.append(r)
+
+            width = now['width']
+            index = now['index']
+            x = now['x']
+            order = now['order']
+            community = now['community']
+        else:
+            width += now['width']
+
+        last = now
+    finalRegion = {}
+    finalRegion['index'] = index
+    finalRegion['width'] = width
+    finalRegion['x'] = x
+    finalRegion['order'] = order
+    finalRegion['community'] = community
+    regions.append(finalRegion)
+
+    # 计算links
+    links = []
+    id = 0
+    for pattern in pattern_count.keys():
+        for i in range(len(pattern) - 1):
+            link = {}
+            start = node_record[i][id]
+            end = rect_record[i][id]
+            link['id'] = id
+            link['order'] = i
+            link['type'] = 0
+            link['startX'] = start['x']
+            link['startIndex'] = start['index']
+            link['endX'] = end['x']
+            link['endIndex'] = end['index']
+            links.append(link)
+
+            link = {}
+            start = rect_record[i][id]
+            end = node_record[i+1][id]
+            link['id'] = id
+            link['order'] = i
+            link['type'] = 1
+            link['startX'] = start['x']
+            link['startIndex'] = start['index']
+            link['endX'] = end['x']
+            link['endIndex'] = end['index']
+            links.append(link)
+        id += 1
+
+    result = {}
+    result['sum'] = flow_sum
+    result['nodes'] = nodes
+    result['regions'] = regions
+    result['rects'] = rects
+    result['timeRects'] = timeRects
+    result['links'] = links
+
+    return json.dumps(result)
+
+
+@app.route('/getStatistic/<date>/<region>', methods=['GET'])
+def _getStatistic(date, region):
+    regionId = int(region)
+    poi, access = st.statistic(regionId)
+
+    poi_data = []
+    access_data = []
+
+    for k, v in poi.items():
+        p = {'category': k, 'count': v}
+        poi_data.append(p)
+
+    for k, v in access.items():
+        a = {'category': k, 'count': v}
+        access_data.append(a)
+
+    return json.dumps([poi_data, access_data])
+
+
 # 根据 date和region 获取对应region的 in and out流量数据
 
 
 @app.route('/getRegionInOut/<date>/<region>', methods=['GET'])
 def _getRegionInOut(date, region):
     def filterByRegion(od_data, region_id):
-        data = od_data[((od_data['pickup_centroid'] == region_id)
-                        | (od_data['dropoff_centroid'] == region_id))
-                       & (od_data['pickup_centroid'] != od_data['dropoff_centroid'])]
+        data = od_data[((od_data['previous_blocks'] == region_id)
+                        | (od_data['next_hop_blocks'] == region_id))
+                       & (od_data['previous_blocks'] != od_data['next_hop_blocks'])]
         return data
 
     def computeFlow(region_data, category_map, regionId, slotNum):
@@ -617,25 +767,25 @@ def _getRegionInOut(date, region):
             checkin_time = row['checkin_time']
             next_hop_checkin_time = row['next_hop_checkin_time']
             duration = row['duration']
-            pre_category = row['pre_level_0_category']
-            next_category = row['next_hop_level_0_category']
-            pickup_centroid = row['pickup_centroid']
-            dropoff_centroid = row['dropoff_centroid']
+            pre_category = row['previous_category']
+            next_category = row['next_hop_category']
+            pickup_centroid = row['previous_blocks']
+            dropoff_centroid = row['next_hop_blocks']
 
             # check first point of each user to add to in_data
             if (checkin_time != last_time) and (pickup_centroid == regionId):
                 in_data[transferTime(checkin_time.split()[
-                                     1], scale)][category_map[pre_category]] += 1
+                                     1][:-6], scale)][category_map[pre_category]] += 1
 
             last_time = next_hop_checkin_time
 
             # check next_hop_checkin_time to add to in_data
             if dropoff_centroid == regionId:
                 in_data[transferTime(next_hop_checkin_time.split()[
-                                     1], scale)][category_map[next_category]] += 1
+                                     1][:-6], scale)][category_map[next_category]] += 1
 
             # check checkin_time + duration to add to out_data
-            time = checkin_time.split()[1]
+            time = checkin_time.split()[1][:7]
             seconds = int(time.split(
                 ':')[0]) * 3600 + int(time.split(':')[1]) * 60 + int(time.split(':')[2])
 
@@ -648,34 +798,46 @@ def _getRegionInOut(date, region):
             if pickup_centroid == regionId:
                 out_data[left_time][category_map[next_category]] += 1
 
-        in_data = mergePOI(in_data)
-        out_data = mergePOI(out_data)
-
         return [in_data, out_data]
 
     # main part
     if (date == 'Weekdays'):
-        od_data = pd.read_csv(r"app/static/weekdays.csv")
+        od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
     else:
-        od_data = pd.read_csv(r"app/static/holidays.csv")
+        od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
 
     # compute region flow
     regionId = int(region)
     region_data = filterByRegion(od_data, regionId)
-    result = computeFlow(region_data, category_map, regionId, 24)
+    result = computeFlow(region_data, category_map, regionId, 48)
     return json.dumps(result)
 
-# @app.route('/fetchLassoedDataPost', methods = ['POST'])
-# def _fetchLassoedDataPost():
-#     # print('backend: run function fetchOverviewData2()')
-#     post_data = json.loads(request.data.decode())
-#     # print('backend: post_data:', post_data)
-#
-#     data = post_data['lassoedData']
-#     # request_data = request.get_json()
-#     # print('backend: request_data:', request_data)
-#     result = dataService.fetchLassoedDataPost(data)
-#     return json.dumps(result)
+
+@app.route('/getSelfOrganization/<start>/<end>', methods=['GET'])
+def _getSelfOrganization(start, end):
+    # start = int(start)
+    # end = int(end)
+    # merged_df_od_duration, merged_area = SO.Self_Organization(
+    #     start, end, entropy_threshold=entropy_threshold)
+
+    # merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
+    # merged_area.to_csv("app/static/merged_area.csv")
+
+    with open("app/static/merged_area.geojson", "r") as f:
+        area = json.load(f)
+
+    regions = pd.read_csv("app/static/merged_area.csv")
+
+    centroids = regions.set_index("traj_key")["centroid"].to_dict()
+
+    for k, v in centroids.items():
+        centroids[k] = v[7:-1]
+
+    result = {}
+    result['area'] = area
+    result['centroids'] = centroids
+
+    return json.dumps(result)
 
 
 @app.route('/fetchroaddata1', methods=['POST'])

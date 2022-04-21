@@ -1,0 +1,32 @@
+<div id="MapView">
+    <div class="card">
+        <div class="card-header">
+            <div style="float: left; margin-right:40px">
+                <el-image :src="require('@/assets/mapview.jpg')"
+                          style="width:4%;height:4%;left: -375px;bottom: 3px;"></el-image>
+                <h6 style="display: inline;font-weight: bolder;position: absolute; left: 50px;top: 7px">Map View</h6>
+<!--                <span style="margin-left: 10px">Show aggregated region</span>-->
+<!--                <el-checkbox v-model="mode" style="margin-left: 5px;font-weight: bold;"></el-checkbox>-->
+                <span style="position: absolute; left: 150px">Show boundary</span>
+                <el-checkbox v-model="boundary" style="left: 250px;font-weight: bold;position: absolute;"></el-checkbox>
+                <el-button type="info" plain size="mini" v-on:click="generateHighOrder"
+                           style="position: absolute;width: 80px;height: 30px;left: 280px;top: 2px">Generate
+                </el-button>
+<!--                <span style="margin-left: 10px">Num of comparison</span>-->
+<!--                <el-select v-model="number" filterable placeholder="" size="mini"-->
+<!--                           style="width: 70px;height: 30px;left:-10px;padding-left: 15px;padding-bottom: 20px">-->
+<!--                    <el-option-->
+<!--                            v-for="item in choice"-->
+<!--                            :key="item"-->
+<!--                            :label="item"-->
+<!--                            :value="item">-->
+<!--                    </el-option>-->
+<!--                </el-select>-->
+            </div>
+        </div>
+        <div class="card-block" id="faceContainer">
+            <div id="mapDiv"></div>
+        </div>
+    </div>
+
+</div>
