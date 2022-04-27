@@ -92,6 +92,12 @@ function getHighOrder (start, period, region, type, callback) {
     request(url, params, GET_REQUEST, callback)
 }
 
+// 点击多个regions获取相应highOrder数据
+function getHighOrderByRegions (params, callback){
+    const url = `${dataServerUrl}/getHighOrderByRegions`
+    request(url, params, POST_REQUEST, callback)
+}
+
 // 传递参数给 self-organization 算法
 function getSelfOrganization(start, end, callback) {
     const url = `${dataServerUrl}/getSelfOrganization/${start}/${end}`
@@ -128,10 +134,9 @@ function getSankey(date, number, callback){
 }
 
 // 取statistic数据
-function getStatistic(date, region, callback){
-    const url = `${dataServerUrl}/getStatistic/${date}/${region}`
-    const params = {}
-    request(url, params, GET_REQUEST, callback)
+function getStatistic(params, callback){
+    const url = `${dataServerUrl}/getStatistic`
+    request(url, params, POST_REQUEST, callback)
 }
 
 // 取 map geoJson数据
@@ -142,8 +147,8 @@ function getMap(callback){
 }
 
 // 取 map region flow数据
-function getRegionFlow(date, callback){
-    const url = `${dataServerUrl}/getRegionFlow/${date}`
+function getRegionFlow(callback){
+    const url = `${dataServerUrl}/getRegionFlow`
     const params = {}
     request(url, params, GET_REQUEST, callback)
 }
@@ -155,10 +160,9 @@ function getOverview(type, callback){
 }
 
 // 根据 date和region 获取对应region的 in and out流量数据
-function getRegionInOut(date, region, callback){
-    const url = `${dataServerUrl}/getRegionInOut/${date}/${region}`
-    const params = {}
-    request(url, params, GET_REQUEST, callback)
+function getRegionInOut(params, callback){
+    const url = `${dataServerUrl}/getRegionInOut`
+    request(url, params, POST_REQUEST, callback)
 }
 
 function audioData(videoId, interval, sliding_speed, callback) {
@@ -253,6 +257,7 @@ export default {
     getDatesByUser,
     display,
     getHighOrder,
+    getHighOrderByRegions,
     getVanAreasMap,
     getOverview,
     getRegionFlow,

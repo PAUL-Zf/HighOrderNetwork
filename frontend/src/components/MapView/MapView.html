@@ -5,12 +5,14 @@
                 <el-image :src="require('@/assets/mapview.jpg')"
                           style="width:4%;height:4%;left: -375px;bottom: 3px;"></el-image>
                 <h6 style="display: inline;font-weight: bolder;position: absolute; left: 50px;top: 7px">Map View</h6>
-<!--                <span style="margin-left: 10px">Show aggregated region</span>-->
-<!--                <el-checkbox v-model="mode" style="margin-left: 5px;font-weight: bold;"></el-checkbox>-->
-                <span style="position: absolute; left: 150px">Show boundary</span>
-                <el-checkbox v-model="boundary" style="left: 250px;font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 150px; top: 8px">Show Segmentation</span>
+                <el-checkbox v-model="showSegmentation" style="left: 270px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 300px; top: 8px">Show Boundary</span>
+                <el-checkbox v-model="boundary" style="left: 400px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 430px; top: 8px">Show HFlow</span>
+                <el-checkbox v-model="showFlow" style="left: 510px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
                 <el-button type="info" plain size="mini" v-on:click="generateHighOrder"
-                           style="position: absolute;width: 80px;height: 30px;left: 280px;top: 2px">Generate
+                           style="position: absolute;width: 80px;height: 30px;left: 600px;top: 2px">Generate
                 </el-button>
 <!--                <span style="margin-left: 10px">Num of comparison</span>-->
 <!--                <el-select v-model="number" filterable placeholder="" size="mini"-->

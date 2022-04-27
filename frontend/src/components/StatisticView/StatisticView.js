@@ -4,7 +4,7 @@ import response from "vue-resource/src/http/response";
 export default {
     name: 'StatisticView',
     components: {},
-    props: ['region', 'date'],
+    props: ['region', 'date', 'generate', 'selects', 'startTime', 'timeLength'],
     data() {
         return {
             width: 279,
@@ -27,8 +27,9 @@ export default {
         }
     },
     watch: {
-        region(val){
-            dataService.getStatistic(this.date, this.region, response => {
+        generate(val){
+            let params = {selects: this.selects, startTime: this.startTime, timeLength: this.timeLength};
+            dataService.getStatistic(params, response => {
                 this.POI = response.data[0];
                 this.access = response.data[1];
                 this.updateSvg();

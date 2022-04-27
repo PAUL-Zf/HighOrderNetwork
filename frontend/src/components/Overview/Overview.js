@@ -5,7 +5,7 @@ import {schemeAccent} from "d3-scale-chromatic";
 export default {
     name: 'Overview',
     components: {},
-    props: ['region', 'date'],
+    props: ['region', 'date', 'load'],
     data() {
         return {
             width: 373,
@@ -21,7 +21,7 @@ export default {
         }
     },
     watch: {
-        date(val) {
+        load(val) {
             dataService.getSankey(this.date, this.number, response => {
                 let sankey = response.data;
                 this.patterns = sankey.patterns;

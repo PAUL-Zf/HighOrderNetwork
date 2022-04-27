@@ -11,6 +11,7 @@ import "leaflet.markercluster/dist/leaflet.markercluster"
 // import * as d3 from 'd3-selection';
 import 'd3-transition';
 import 'leaflet-providers';
+import response from "vue-resource/src/http/response";
 // import dataService from "@/service/dataService";
 // import * as Json from "acorn";
 // import dataService from '../../service/dataService.js'
@@ -26,10 +27,15 @@ export default {
         return {
             // new project
             mode: false,    // false: Segmentation mode; true: h-flow mode
+            isOverview: true,    // select drawOverview or drawKelp
             circles: null,
             highOrder: null,
+            segmentation: null,
             generate: 0,    // work as generate signal
+            finish: 0,    // getHighOrder Finishing and finish++
             boundary: false,
+            showFlow: true,
+            showSegmentation: true,
             highOrderMode: false,
             number: 1,
             choice: [1, 2, 3, 4],
@@ -40,9 +46,11 @@ export default {
             regions: null,
             geoJSONLayer: null,
             boundaryLayer: null,
+            segmentationLayer: null,
             endTime: 10,
             centroids: null,
             selects: [],
+            groupId: 100000,
             overviewColors : ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9',
                 '#bc80bd','#ccebc5','#ffed6f','#b3e2cd','#fdcdac','#cbd5e8','#f4cae4','#e6f5c9', '#1f78b4', '#33a02c'],
             colors: ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099cc', '#CC9999', '#FF6666',
@@ -66,7 +74,7 @@ export default {
     },
 
     props: ['date', 'startTime', 'timeLength', 'highlight', 'select', 'selectedData',
-        'level', 'pattern', 'type', 'patternId'],
+        'level', 'pattern', 'type', 'patternId', 'load'],
 
     computed: {
         info() {
@@ -104,18 +112,21 @@ export default {
         time(val) {
             let self = this;
             this.endTime = this.startTime + this.timeLength;
+
+            // 每次self-organization算法，mapview数据都要更新
+            this.selects = [];
             dataService.getSelfOrganization(Math.floor(this.startTime / 2), Math.floor(this.endTime / 2), response => {
                 let result = response.data;
-                let boundary = result.area;
+                let segmentation = result.area;
                 let centroids = result.centroids;
                 this.centroids = centroids;
-                console.log(centroids)
+                this.segmentation = segmentation;
 
                 // 更新地图
                 this.mymap.remove();
                 this.mymap = this.init('mapDiv');
 
-                this.boundaryLayer = L.geoJson(boundary, {
+                let boundaryLayer = L.geoJson(segmentation, {
                         style: function (feature) {
                             return {
                                 weight: 0.1,
@@ -126,10 +137,10 @@ export default {
                             }
                         },
                         onEachFeature: self.onEachFeature,
-                    }
-                ).bindPopup(function (layer) {
-                    return layer.feature.properties.category;
-                }).addTo(self.mymap);
+                    }).addTo(self.mymap);
+
+                this.boundaryLayer = boundaryLayer;
+                this.segmentationLayer = boundaryLayer;
             })
         },
 
@@ -143,18 +154,36 @@ export default {
         //     this.drawSegmentation();
         // },
 
-        date(value) {
+        load(value) {
             // 传给后端：Weekdays or Holidays
             // 后端返回：region flow data
-            dataService.getRegionFlow(this.date, response => {
-                this.regions = response.data;
-                this.$emit("conveyRegionFlow", this.regions);
-                this.drawSegmentation();
-            })
+            this.drawSegmentation();
         },
 
         pattern(value) {
             // console.log(this.pattern);
+        },
+
+        showFlow(value) {
+            if (value){
+                if(this.isOverview){this.drawOverview();}
+                else {this.drawKelp();}
+            } else {
+                this.removeHFlow();
+            }
+        },
+
+        showSegmentation(value){
+            this.mymap.remove();
+            this.svg = null;
+            this.mymap = this.init('mapDiv');
+            if(value) {
+                this.boundaryLayer.addTo(this.mymap);
+            }
+            if(this.showFlow){
+                if(this.isOverview){this.drawOverview();}
+                else {this.drawKelp();}
+            }
         },
 
         boundary(value) {
@@ -202,28 +231,38 @@ export default {
 
     methods: {
         generateHighOrder() {
-            // this.highOrderMode = true;
-            dataService.getHighOrder(this.startTime, this.timeLength, this.regionId, this.date, response => {
+
+            // generate signal changed
+            this.generate++;
+            this.$emit("conveyGenerate", this.generate);
+
+            let params = {startTime: this.startTime, timeLength: this.timeLength,
+                regionsId: this.selects, groupId: this.groupId}
+            dataService.getHighOrderByRegions(params, response => {
                 this.highOrder = response.data.lines;
                 this.circles = response.data.circles;
-                this.$emit("conveyHighOrder", this.highOrder);
-                this.$emit("conveyGenerate", this.generate);
+                this.glyphs = response.data.glyphs;
+                this.content = response.data.content;
+                this.regions = response.data.regions;
+                let links = response.data.links;
+                let destLinks = response.data.destLinks;
 
-                // generate signal changed
-                this.generate++;
-                this.selects = [];
+                this.finish++;
+                this.$emit("conveyFinish", this.finish);
+                this.$emit("conveyHighOrder", this.content, this.glyphs, links, destLinks);
 
+                console.log("--------------MapView---------------");
                 console.log(this.highOrder);
                 console.log(this.circles);
+                console.log(this.regions);
+                console.log("--------------MapView---------------");
                 this.mode = false;
+                this.svg = null;
                 this.drawKelp();
             })
-        },
 
-        handleChange() {
-            this.mymap.remove();
-            this.mymap = this.init('mapDiv');
-            this.drawSegmentation();
+            this.groupId++;
+
         },
 
         onEachFeature(feature, layer) {
@@ -248,6 +287,7 @@ export default {
                     self.regionId = regionId;
                     console.log(regionId)
                     self.selects.push(regionId);
+                    self.$emit("conveySelects", self.selects);
                 },
                 mouseover: function(e) {
                     // Judge whether clicked
@@ -293,12 +333,7 @@ export default {
         },
 
         hideBoundary() {
-            let boundaryLayer = this.boundaryLayer;
-            boundaryLayer.setStyle({
-                weight: 0,
-                color: 'black',
-                fillOpacity: 0,
-            });
+            this.boundaryLayer = this.segmentationLayer;
         },
 
         myStyle(feature) {
@@ -321,19 +356,27 @@ export default {
             let self = this;
             let svg = this.svg;
             let map = this.mymap;
-
-            if(this.mode){
-                svg.selectAll('.glyph').remove();
-                svg.selectAll('.highOrder').remove()
-            } else {
-                this.mymap.remove();
-                this.mymap = this.init('mapDiv');
-                map = this.mymap;
+            if(svg === null){
                 L.svg({clickable: true}).addTo(map);
                 const overlay = d3.select(map.getPanes().overlayPane);
                 svg = overlay.select('svg').attr("pointer-events", "auto");
                 this.svg = svg;
             }
+
+            this.removeHFlow();
+
+            // if(this.mode){
+            //     svg.selectAll('.glyph').remove();
+            //     svg.selectAll('.HFlow').remove()
+            // } else {
+            //     this.mymap.remove();
+            //     this.mymap = this.init('mapDiv');
+            //     map = this.mymap;
+            //     L.svg({clickable: true}).addTo(map);
+            //     const overlay = d3.select(map.getPanes().overlayPane);
+            //     svg = overlay.select('svg').attr("pointer-events", "auto");
+            //     this.svg = svg;
+            // }
 
             // draw lines
             let lineGenerator = d3.line()
@@ -348,7 +391,7 @@ export default {
                 .data(this.highOrder)
                 .enter()
                 .append('path')
-                .attr("class", "highOrder")
+                .attr("class", "HFlow")
                 .attr("stroke", d => self.overviewColors[d.id])
                 .attr("stroke-width", 5)
                 .attr("fill", 'none')
@@ -359,7 +402,7 @@ export default {
                 .data(this.circles)
                 .enter()
                 .append('circle')
-                .attr("class", "highOrder")
+                .attr("class", "HFlow")
                 .attr("fill", d => self.overviewColors[d.id])
                 // .attr("fill", d => color[d.radius])
                 .attr("stroke", "black")
@@ -386,33 +429,47 @@ export default {
 
             // 画完第一个h-flow就设为h-flow模式
             this.mode = true;
+            this.isOverview = true;
+        },
+
+        removeHFlow(){
+            d3.selectAll(".HFlow").remove();
         },
 
         drawKelp() {
             let self = this;
             let svg = this.svg;
             let map = this.mymap;
-
-            if(this.mode){
-                svg.selectAll('.glyph').remove();
-                svg.selectAll('.highOrder').remove()
-            } else {
-                this.mymap.remove();
-                this.mymap = this.init('mapDiv');
-                map = this.mymap;
+            if(svg === null){
                 L.svg({clickable: true}).addTo(map);
                 const overlay = d3.select(map.getPanes().overlayPane);
                 svg = overlay.select('svg').attr("pointer-events", "auto");
                 this.svg = svg;
             }
 
+            this.removeHFlow();
+
+            // if(this.mode){
+            //     svg.selectAll('.glyph').remove();
+            //     svg.selectAll('.HFlow').remove();
+            // } else {
+            //     this.mymap.remove();
+            //     this.mymap = this.init('mapDiv');
+            //     map = this.mymap;
+            //     L.svg({clickable: true}).addTo(map);
+            //     const overlay = d3.select(map.getPanes().overlayPane);
+            //     svg = overlay.select('svg').attr("pointer-events", "auto");
+            //     this.svg = svg;
+            // }
+
             // 生成circles & lines
             let count = 0;
             // let color = ['#FF6666', '#FFFF00', '#0066CC', 'green', 'red']
             // let color = ['#9ADCFF', '#FFF89A', '#FFB2A6', '#C1F4C5', '#65C18C']
             let color = ['#8dd3c7', '#ffffb3', '#bebada', '#fb8072']
-            let radius = [16, 12, 8, 4]
+            let radius = [12, 9, 6, 3]
             let opacity = [0.7, 0.8, 0.9, 1]
+            let lineWidth = [4, 3, 2, 1]
             let top = 4
             // for (let key in data) {
             //     let points = [];
@@ -547,7 +604,6 @@ export default {
             // }
 
 
-
             // draw lines
             let lineGenerator = d3.line()
                 .x(function(d) {
@@ -561,9 +617,9 @@ export default {
                 .data(this.highOrder)
                 .enter()
                 .append('path')
-                .attr("class", "highOrder")
+                .attr("class", "HFlow")
                 .attr("stroke", d => color[d.id])
-                .attr("stroke-width", 3)
+                .attr("stroke-width", d => lineWidth[d.id])
                 .attr("fill", 'none')
                 .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
 
@@ -574,7 +630,7 @@ export default {
                 .data(this.circles)
                 .enter()
                 .append('circle')
-                .attr("class", "highOrder")
+                .attr("class", "HFlow")
                 .attr("fill", d => color[d.radius])
                 .attr("stroke", "black")
                 .attr("stroke-width", 0)
@@ -597,9 +653,9 @@ export default {
                 // console.log("Zoom Level is: " + e.target.getZoom());
             })
 
-
             // 画完第一个h-flow就设为h-flow模式
             this.mode = true;
+            this.isOverview = false;
         },
 
         drawGlyph() {
@@ -727,9 +783,10 @@ export default {
 
             dataService.getBoundary(response => {
                 let result = response.data;
-                let boundary = result.info;
-                let belong = result.belong;
-                let boundaryLayer = L.geoJson(boundary, {
+                let segmentation = result.info;
+                this.segmentation = segmentation;
+                // let belong = result.belong;
+                let boundaryLayer = L.geoJson(segmentation, {
                         style: function (feature) {
                             return {
                                 weight: 0.1,
@@ -743,6 +800,7 @@ export default {
                     }
                 ).addTo(map);
                 this.boundaryLayer = boundaryLayer;
+                this.segmentationLayer = boundaryLayer;
             })
         },
 
@@ -786,58 +844,6 @@ export default {
             // map.fitBounds(polyline.getBounds());
             // map.addLayer(baseLayer);
 
-            // L.control.lasso().addTo(map);
-            // dataService.fetchnode( (returnedData) => {
-            //     // console.log('selectview::fetchProductViewLassoedDataPost: ', returnedData)
-            //     let coords = returnedData.data.coords
-            //     let markers = L.markerClusterGroup();
-            //     console.log(coords)
-            //     for (let i in coords) {
-            //         // console.log(i)
-            //         // console.log(title)
-            //         // console.log(i)
-            //         let title=coords[i]
-            //         let coord = eval(i)
-            //
-            //         markers.addLayer(L.marker(new L.latLng(coord[1],coord[0]),{title:title,}));
-            //     }
-            //     // console.log(markers)
-            //     map.addLayer(markers);
-            //     console.log('finish markders===================')
-            // });
-            //
-            // map.on('zoomed',()=>{
-            //     resetSelectedState();
-            // })
-            //
-            // map.on('mousedown', () => {
-            //     resetSelectedState();
-            // });
-            // let h = 0;
-            // let w = 0;
-            // map.on('lasso.finished', event => {
-            //     let latlng = setSelectedLayers(event.layers);
-            //     // console.log(latlng)
-            //     let b = map.getBounds()
-            //     h = (latlng[0] - b.getSouthWest().lat)/(b.getNorthEast().lat-b.getSouthWest().lat)
-            //     w = (latlng[1] - b.getSouthWest().lng)/(b.getNorthEast().lng-b.getSouthWest().lng)
-            //     // console.log("==============="+this.bound)
-            //     // console.log(h)
-            //     //             console.log(w)
-            //     // console.log(this)
-            //     this.$emit('changeData', w,h);
-            // });
-            //
-            // // console.log(this)
-            // map.on('lasso.enabled', () => {
-            //     // lassoEnabled.innerHTML = 'Enabled';
-            //     resetSelectedState();
-            // });
-            // map.on('lasso.disabled', () => {
-            //     // lassoEnabled.innerHTML = 'Disabled';
-            // });
-
-            // map.getBounds()
             return map
         },
         // changeData() {

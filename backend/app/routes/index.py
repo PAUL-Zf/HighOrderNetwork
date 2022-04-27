@@ -1,8 +1,11 @@
 '''
     The RESTful style api server
 '''
+from glob import glob
 from pprint import pprint
 from time import time
+
+from matplotlib import artist
 
 from app import app
 from app import dataService
@@ -47,6 +50,10 @@ entropy_threshold = 1.0
 merged_df_od_duration = {}
 merged_area = {}
 id_pattern = {}
+
+participates = []    # 记录HighOrder中所有参与的regions
+groupId = 0
+group = []
 
 # compute offset point
 
@@ -305,10 +312,32 @@ def _getPattern(patternId):
 # 根据startTime和timeLength获取对应的HighOrder数据
 
 
-@app.route('/getHighOrder/<start>/<length>/<region>/<type>', methods=['GET'])
-def _getHighOrder(start, length, region, type):
-    result = gho.getHighOrder(start, length, region, type)
+# @app.route('/getHighOrder/<start>/<length>/<region>/<type>', methods=['GET'])
+# def _getHighOrder(start, length, region, type):
+#     result = gho.getHighOrder(start, length, region)
+#     global participates
+#     participates = result['regions']
+
+#     return json.dumps(result)
+
+
+@app.route('/getHighOrderByRegions', methods=['POST'])
+def _getHighOrderByRegions():
+    regionsId = request.json.get("regionsId")
+    startTime = request.json.get("startTime")
+    timeLength = request.json.get("timeLength")
+    global groupId
+    groupId = request.json.get("groupId")
+
+    global group
+    group = regionsId
+
+    result = gho.getHighOrder(startTime, timeLength, regionsId, groupId)
+    global participates
+    participates = result['regions']
+
     return json.dumps(result)
+
 
 # 取overview数据
 
@@ -316,9 +345,9 @@ def _getHighOrder(start, length, region, type):
 @app.route('/getOverview/<type>', methods=['GET'])
 def _getOverview(type):
     if (type == 'Weekdays'):
-        od_data = pd.read_csv(r"app/static/weekdays.csv")
+        od_data = pd.read_csv("app/static/weekdays.csv")
     else:
-        od_data = pd.read_csv(r"app/static/holidays.csv")
+        od_data = pd.read_csv("app/static/holidays.csv")
     region_number = 13
     category_number = 10
     matrix = [[] for x in range(region_number)]
@@ -436,17 +465,20 @@ def _getMap():
 # 根据date获取对应的region flow数据
 
 
-@app.route('/getRegionFlow/<date>', methods=['GET'])
-def _getRegionFlow(date):
-    if (date == 'Weekdays'):
-        od_data = pd.read_csv(r"app/static/weekdays.csv")
-    else:
-        od_data = pd.read_csv(r"app/static/holidays.csv")
+@app.route('/getRegionFlow', methods=['GET'])
+def _getRegionFlow():
+
+    od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
+
+    regionsFlow = {}
+
+    global groupId
+    global group
+
     # compute region flow
-    region_number = 13
-    regions = [[] for x in range(region_number)]
-    for i in range(region_number):
-        regions[i] = [0 for x in range(len(category_map))]
+
+    for p in participates:
+        regionsFlow[p] = [0 for x in range(len(category_map))]
 
     last_time = 0
 
@@ -454,19 +486,27 @@ def _getRegionFlow(date):
         user_id = row['user_id']
         checkin_time = row['checkin_time']
         next_hop_checkin_time = row['next_hop_checkin_time']
-        pre_category = row['pre_level_0_category']
-        next_category = row['next_hop_level_0_category']
-        pickup_centroid = row['pickup_centroid']
-        dropoff_centroid = row['dropoff_centroid']
+        pre_category = row['previous_category']
+        next_category = row['next_hop_category']
+        pickup_centroid = row['previous_blocks']
+        dropoff_centroid = row['next_hop_blocks']
 
         # 判断当前点的 checkin_time 是否与前一个点的 next_hop_checkin_time相同
         # 相同则不重复计算
-        if (checkin_time != last_time):
-            regions[pickup_centroid][category_map[pre_category]] += 1
+        if pickup_centroid in participates:
+            if (checkin_time != last_time):
+                regionsFlow[pickup_centroid][category_map[pre_category]] += 1
+        if dropoff_centroid in participates:
+            regionsFlow[dropoff_centroid][category_map[next_category]] += 1
+        # 考虑group
+        if pickup_centroid in group and len(group) > 1:
+            if (checkin_time != last_time):
+                regionsFlow[groupId][category_map[pre_category]] += 1
+        if dropoff_centroid in group:
+            regionsFlow[groupId][category_map[next_category]] += 1
 
-        regions[dropoff_centroid][category_map[next_category]] += 1
         last_time = next_hop_checkin_time
-    return json.dumps(regions)
+    return json.dumps(regionsFlow)
 
 
 @app.route('/getCheckin/<date>', methods=['GET'])
@@ -720,10 +760,12 @@ def _getSankey(date, number):
     return json.dumps(result)
 
 
-@app.route('/getStatistic/<date>/<region>', methods=['GET'])
-def _getStatistic(date, region):
-    regionId = int(region)
-    poi, access = st.statistic(regionId)
+@app.route('/getStatistic', methods=['POST'])
+def _getStatistic():
+    regionsId = request.json.get("selects")
+    startTime = request.json.get("startTime")
+    timeLength = request.json.get("timeLength")
+    poi, access = st.statistic(regionsId, startTime, timeLength)
 
     poi_data = []
     access_data = []
@@ -742,13 +784,20 @@ def _getStatistic(date, region):
 # 根据 date和region 获取对应region的 in and out流量数据
 
 
-@app.route('/getRegionInOut/<date>/<region>', methods=['GET'])
-def _getRegionInOut(date, region):
+@app.route('/getRegionInOut', methods=['POST'])
+def _getRegionInOut():
     def filterByRegion(od_data, region_id):
-        data = od_data[((od_data['previous_blocks'] == region_id)
-                        | (od_data['next_hop_blocks'] == region_id))
-                       & (od_data['previous_blocks'] != od_data['next_hop_blocks'])]
-        return data
+        id = region_id[0]
+        result = od_data[((od_data['previous_blocks'] == id)
+                          | (od_data['next_hop_blocks'] == id))
+                         & (od_data['previous_blocks'] != od_data['next_hop_blocks'])]
+        for i in range(1, len(region_id)):
+            id = region_id[i]
+            data = od_data[((od_data['previous_blocks'] == id)
+                            | (od_data['next_hop_blocks'] == id))
+                           & (od_data['previous_blocks'] != od_data['next_hop_blocks'])]
+            result = pd.concat([result, data])
+        return result
 
     def computeFlow(region_data, category_map, regionId, slotNum):
         # initial data
@@ -773,14 +822,14 @@ def _getRegionInOut(date, region):
             dropoff_centroid = row['next_hop_blocks']
 
             # check first point of each user to add to in_data
-            if (checkin_time != last_time) and (pickup_centroid == regionId):
+            if (checkin_time != last_time) and (pickup_centroid in regionId):
                 in_data[transferTime(checkin_time.split()[
                                      1][:-6], scale)][category_map[pre_category]] += 1
 
             last_time = next_hop_checkin_time
 
             # check next_hop_checkin_time to add to in_data
-            if dropoff_centroid == regionId:
+            if dropoff_centroid in regionId:
                 in_data[transferTime(next_hop_checkin_time.split()[
                                      1][:-6], scale)][category_map[next_category]] += 1
 
@@ -795,19 +844,17 @@ def _getRegionInOut(date, region):
             minute = math.floor(total % 3600 / 60)
             left_time = int(hour / scale) + math.floor(minute / (60 * scale))
 
-            if pickup_centroid == regionId:
+            if pickup_centroid in regionId:
                 out_data[left_time][category_map[next_category]] += 1
 
         return [in_data, out_data]
 
     # main part
-    if (date == 'Weekdays'):
-        od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
-    else:
-        od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
+    regionsId = request.json.get("selects")
+    od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
 
     # compute region flow
-    regionId = int(region)
+    regionId = regionsId
     region_data = filterByRegion(od_data, regionId)
     result = computeFlow(region_data, category_map, regionId, 48)
     return json.dumps(result)

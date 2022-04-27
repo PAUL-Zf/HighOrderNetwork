@@ -15,30 +15,46 @@ import he from "element-ui/src/locale/lang/he";
 export default {
     name: 'AudioView',
     components: {},
-    props: ['content', 'region', 'regionsFlow', 'number', 'index'],
+    props: ['content', 'region', 'number', 'index', 'finish', 'glyphs', 'links', 'destLinks'],
 
     watch: {
-        content(val) {
+        // content(val) {
+        //     let svg = this.svg;
+        //     if (this.number === 1) {
+        //         this.compute();
+        //         // update sankey
+        //         this.update(this.index);
+        //         this.drawSankey(this.index, this.width, this.height);
+        //     } else if (this.number === 2) {
+        //         this.compute();
+        //         // 先把index对应的svg删除，再重新构建新的
+        //         this.update(this.index)
+        //         this.drawSankey(this.index, this.width / 2, this.height)
+        //     } else if(this.number === 3){
+        //         this.compute();
+        //         this.update(this.index);
+        //         this.drawSankey(this.index, this.width / 2, this.height / 2);
+        //     } else if(this.number === 4){
+        //         this.compute();
+        //         this.update(this.index);
+        //         this.drawSankey(this.index, this.width / 2, this.height / 2);
+        //     }
+        // },
+
+        finish(val) {
             let svg = this.svg;
-            if (this.number === 1) {
-                this.compute();
-                // update sankey
-                this.update(this.index);
-                this.drawSankey(this.index, this.width, this.height);
-            } else if (this.number === 2) {
-                this.compute();
-                // 先把index对应的svg删除，再重新构建新的
-                this.update(this.index)
-                this.drawSankey(this.index, this.width / 2, this.height)
-            } else if(this.number === 3){
-                this.compute();
-                this.update(this.index);
-                this.drawSankey(this.index, this.width / 2, this.height / 2);
-            } else if(this.number === 4){
-                this.compute();
-                this.update(this.index);
-                this.drawSankey(this.index, this.width / 2, this.height / 2);
-            }
+            dataService.getRegionFlow(response => {
+                console.log("--------------StateView---------------");
+                this.regionsFlow = response.data;
+                console.log(this.regionsFlow);
+                console.log(this.glyphs);
+                console.log(this.links);
+                console.log(this.destLinks);
+                console.log("--------------StateView---------------");
+
+                this.update();
+                this.drawDendrogram();
+            })
         },
     },
     data() {
@@ -47,15 +63,22 @@ export default {
             clickedData: {},    //当前正在点击的data
             savedData: {},
             indexMapKey: [],
+            patterns: null,
+
+            patternId: null,
+            fourPatterns: [],    //用来记录四个位置对应的pattern信息
+            fourPatternsId: [],    //用来记录四个位置对应的patternId
+            fourRegionsFlow: [],   //用来记录四个位置对应的patternRegionsFlow
+            isEmpty: [],    //用来判断四个位置是否为空
+
             allData: [],    //用来存储最多四个region的所有轨迹数据
-            width: 500,
-            height: 320,
-            region_number: 13,
+            width: 1123,
+            height: 220,
+            regionsFlow: null,
             column: 0,
             row: 0,
             entropy: [],
             rects: [],
-            links: [],
             hLinks: [],
             nextLinks: [],
             lastLinks: [],
@@ -69,11 +92,28 @@ export default {
     mounted: function () {
         const svg = d3.select("#sankey")
             .append('svg')
-            .attr("class", "sankey")
+            // .attr("class", "dendrogram")
             .attr("width", this.width)
             .attr("height", this.height)
 
         this.svg = svg;
+
+        // Add divider
+        let line = svg.append('line')
+            .style("Stroke", "black")
+            .style("opacity", 0.5)
+            .attr("x1", 600)
+            .attr("y1", 10)
+            .attr("x2", 600)
+            .attr("y2", this.height - 10)
+
+        // 初始四个空位
+        for(let i = 0; i < 4; i++){
+            this.isEmpty[i] = true;
+            this.fourPatternsId[i] = 0;
+            this.fourPatterns[i] = {};
+            this.fourRegionsFlow[i] = {};
+        }
 
         //初始化 indexMapKey和allData
         for(let i = 0; i < 4; i++){
@@ -115,14 +155,241 @@ export default {
            }
         },
 
-        update: function (index) {
-            d3.selectAll(".sankey" + index).remove();
-            d3.selectAll(".highOrder" + index).remove();
+        update: function () {
+            d3.selectAll(".dendrogram").remove();
 
             // 更新allData数据
-            this.allData[index] = this.content;
+            // this.allData[index] = this.content;
             // 更新indexMapKey
-            this.mapIndexToKey();
+            // this.mapIndexToKey();
+        },
+
+        drawDendrogram: function () {
+            let svg = this.svg;
+            let margin = {top: 10, bottom: 10, left: 10, right: 10};
+
+            this.patterns = this.content['patterns'];
+
+            let dendrogram = {left: 600, width: 500, height: 220};
+            let columnNumber = this.content.columnNumber;
+            let patternNumber = this.content.patternNumber;
+            let destinationNumber = this.content.destinationNumber;
+
+            console.log("--------------StateView---------------");
+            console.log(columnNumber);
+            console.log(patternNumber);
+            console.log(destinationNumber);
+            console.log(this.patterns);
+            console.log("--------------StateView---------------");
+
+            let columnWidth =  (dendrogram.width - margin.left - margin.right) / columnNumber;
+            let rowHeight = (dendrogram.height - margin.top - margin.bottom) / patternNumber;
+            let rowPadding = 4;
+            let centerRadius = dendrogram.height / patternNumber / 2;
+            let preambleRadius = centerRadius / 2;
+            let destRow = rowHeight / destinationNumber;
+            let destRadius = destRow / 2 - 4;
+
+            // Build the links
+            let links = this.links;
+            let link = d3.linkHorizontal();
+            let svgLinks = svg.append("g")
+                .attr("class", "dendrogram")
+                .selectAll("path")
+                .data(links)
+                .enter()
+                .append("path")
+                .attr("class", d => "link" + d.startRow)
+                .attr("d", d => {
+                    let l = {source: [0, 0], target: [0, 0]};
+                    l.source[0] = dendrogram.left + margin.left + d.startColumn * columnWidth + columnWidth / 2;
+                    l.source[1] = margin.top + d.startRow * rowHeight + rowHeight / 2;
+                    if(d.endType === 3){
+                        l.target[0] = dendrogram.left + margin.left + d.endColumn * columnWidth + columnWidth / 2;
+                        l.target[1] = dendrogram.height / 2;
+                    } else {
+                        l.target[0] = dendrogram.left + margin.left + d.endColumn * columnWidth + columnWidth / 2;
+                        l.target[1] = margin.top + d.endRow * rowHeight + rowHeight / 2;
+                    }
+                    return link(l);
+                })
+                .attr("fill", "none")
+                .attr("stroke", 'lightsteelblue')
+                .attr("stroke-width", 4)
+                .attr("opacity", 1)
+
+            // draw centerLinks
+            let centerLinksData = []
+            for (let i = 0; i < patternNumber; i++){
+                centerLinksData[i] = i;
+            }
+            let centerLinks = svg.append("g")
+                .attr("class", "dendrogram")
+                .selectAll("path")
+                .data(centerLinksData)
+                .enter()
+                .append("path")
+                .attr("class", d => "link" + d)
+                .attr("d", d => {
+                    let l = {source: [0, 0], target: [0, 0]};
+                    l.source[0] = dendrogram.left + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2;
+                    l.source[1] = dendrogram.height / 2;
+                    l.target[0] = dendrogram.left + margin.left +  (columnNumber - 1) * columnWidth + columnWidth / 4;
+                    l.target[1] = margin.top + d * rowHeight + rowHeight / 2;
+                    return link(l);
+                })
+                .attr("fill", "none")
+                .attr("stroke", 'lightsteelblue')
+                .attr("stroke-width", 4)
+                .attr("opacity", 1)
+
+            // draw destLinks
+            let destLinks = svg.append("g")
+                .attr("class", "dendrogram")
+                .selectAll("path")
+                .data(this.destLinks)
+                .enter()
+                .append("path")
+                .attr("class", d => "link" + d.row)
+                .attr("d", d => {
+                    let l = {source: [0, 0], target: [0, 0]};
+                    l.source[0] = dendrogram.left + margin.left +  (columnNumber - 1) * columnWidth + columnWidth / 4;
+                    l.source[1] = margin.top + d.row * rowHeight + rowHeight / 2;
+                    l.target[0] = dendrogram.left + margin.left +  (columnNumber - 1) * columnWidth + columnWidth / 2;
+                    l.target[1] = margin.top + rowHeight * d.row + d.destCount * destRow + rowPadding + destRadius;
+                    return link(l);
+                })
+                .attr("fill", "none")
+                .attr("stroke", 'lightsteelblue')
+                .attr("stroke-width", 4)
+                .attr("opacity", 1)
+
+            // draw glyphs
+            for(let i = 0; i < this.glyphs.length; i++){
+                let glyph = this.glyphs[i];
+                let column = columnNumber - 2 + glyph.column;
+                let row = glyph.patternId;
+                let patternId = glyph.patternId;
+                let regionId = glyph.regionId;
+                let type = glyph.type;
+
+                let cx, cy, innerRadius, outerRadius;
+                // compute glyph position
+                if(type===1){
+                    cx = dendrogram.left + margin.left + column * columnWidth + columnWidth / 2;
+                    cy = margin.top + rowHeight * row + glyph.destCount * destRow + rowPadding + destRadius;
+                    innerRadius = destRadius - patternNumber * 2;
+                    outerRadius = destRadius;
+                } else if (type===2){
+                    cx = dendrogram.left + margin.left + column * columnWidth + columnWidth / 2;
+                    cy = margin.top + rowHeight * row + rowHeight / 2;
+                    innerRadius = destRadius - patternNumber * 2;
+                    outerRadius = destRadius;
+                } else {
+                    cx = dendrogram.left + margin.left + column * columnWidth + columnWidth / 2;
+                    cy = dendrogram.height / 2;
+                    innerRadius = centerRadius - patternNumber * 4;
+                    outerRadius = centerRadius;
+                }
+                this.drawSingleGlyph(regionId, patternId, cx, cy, 'dendrogram', innerRadius, outerRadius);
+            }
+        },
+
+        drawSinglePattern: function(index) {
+            let moduleWidth = 600;
+            let moduleHeight = 220;
+            let patternWidth = moduleWidth / 2;
+            let patternHeight = moduleHeight / 2;
+            let cx = index % 2 * patternWidth;
+            let cy = Math.floor(index / 2) * patternHeight;
+
+            let svg = this.svg;
+            // let g = svg.append("g")
+            //     .attr("class", 'pattern')
+            //     .attr("transform", "translate(" + cx + "," + cy + ")")
+
+            let margin = {left: 10, right: 10, top: 20, bottom: 20}
+
+            // data
+            let patternId = this.fourPatternsId[index];
+            let pattern = this.fourPatterns[index];
+            let regionsFlow = this.fourRegionsFlow[index];
+
+            let columnNumber = pattern['preamble'].length + 1;
+            let destNumber = pattern['destinations'].length;
+            let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
+            let destHeight = (patternHeight - margin.top - margin.bottom) / destNumber;
+            let padding = 2
+            let preambleRadius = ((patternHeight - margin.top - margin.bottom) / 2 - padding * 2) / 2;
+            let radius = (destNumber > 2) ? (destHeight - padding * 2) / 2 : preambleRadius;
+
+            // draw flow
+            let total = 0;
+            for(let i = 0; i < pattern['destinations'].length; i++){
+                total += pattern['destinations'][i]['count'];
+            }
+
+            // draw preamble flow
+            for(let i = 0; i < pattern['preamble'].length - 1; i++){
+                svg.append('line')
+                    .attr("class", 'pattern')
+                    .style("Stroke", "lightsteelblue")
+                    .attr("stroke-width", preambleRadius - 6)
+                    .style("opacity", 1)
+                    .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+                    .attr("y1", cy + patternHeight / 2)
+                    .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+                    .attr("y2", cy + patternHeight / 2)
+            }
+
+            // draw destination flow
+            for(let i = 0; i < pattern['destinations'].length; i++){
+                let regionId = pattern['destinations'][i]['regionId'];
+                let flow = pattern['destinations'][i]['count'];
+                let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+                let y = cy + margin.top + destHeight * i + destHeight / 2;
+                svg.append('line')
+                    .attr("class", 'pattern')
+                    .style("Stroke", "lightsteelblue")
+                    .attr("stroke-width", (preambleRadius - 6) * flow / total)
+                    .style("opacity", 1)
+                    .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
+                    .attr("y1", cy + patternHeight / 2)
+                    .attr("x2", x)
+                    .attr("y2", y)
+            }
+
+            // draw preamble glyph
+            for(let i = 0; i < pattern['preamble'].length; i++){
+                let regionId = pattern['preamble'][i];
+                let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+                let y = cy + patternHeight / 2;
+                this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', preambleRadius - 6, preambleRadius);
+            }
+
+            // draw destination glyph
+            for(let i = 0; i < pattern['destinations'].length; i++){
+                let regionId = pattern['destinations'][i]['regionId'];
+                let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+                let y = cy + margin.top + destHeight * i + destHeight / 2;
+                this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
+            }
+        },
+
+        findPosition: function (patternId){
+            // 遍历四个位置
+            for(let i = 0; i < 4; i++){
+                if(this.isEmpty[i]){
+                    this.isEmpty[i] = false;
+                    this.fourPatternsId[i] = patternId;
+                    this.fourPatterns[i] = this.patterns[patternId];
+                    this.fourRegionsFlow[i] = this.regionsFlow;
+
+                    this.drawSinglePattern(i);
+                    return 1;
+                }
+            }
+            return -1;
         },
 
         drawSankey: function (index, width, height) {
@@ -298,19 +565,26 @@ export default {
             //     .attr("fill", 'white')
         },
 
-        drawSingleGlyph(index, isFocus, regionId, cx, cy, innerRadius, outerRadius) {
-            let region = this.regionsFlow[regionId];
+        drawSingleGlyph(regionId, patternId, cx, cy, type, innerRadius, outerRadius) {
+            let region = this.regionsFlow[regionId]
+            // console.log("--------------StateView---------------");
+            // console.log(this.regionsFlow);
+            // console.log(regionId);
+            // console.log(region)
+            // console.log("--------------StateView---------------");
+
             let svg = this.svg;
             let self = this;
 
             let g = svg.append("g")
-                .attr("class", 'highOrder' + index)
+                .attr("class", type)
                 .attr("transform", "translate(" + cx + "," + cy + ")")
 
             // set the color map
             let region_color = ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099cc', '#CC9999', '#FF6666',
                 '#FFFF99', '#CCCCFF', '#CC9966', '#CCCCCC', '#666666', '#99CC66', '#CCCC99'];
-            let color = ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099CC', '#CC9999', '#FF6666', '#FFFF99', '#CCCCFF', '#CC9966', '#CCCCCC']
+            let color = ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099cc', '#CC9999', '#FF6666',
+                '#FFFF99', '#CCCCFF', '#CC9966', '#CCCCCC', '#666666', '#99CC66', '#CCCC99']
 
             // Compute the position of each group on the pie:
             let pie = d3.pie()
@@ -328,74 +602,85 @@ export default {
                     .innerRadius(innerRadius)         // This is the size of the donut hole
                     .outerRadius(outerRadius)
                 )
-                .attr('fill', function (d) {
-                    return color[d.index]
-                })
+                .attr('fill', d => color[d.index])
                 .attr("stroke", "black")
                 .style("stroke-width", "0.3px")
                 .style("opacity", 1)
 
-            if(isFocus){
-                // 计算entropy, 按照entropy比例画扇形
-                this.computeEntropy();
-                let entropy = this.entropy;
-                let entropy_data = pie(this.entropy);
+            g.append('circle')
+                .attr("class", "circle")
+                .attr("r", innerRadius)
+                .attr("fill", 'white')
+                .attr("stroke", "black")
+                .attr("stroke-width", "0.3px")
+                .attr("opacity", 1)
+                .style("cursor", 'pointer')
+                .on("click", function() {
+                    self.patternId = patternId;
+                    self.findPosition(patternId);
+                })
 
-                let startColor = d3.rgb('#7f2704')
-                let endColor = d3.rgb('#fff5eb') // orange
-                let computeColor = d3.interpolate(startColor, endColor)
-
-                // computer max and min in variance
-                let max = entropy[0];
-                let min = entropy[0];
-                for (let i = 0; i < entropy.length; i++){
-                    max = max > entropy[i] ? max : entropy[i];
-                    min = min < entropy[i] ? min : entropy[i];
-                }
-
-                let linearColor = d3.scaleLinear()
-                    .domain([min, max])
-                    .range([0, 1])
-
-                g.selectAll('whatever')
-                    .data(entropy_data)
-                    .enter()
-                    .append('path')
-                    .attr('d', d3.arc()
-                        .innerRadius(0)         // This is the size of the donut hole
-                        .outerRadius(innerRadius)
-                    )
-                    .attr('fill', function (d, i) {return computeColor(linearColor(entropy[i]))})
-                    .attr("stroke", "black")
-                    .style("stroke-width", "0.3px")
-                    .style("opacity", 1)
-                    .on("mouseover", function(d) {
-                        d3.select(this).attr("fill", '#92A9BD');
-                        d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'black');
-                    })
-                    .on("mouseout", function (d, i){
-                        d3.select(this).attr("fill", computeColor(linearColor(entropy[i])));
-                        d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'grey');
-                    })
-                    .on("click", function (d){
-                        d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'black');
-                        let key = self.indexMapKey[self.index][d.index]
-                        self.savedData[key] = self.allData[self.index][key];
-                        self.$emit("conveySelected", self.select, self.savedData);
-                        self.select++;
-                        console.log(self.savedData);
-                    })
-
-
-            } else {
-                g.append('circle')
-                    .attr("class", "circle")
-                    .attr("r", innerRadius)
-                    .attr("fill", region_color[regionId])
-                    .attr("stroke", "black")
-                    .attr("stroke-width", "0.3px")
-                    .attr("opacity", 1)
-            }
+        //     if(type === 3){
+        //         // 计算entropy, 按照entropy比例画扇形
+        //         this.computeEntropy();
+        //         let entropy = this.entropy;
+        //         let entropy_data = pie(this.entropy);
+        //
+        //         let startColor = d3.rgb('#7f2704')
+        //         let endColor = d3.rgb('#fff5eb') // orange
+        //         let computeColor = d3.interpolate(startColor, endColor)
+        //
+        //         // computer max and min in variance
+        //         let max = entropy[0];
+        //         let min = entropy[0];
+        //         for (let i = 0; i < entropy.length; i++){
+        //             max = max > entropy[i] ? max : entropy[i];
+        //             min = min < entropy[i] ? min : entropy[i];
+        //         }
+        //
+        //         let linearColor = d3.scaleLinear()
+        //             .domain([min, max])
+        //             .range([0, 1])
+        //
+        //         g.selectAll('whatever')
+        //             .data(entropy_data)
+        //             .enter()
+        //             .append('path')
+        //             .attr('d', d3.arc()
+        //                 .innerRadius(0)         // This is the size of the donut hole
+        //                 .outerRadius(innerRadius)
+        //             )
+        //             .attr('fill', function (d, i) {return computeColor(linearColor(entropy[i]))})
+        //             .attr("stroke", "black")
+        //             .style("stroke-width", "0.3px")
+        //             .style("opacity", 1)
+        //             .on("mouseover", function(d) {
+        //                 d3.select(this).attr("fill", '#92A9BD');
+        //                 d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'black');
+        //             })
+        //             .on("mouseout", function (d, i){
+        //                 d3.select(this).attr("fill", computeColor(linearColor(entropy[i])));
+        //                 d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'grey');
+        //             })
+        //             .on("click", function (d){
+        //                 d3.selectAll(".sankey" + index).selectAll(".link" + d.index).attr('stroke', 'black');
+        //                 let key = self.indexMapKey[self.index][d.index]
+        //                 self.savedData[key] = self.allData[self.index][key];
+        //                 self.$emit("conveySelected", self.select, self.savedData);
+        //                 self.select++;
+        //                 console.log(self.savedData);
+        //             })
+        //
+        //
+        //     } else {
+        //         g.append('circle')
+        //             .attr("class", "circle")
+        //             .attr("r", innerRadius)
+        //             .attr("fill", 'lightsteelblue')
+        //             .attr("stroke", "black")
+        //             .attr("stroke-width", "0.3px")
+        //             .attr("opacity", 1)
+        //     }
         },
 
         compute: function () {

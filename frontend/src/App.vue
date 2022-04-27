@@ -10,16 +10,19 @@
       <div class="row" style="margin-left: 0px; margin-right: 0px">
         <div class="col-3 content" style="padding-left: 0px; padding-right: 0px">
           <ControlView v-on:conveyData="updateData" v-on:highlightRegion="highlightRegion"
+                       v-on:conveyLoad="conveyLoad"
                        :videoList="videoList" :videoId="videoId" :videoData="videoData"
                        :w="width" :h="height"
                        @changemap='changemap'></ControlView>
           <Overview v-on:conveyTimeInterval="conveyTimeInterval" v-bind:date="date" v-bind:region="region"
+                    v-bind:load="load"
                     v-on:conveyPattern="conveyPattern" v-on:conveyPatternId="conveyPatternId"
           ></Overview>
         </div>
         <div class="col-9 content" style="padding-left: 0px; padding-right: 0px">
           <TemporalView v-on:passTime="updateTime" v-on:conveyIndex="updateIndex" v-on:conveyType="updateType"
                         v-bind:region="region" v-bind:date="date" v-bind:number="number" v-bind:generate="generate"
+                        v-bind:load="load" v-bind:selects="selects"
                         v-bind:coords="coords" v-bind:time="time" v-bind:halfInterval="halfInterval" @change="change">
           </TemporalView>
           <div class="row" style="margin-left: 0px; margin-right: 0px">
@@ -29,20 +32,24 @@
                        v-on:conveyNumber="updateNumber"
                        v-on:conveyRegionFlow="updateRegionFlow"
                        v-on:conveyGenerate="conveyGenerate"
+                       v-on:conveyFinish="conveyFinish"
+                       v-on:conveySelects="conveySelects"
                        v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
                        v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
-                       v-bind:level="level" v-bind:pattern="pattern" v-bind:patternId="patternId"
+                       v-bind:level="level" v-bind:pattern="pattern" v-bind:patternId="patternId" v-bind:load="load"
                        :videoId="videoId" :videoData="videoData"
                        :dir="dir" v-bind:type="type"
                        @changeData='initdraw'></MapView>
             </div>
             <div class="col-3 content" style="padding-left: 0px; padding-right: 0px">
-              <StatisticView v-bind:date="date" v-bind:region="region"></StatisticView>
+              <StatisticView v-bind:date="date" v-bind:region="region" v-bind:selects="selects"
+                             v-bind:startTime="startTime" v-bind:timeLength="timeLength"
+                             v-bind:generate="generate"></StatisticView>
             </div>
           </div>
           <StateView v-on:conveySelected="conveySelected"
                      v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
-                     v-bind:regionsFlow="regionsFlow"
+                     v-bind:finish="finish" v-bind:glyphs="glyphs" v-bind:links="links" v-bind:destLinks="destLinks"
                      :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></StateView>
         </div>
 
@@ -83,6 +90,8 @@ export default {
       pattern: null,
       patternId: null,
       generate: null,
+      finish: null,
+      load: null,
       info: {
         user_id: 0,
         date: 2000 - 1 - 22
@@ -90,8 +99,12 @@ export default {
       startTime: 9,
       timeLength: 1,
       content: null,
+      glyphs: null,
+      links: null,
+      destLinks: null,
       number: 1,
       regionsFlow: null,
+      selects: null,
       index: 0,    // 标注temporal view中的时间轴的index
       selectedData: null,
       select: null,
@@ -115,6 +128,18 @@ export default {
     // new project
     highlightRegion(highlight) {
       this.highlight = highlight;
+    },
+
+    conveyLoad(load){
+      this.load = load;
+    },
+
+    conveyFinish(finish){
+      this.finish = finish;
+    },
+
+    conveySelects(selects){
+      this.selects = selects;
     },
 
     conveyTimeInterval(time, halfInterval) {
@@ -160,8 +185,11 @@ export default {
       this.regionsFlow = regionsFlow;
     },
 
-    updateHighOrder(content) {
+    updateHighOrder(content, glyphs, links, destLinks) {
       this.content = content;
+      this.glyphs = glyphs;
+      this.links = links;
+      this.destLinks = destLinks;
     },
 
     updateNumber(number) {
