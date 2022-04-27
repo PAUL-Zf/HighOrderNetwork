@@ -18,6 +18,7 @@ export default {
             valueOfDate: '',
             overview: [],
             level: 1,
+            load: 0,    // 每次点击load都自增
         }
     },
 
@@ -62,6 +63,9 @@ export default {
                 // this.drawChord(this.overview[0], this.overview[1], this.overview[2], this.overview[3], this.overview[4]);
             })
             this.$emit("conveyData", this.valueOfDate, this.level);
+
+            this.load++;
+            this.$emit("conveyLoad", this.load);
         },
 
         drawLegend: function () {

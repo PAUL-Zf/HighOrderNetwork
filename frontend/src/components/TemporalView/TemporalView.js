@@ -14,7 +14,7 @@ export default {
     name: 'TextView',
     components: {},
 
-    props: ['region', 'date', 'number', 'time', 'halfInterval', 'generate'],
+    props: ['region', 'date', 'number', 'time', 'halfInterval', 'generate', 'load', 'selects'],
     data() {
         return {
             index: 0,
@@ -57,7 +57,7 @@ export default {
 
     watch: {
         // new project
-        date(val) {
+        load(val) {
             dataService.getCheckin(this.date, response => {
                 this.checkin = response.data;
                 this.updateSvg();
@@ -68,7 +68,8 @@ export default {
         },
 
         generate(val) {
-            dataService.getRegionInOut(this.date, this.region, response => {
+            let params = {selects: this.selects};
+            dataService.getRegionInOut(params, response => {
                 // this.updateSvg();
                 // this.type = true;
                 this.drawTimeSlot(response.data[0], response.data[1], this.width, this.height);
@@ -328,8 +329,8 @@ export default {
                 .attr("y", d => d[1])
                 .attr("width", slotWidth)
                 .attr("height", d => d[2])
-                .attr("fill", 'lightsteelblue')
-                // .attr("fill", d => d[3])
+                // .attr("fill", 'lightsteelblue')
+                .attr("fill", d => d[3])
                 .attr("opacity", d => (d[0] >= self.startTime && d[0] < self.startTime + self.timeLength) ? 1 : 0)
                 .attr("stroke", '#505254')
                 .attr("stroke-width", 1)

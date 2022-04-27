@@ -9,20 +9,30 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 
 
-def getHighOrder(start, length, region, type):
+def getHighOrder(start, length, region, groupId):
+    od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
+
     start = int(start)
     slot_length = int(length)
-    regionId = int(region)
-    date = type
+    regionId = int(groupId)
+    group = region
+
+    # # 单个regionId
+    # regionId = int(region)
+
+    if(len(group) == 1):
+        regionId = group[0]
+    else:
+        od_data['previous_blocks'] = od_data['previous_blocks'].apply(
+            lambda x: x in group and groupId or x)
+
+        od_data['next_hop_blocks'] = od_data['next_hop_blocks'].apply(
+            lambda x: x in group and groupId or x)
+
     slotNum = 48
 
     scale = 24 / slotNum
     time_slots = [x for x in range(start, start + slot_length)]
-
-    if (date == 'Weekdays'):
-        od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
-    else:
-        od_data = pd.read_csv("app/static/merged_df_od_duration.csv")
 
     # count all regions Id
     # reset index
@@ -270,21 +280,69 @@ def getHighOrder(start, length, region, type):
         centroids[k] = [float(v[7:-1].split(" ")[1]),
                         float(v[7:-1].split(" ")[0])]
 
+    # 统计groupId的centroids信息
+    if(len(group) > 1):
+        cx = 0
+        cy = 0
+        num = len(group)
+        for k in group:
+            cx += centroids[k][0]
+            cy += centroids[k][1]
+        centroids[groupId] = [cx / num, cy / num]
+
     # 整理数据格式
     count = 0
     highOrder = []
     circles = []
     lines = []
+
+    # state view information
+    patterns = []
+    columnNumber = 0
+    patternNumber = 0
+    destinationNumber = 0
+    glyphs = []
+    links = []
+    destLinks = []
+
+    # add center circle
+    glyph = {}
+    glyph['regionId'] = regionId
+    glyph['patternId'] = -1
+    glyph['type'] = 3
+    glyph['column'] = 0
+    glyphs.append(glyph)
+
     for k, v in result.items():
         r = k.split("_")[:-1]
         coord = []
-        for id in r:
+        pattern = {}
+        preamble = []
+        destinations = []
+        columnCount = len(r) + 1
+        for i in range(len(r)):
+            id = r[i]
             circle = {}
+
             circle['coordinate'] = centroids[int(id)]
             circle['radius'] = count
             circles.append(circle)
+            preamble.append(int(id))
 
+            # state view
+            # center circle单独添加
+            if(count < 3):
+                if(i < len(r) - 1):
+                    glyph = {}
+                    glyph['regionId'] = int(id)
+                    glyph['patternId'] = count
+                    glyph['type'] = 2
+                    glyph['column'] = i - len(r) + 1
+                    glyphs.append(glyph)
+
+            # todo
             coord.append(centroids[int(id)])
+        destCount = 0
         for i in range(len(v)):
             if v[i]:
                 c = copy.deepcopy(coord)
@@ -295,13 +353,69 @@ def getHighOrder(start, length, region, type):
                 h['coordinate'] = c
                 highOrder.append(h)
 
+                dest = {}
+                dest['regionId'] = index_to_id[i]
+                dest['count'] = v[i]
+                destinations.append(dest)
+
+                # state view
+                if count < 3:
+                    destCount += 1
+                    glyph = {}
+                    glyph['regionId'] = index_to_id[i]
+                    glyph['patternId'] = count
+                    glyph['type'] = 1
+                    glyph['column'] = 1
+                    glyph['destCount'] = destCount - 1
+                    glyphs.append(glyph)
+
+                    destLink = {}
+                    destLink['row'] = count
+                    destLink['destCount'] = destCount - 1
+                    destLink['column'] = columnNumber - 1
+                    destLinks.append(destLink)
+
                 circle = {}
                 circle['coordinate'] = centroids[index_to_id[i]]
                 circle['radius'] = count
                 circles.append(circle)
 
+        pattern['preamble'] = preamble
+        pattern['destinations'] = destinations
+        patternNumber = 3    # patternNumber限制为3条
+        # patternNumber += 1
+        destinationNumber = destinationNumber > destCount and destinationNumber or destCount
+        columnNumber = columnNumber > columnCount and columnNumber or columnCount
+
+        patterns.append(pattern)
+
         count += 1
-    
+
+    # state view
+    # 前序link（包括与center连接的link）
+    # 只保留三条pattern
+    for i in range(3):
+        pattern = patterns[i]
+        preamble = pattern['preamble']
+        for j in range(len(preamble) - 1):
+            link = {}
+            link['startRow'] = i
+            link['startColumn'] = j + columnNumber - len(preamble) - 1
+            link['startType'] = 2
+            link['endRow'] = i
+            link['endColumn'] = j + columnNumber - len(preamble)
+            if(link['endColumn'] == columnNumber - 2):
+                link['endType'] = 3
+            else:
+                link['endType'] = 2
+            links.append(link)
+
+    # 统计所有参与的regionId
+    allRegions = []
+    for glyph in glyphs:
+        if glyph['regionId'] not in allRegions:
+            allRegions.append(glyph['regionId'])
+
     for h in highOrder:
         points = h['coordinate']
         for i in range(len(points) - 1):
@@ -413,9 +527,21 @@ def getHighOrder(start, length, region, type):
 
     #     h['coordinate'] = newLine
 
+    content = {}
+    content['patterns'] = patterns
+    content['columnNumber'] = columnNumber
+    content['patternNumber'] = patternNumber
+    content['destinationNumber'] = destinationNumber
+
     result = {}
     result['lines'] = lines
     result['circles'] = circles
+    result['content'] = content
+    result['glyphs'] = glyphs
+    result['regions'] = allRegions
+    result['links'] = links
+    result['destLinks'] = destLinks
+
     return result
 
 
