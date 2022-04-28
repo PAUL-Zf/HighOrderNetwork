@@ -41,7 +41,6 @@ export default {
                 'Arts & Entertainment': 6,
                 'College & University': 7,
                 'Residence': 8,
-                'Event': 9
             },
             colors: ['#8dd3c7', '#80b1d3', '#b3de69', '#fdb462', '#bc80bd',
                 '#bebada', '#fccde5', '#d9d9d9', '#fb8072', 'black']

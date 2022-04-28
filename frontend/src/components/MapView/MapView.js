@@ -33,8 +33,9 @@ export default {
             segmentation: null,
             generate: 0,    // work as generate signal
             finish: 0,    // getHighOrder Finishing and finish++
-            boundary: false,
+            showBoundary: false,
             showFlow: true,
+            showHistory: false,
             showSegmentation: true,
             highOrderMode: false,
             number: 1,
@@ -47,6 +48,7 @@ export default {
             geoJSONLayer: null,
             boundaryLayer: null,
             segmentationLayer: null,
+            historyLayer: null,
             endTime: 10,
             centroids: null,
             selects: [],
@@ -65,7 +67,6 @@ export default {
                 'Arts & Entertainment': 6,
                 'College & University': 7,
                 'Residence': 8,
-                'Event': 9
             },
             content: {},
             mymap: null,
@@ -115,6 +116,7 @@ export default {
 
             // 每次self-organization算法，mapview数据都要更新
             this.selects = [];
+            this.showHistory = false;
             dataService.getSelfOrganization(Math.floor(this.startTime / 2), Math.floor(this.endTime / 2), response => {
                 let result = response.data;
                 let segmentation = result.area;
@@ -126,7 +128,7 @@ export default {
                 this.mymap.remove();
                 this.mymap = this.init('mapDiv');
 
-                let boundaryLayer = L.geoJson(segmentation, {
+                let segmentationLayer = L.geoJson(segmentation, {
                         style: function (feature) {
                             return {
                                 weight: 0.1,
@@ -139,8 +141,19 @@ export default {
                         onEachFeature: self.onEachFeature,
                     }).addTo(self.mymap);
 
+                let boundaryLayer = L.geoJson(segmentation, {
+                    style: function (feature) {
+                        return {
+                            weight: 0.5,
+                            color: 'black',
+                            fillOpacity: 0,
+                        }
+                    }
+                })
+
+                this.showHistory = true;
+                this.segmentationLayer = segmentationLayer;
                 this.boundaryLayer = boundaryLayer;
-                this.segmentationLayer = boundaryLayer;
             })
         },
 
@@ -174,23 +187,31 @@ export default {
         },
 
         showSegmentation(value){
-            this.mymap.remove();
-            this.svg = null;
-            this.mymap = this.init('mapDiv');
             if(value) {
-                this.boundaryLayer.addTo(this.mymap);
+                this.showBoundary = false;
+                this.segmentationLayer.addTo(this.mymap);
+            } else{
+                this.mymap.removeLayer(this.segmentationLayer);
             }
-            if(this.showFlow){
-                if(this.isOverview){this.drawOverview();}
-                else {this.drawKelp();}
+            this.showHistory = false;
+        },
+
+        showHistory(value){
+            if(value){
+                if(this.historyLayer !== null){
+                    this.historyLayer.addTo(this.mymap);
+                }
+            } else {
+                this.mymap.removeLayer(this.historyLayer);
             }
         },
 
-        boundary(value) {
+        showBoundary(value) {
             if (value) {
-                this.showBoundary();
+                this.showSegmentation = false;
+                this.boundaryLayer.addTo(this.mymap);
             } else {
-                this.hideBoundary();
+                this.mymap.removeLayer(this.boundaryLayer);
             }
         },
 
@@ -231,7 +252,6 @@ export default {
 
     methods: {
         generateHighOrder() {
-
             // generate signal changed
             this.generate++;
             this.$emit("conveyGenerate", this.generate);
@@ -262,7 +282,40 @@ export default {
             })
 
             this.groupId++;
+            this.createHistoryLayer();
+        },
 
+        createHistoryLayer(){
+            let self = this;
+            let historyLayer = L.geoJson(this.segmentation, {
+                style: function (feature) {
+                    let isSelected = false;
+                    let id = feature.properties.traj_key;
+                    for (let i = 0; i < self.selects.length; i++){
+                        if(id === Number(self.selects[i])){
+                            isSelected = true;
+                        }
+                    }
+                    if(isSelected){
+                        return {
+                            weight: 1.5,
+                            color: 'black',
+                            fill: true,
+                            fillColor: 'black',
+                            fillOpacity: 0.3,
+                        }
+                    } else {
+                        return {
+                            weight: 0,
+                            color: 'black',
+                            fill: false,
+                            fillColor: 'black',
+                            fillOpacity: 0,
+                        }
+                    }
+                },
+            })
+            this.historyLayer = historyLayer;
         },
 
         onEachFeature(feature, layer) {
@@ -279,13 +332,21 @@ export default {
             }
             layer.on({
                 click: function (e) {
+                    // this.setStyle({
+                    //     fillColor:'grey',
+                    //     fillOpacity: 1,
+                    // });
                     this.setStyle({
-                        fillColor:'grey',
-                        fillOpacity: 1,
+                        weight: 1.5,
+                        color: 'black',
+                        fill: true,
+                        fillColor: 'black',
+                        fillOpacity: 0.3,
                     });
+
                     self.$emit("conveyRegion", regionId);
                     self.regionId = regionId;
-                    console.log(regionId)
+                    console.log(regionId);
                     self.selects.push(regionId);
                     self.$emit("conveySelects", self.selects);
                 },
@@ -321,19 +382,6 @@ export default {
                     }
                 }
             })
-        },
-
-        showBoundary() {
-            let boundaryLayer = this.boundaryLayer;
-            boundaryLayer.setStyle({
-                weight: 0.5,
-                color: 'black',
-                fillOpacity: 0
-            });
-        },
-
-        hideBoundary() {
-            this.boundaryLayer = this.segmentationLayer;
         },
 
         myStyle(feature) {
@@ -786,7 +834,7 @@ export default {
                 let segmentation = result.info;
                 this.segmentation = segmentation;
                 // let belong = result.belong;
-                let boundaryLayer = L.geoJson(segmentation, {
+                let segmentationLayer = L.geoJson(segmentation, {
                         style: function (feature) {
                             return {
                                 weight: 0.1,
@@ -799,8 +847,26 @@ export default {
                         // onEachFeature: self.onEachFeature,
                     }
                 ).addTo(map);
-                this.boundaryLayer = boundaryLayer;
-                this.segmentationLayer = boundaryLayer;
+                this.segmentationLayer = segmentationLayer;
+
+                // // 底图，不允许修改
+                // let segmentationLayer = L.geoJson(segmentation, {
+                //         style: function (feature) {
+                //             return {
+                //                 weight: 0.1,
+                //                 color: 'black',
+                //                 fill: true,
+                //                 fillColor: colors[feature.properties.class_center],
+                //                 fillOpacity: 1,
+                //             }
+                //         },
+                //         // onEachFeature: self.onEachFeature,
+                //     }
+                // );
+                // this.segmentationLayer = segmentationLayer;
+
+                // remove layer
+                // map.removeLayer(boundaryLayer);
             })
         },
 

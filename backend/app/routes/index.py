@@ -43,7 +43,8 @@ category_map = {'Food': 0,
                 'Arts & Entertainment': 6,
                 'College & University': 7,
                 'Residence': 8,
-                'Event': 9}
+                'Event': 9,
+                }
 
 slotNum = 48
 entropy_threshold = 1.0
@@ -502,7 +503,7 @@ def _getRegionFlow():
         if pickup_centroid in group and len(group) > 1:
             if (checkin_time != last_time):
                 regionsFlow[groupId][category_map[pre_category]] += 1
-        if dropoff_centroid in group:
+        if dropoff_centroid in group and len(group) > 1:
             regionsFlow[groupId][category_map[next_category]] += 1
 
         last_time = next_hop_checkin_time
@@ -769,16 +770,35 @@ def _getStatistic():
 
     poi_data = []
     access_data = []
+    poi_order_data = []
+    access_order_data = []
 
-    for k, v in poi.items():
-        p = {'category': k, 'count': v}
-        poi_data.append(p)
+    # Order in category_map
+    # Order in count
+    poi_order = sorted(poi.items(), key=lambda x: x[1], reverse=True)
+    access_order = sorted(access.items(), key=lambda x: x[1], reverse=True)
 
-    for k, v in access.items():
-        a = {'category': k, 'count': v}
-        access_data.append(a)
+    for value in poi_order:
+        p = {'category': value[0], 'count': value[1]}
+        poi_order_data.append(p)
 
-    return json.dumps([poi_data, access_data])
+    for value in access_order:
+        p = {'category': value[0], 'count': value[1]}
+        access_order_data.append(p)
+
+    global category_map
+
+    for k in category_map.keys():
+        if k in poi:
+            p = {'category': k, 'count': poi[k]}
+            poi_data.append(p)
+
+    for k in category_map.keys():
+        if k in access:
+            p = {'category': k, 'count': access[k]}
+            access_data.append(p)
+
+    return json.dumps([poi_order_data, access_order_data, poi_data, access_data])
 
 
 # 根据 date和region 获取对应region的 in and out流量数据

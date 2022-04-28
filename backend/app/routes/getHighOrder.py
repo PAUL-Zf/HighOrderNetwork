@@ -385,7 +385,9 @@ def getHighOrder(start, length, region, groupId):
         patternNumber = 3    # patternNumber限制为3条
         # patternNumber += 1
         destinationNumber = destinationNumber > destCount and destinationNumber or destCount
-        columnNumber = columnNumber > columnCount and columnNumber or columnCount
+        
+        if(count < 3): 
+            columnNumber = columnNumber > columnCount and columnNumber or columnCount
 
         patterns.append(pattern)
 
