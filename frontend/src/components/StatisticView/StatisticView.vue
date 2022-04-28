@@ -60,4 +60,10 @@ text {
 
 }
 
+span {
+  font-weight: bold;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+  font-size: 10px;
+}
+
 </style>

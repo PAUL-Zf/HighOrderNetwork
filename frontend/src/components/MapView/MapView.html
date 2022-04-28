@@ -8,11 +8,13 @@
                 <span style="position: absolute; left: 150px; top: 8px">Show Segmentation</span>
                 <el-checkbox v-model="showSegmentation" style="left: 270px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
                 <span style="position: absolute; left: 300px; top: 8px">Show Boundary</span>
-                <el-checkbox v-model="boundary" style="left: 400px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <el-checkbox v-model="showBoundary" style="left: 400px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
                 <span style="position: absolute; left: 430px; top: 8px">Show HFlow</span>
                 <el-checkbox v-model="showFlow" style="left: 510px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 545px; top: 8px">Show History</span>
+                <el-checkbox v-model="showHistory" style="left: 630px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
                 <el-button type="info" plain size="mini" v-on:click="generateHighOrder"
-                           style="position: absolute;width: 80px;height: 30px;left: 600px;top: 2px">Generate
+                           style="position: absolute;width: 80px;height: 30px;left: 700px;top: 2px">Generate
                 </el-button>
 <!--                <span style="margin-left: 10px">Num of comparison</span>-->
 <!--                <el-select v-model="number" filterable placeholder="" size="mini"-->

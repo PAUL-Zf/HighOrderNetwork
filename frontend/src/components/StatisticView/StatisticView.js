@@ -12,6 +12,9 @@ export default {
             svg: null,
             POI: null,
             access: null,
+            POIOrder: null,
+            accessOrder: null,
+            inOrder: false,
             category_map: {'Food': 0,
                 'Shop & Service': 1,
                 'Outdoors & Recreation': 2,
@@ -21,22 +24,37 @@ export default {
                 'Arts & Entertainment': 6,
                 'College & University': 7,
                 'Residence': 8,
-                'Event': 9},
+            },
             color: ['#8dd3c7', '#80b1d3', '#b3de69', '#fdb462', '#bc80bd',
                 '#bebada', '#fccde5', '#d9d9d9', '#fb8072']
         }
     },
     watch: {
-        generate(val){
+        generate(val) {
             let params = {selects: this.selects, startTime: this.startTime, timeLength: this.timeLength};
             dataService.getStatistic(params, response => {
-                this.POI = response.data[0];
-                this.access = response.data[1];
+                this.POIOrder = response.data[0];
+                this.accessOrder = response.data[1];
+                this.POI = response.data[2];
+                this.access = response.data[3];
+                console.log("------------Statistic View-------------");
+                console.log(this.POI);
+                console.log(this.access);
+                console.log(this.POIOrder);
+                console.log(this.accessOrder);
+                console.log("------------Statistic View-------------");
                 this.updateSvg();
                 this.drawLine();
-                this.drawBarchart();
+                this.drawBarchart(this.POI, this.access);
             })
-        }
+        },
+
+        inOrder(value) {
+            this.updateSvg();
+            this.drawLine();
+            if (value) this.drawBarchart(this.POIOrder, this.accessOrder);
+            else this.drawBarchart(this.POI, this.access);
+        },
     },
 
     mounted: function () {
@@ -107,7 +125,7 @@ export default {
                 .style("font-size", 14)
         },
 
-        drawBarchart: function (){
+        drawBarchart: function (poi, access){
             let svg = this.svg;
             const topMargin = 20;
             const leftMargin = 20;
@@ -123,8 +141,8 @@ export default {
             const slotHeight= (axisLength - 2 * axisMargin) / slotNum / 3;
             const slotPadding = slotHeight * 2;
 
-            let max1 = this.POI[0]['count'];
-            let max2 = this.access[0]['count'];
+            let max1 = this.POIOrder[0]['count'];
+            let max2 = this.accessOrder[0]['count'];
             let scale1 = (maxWidth - baseWidth) / max1 * 2 / 3;
             let scale2 = (maxWidth - baseWidth) / max2;
 
@@ -132,7 +150,7 @@ export default {
             let POIRects = svg.append("g")
                 .classed("rects", true)
                 .selectAll("rect")
-                .data(this.POI)
+                .data(poi)
                 .enter()
                 .append("rect")
                 .classed("rect", true)
@@ -149,7 +167,7 @@ export default {
             let AccessRects = svg.append("g")
                 .classed("rects", true)
                 .selectAll("rect")
-                .data(this.access)
+                .data(access)
                 .enter()
                 .append("rect")
                 .classed("rect", true)
@@ -164,7 +182,7 @@ export default {
 
             // add POI text
             svg.selectAll("POILabels")
-                .data(this.POI)
+                .data(poi)
                 .enter()
                 .append("text")
                 .attr("x", this.width / 2 - middleMargin)
@@ -177,7 +195,7 @@ export default {
 
             // add access text
             svg.selectAll("accessLabels")
-                .data(this.access)
+                .data(access)
                 .enter()
                 .append("text")
                 .attr("x", this.width / 2 + middleMargin)
