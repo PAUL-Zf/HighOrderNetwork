@@ -28,6 +28,7 @@ export default {
             data: [],
             startTime: 0,
             timeLength: 0,
+            start: 0,    // work as start algorithm signal
             svg: null,
             checkin: null,
             type: false,    // false: lineChart  true: barchart
@@ -91,6 +92,11 @@ export default {
     },
 
     methods: {
+        startAlgorithm(){
+            this.start++;
+            this.$emit("conveyStart", this.start);
+        },
+
         updateSvg: function () {
             d3.select('#timeView').remove();
             const svg = d3.select("#textContainer")

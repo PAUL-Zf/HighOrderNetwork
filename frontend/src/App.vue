@@ -21,6 +21,7 @@
         </div>
         <div class="col-9 content" style="padding-left: 0px; padding-right: 0px">
           <TemporalView v-on:passTime="updateTime" v-on:conveyIndex="updateIndex" v-on:conveyType="updateType"
+                        v-on:conveyStart="conveyStart"
                         v-bind:region="region" v-bind:date="date" v-bind:number="number" v-bind:generate="generate"
                         v-bind:load="load" v-bind:selects="selects"
                         v-bind:coords="coords" v-bind:time="time" v-bind:halfInterval="halfInterval" @change="change">
@@ -37,6 +38,7 @@
                        v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
                        v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
                        v-bind:level="level" v-bind:pattern="pattern" v-bind:patternId="patternId" v-bind:load="load"
+                       v-bind:start="start"
                        :videoId="videoId" :videoData="videoData"
                        :dir="dir" v-bind:type="type"
                        @changeData='initdraw'></MapView>
@@ -90,6 +92,7 @@ export default {
       pattern: null,
       patternId: null,
       generate: null,
+      start: null,
       finish: null,
       load: null,
       info: {
@@ -136,6 +139,10 @@ export default {
 
     conveyFinish(finish){
       this.finish = finish;
+    },
+
+    conveyStart(start){
+      this.start = start;
     },
 
     conveySelects(selects){

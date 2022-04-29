@@ -75,7 +75,7 @@ export default {
     },
 
     props: ['date', 'startTime', 'timeLength', 'highlight', 'select', 'selectedData',
-        'level', 'pattern', 'type', 'patternId', 'load'],
+        'level', 'pattern', 'type', 'patternId', 'load', 'start'],
 
     computed: {
         info() {
@@ -110,7 +110,7 @@ export default {
             })
         },
 
-        time(val) {
+        start(val) {
             let self = this;
             this.endTime = this.startTime + this.timeLength;
 
