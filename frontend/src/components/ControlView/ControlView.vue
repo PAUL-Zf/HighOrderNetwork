@@ -57,7 +57,7 @@ text {
 
 #videoPlayerContainer {
   /* height: 243px; */
-  height: 130px;
+  height: 167px;
 }
 
 #my-player {

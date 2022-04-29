@@ -8,7 +8,7 @@ export default {
         return {
             // slider
             svg: null,
-            dataset: 'NYC',
+            dataset: '',
             datasets: ['NYC', 'Manhattan'],
             value: [0, 6],
             marks: {0: 'min', 1: '5', 2: '10', 3: '15', 5: '60', 6: 'max'},
@@ -81,13 +81,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 10)
+                .attr("cy", 15)
                 .attr("r", 3)
                 .style("fill", '#8dd3c7')
 
             svg.append("text")
                 .attr("x", 15)
-                .attr("y", 10)
+                .attr("y", 15)
                 .style("fill", '#8dd3c7')
                 .text('Food')
                 .attr("text-anchor", "left")
@@ -96,13 +96,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 70)
-                .attr("cy", 10)
+                .attr("cy", 15)
                 .attr("r", 3)
                 .style("fill", '#bebada')
 
             svg.append("text")
                 .attr("x", 75)
-                .attr("y", 10)
+                .attr("y", 15)
                 .style("fill", '#bebada')
                 .text('Nightlife Spot')
                 .attr("text-anchor", "left")
@@ -111,13 +111,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 22)
+                .attr("cy", 30)
                 .attr("r", 3)
                 .style("fill", '#fb8072')
 
             svg.append("text")
                 .attr("x", 15)
-                .attr("y", 22)
+                .attr("y", 30)
                 .style("fill", '#fb8072')
                 .text('Residence')
                 .attr("text-anchor", "left")
@@ -126,13 +126,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 70)
-                .attr("cy", 22)
+                .attr("cy", 30)
                 .attr("r", 3)
                 .style("fill", '#80b1d3')
 
             svg.append("text")
                 .attr("x", 75)
-                .attr("y", 22)
+                .attr("y", 30)
                 .style("fill", '#80b1d3')
                 .text('Shop & Service')
                 .attr("text-anchor", "left")
@@ -141,13 +141,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 34)
+                .attr("cy", 45)
                 .attr("r", 3)
                 .style("fill", '#fdb462')
 
             svg.append("text")
                 .attr("x", 15)
-                .attr("y", 34)
+                .attr("y", 45)
                 .style("fill", '#fdb462')
                 .text('Professional & Other Places')
                 .attr("text-anchor", "left")
@@ -156,13 +156,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 46)
+                .attr("cy", 60)
                 .attr("r", 3)
                 .style("fill", '#b3de69')
 
             svg.append("text")
                 .attr("x", 15)
-                .attr("y", 46)
+                .attr("y", 60)
                 .style("fill", '#b3de69')
                 .text('Outdoors & Recreation')
                 .attr("text-anchor", "left")
@@ -171,13 +171,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 58)
+                .attr("cy", 75)
                 .attr("r", 3)
                 .style("fill", '#fccde5')
 
             svg.append("text")
                 .attr("x", 15)
-                .attr("y", 58)
+                .attr("y", 75)
                 .style("fill", '#fccde5')
                 .text('Arts & Entertainment')
                 .attr("text-anchor", "left")
@@ -186,13 +186,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 70)
+                .attr("cy", 90)
                 .attr("r", 3)
                 .style("fill", '#d9d9d9')
 
             svg.append("text")
                 .attr("x", 15)
-                .attr("y", 70)
+                .attr("y", 90)
                 .style("fill", '#d9d9d9')
                 .text('College & University')
                 .attr("text-anchor", "left")
@@ -201,13 +201,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 82)
+                .attr("cy", 105)
                 .attr("r", 3)
                 .style("fill", '#bc80bd')
 
             svg.append("text")
                 .attr("x", 15)
-                .attr("y", 82)
+                .attr("y", 105)
                 .style("fill", '#bc80bd')
                 .text('Travel & Transport')
                 .attr("text-anchor", "left")
