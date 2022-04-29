@@ -10,9 +10,9 @@
             <div class="labelsContainer">
                 <div class="divide1">
                     <div class="select">
-                        <span class="toolName">Dataset</span>
+                        <span class="toolName" style="top: 8px">Dataset</span>
                         <el-select v-model="dataset" filterable placeholder="" size="mini"
-                                   style="width: 105px; margin-top: 5px">
+                                   style="width: 105px; margin-top: 12px">
                             <el-option
                                     v-for="item in datasets"
                                     :key="item"
@@ -22,9 +22,9 @@
                         </el-select>
                     </div>
                     <div class="select">
-                        <span class="toolName">Day Types</span>
+                        <span class="toolName" style="top: 8px">Day Types</span>
                         <el-select v-model="valueOfDate" filterable placeholder="" size="mini"
-                                   style="width: 105px; margin-top: 5px">
+                                   style="width: 105px; margin-top: 12px">
                             <el-option
                                     v-for="item in dates"
                                     :key="item"
@@ -33,7 +33,7 @@
                             </el-option>
                         </el-select>
                     </div>
-                    <span class="toolName" style="top:5%">Time Interval</span>
+                    <span class="toolName" style="top:12%;left:6px">Time Interval</span>
                     <div class="periods">
                         <el-slider
                                 v-model="value"
@@ -42,14 +42,14 @@
                                 :max="6"
                                 :show-tooltip="false"
                                 :marks="marks"
-                                style="margin-left: 8%; margin-right: 10%;height: 50px">
+                                style="margin-top:5%; margin-left: 7%; margin-right: 10%;height: 50px">
                         </el-slider>
                     </div>
                 </div>
                 <div class="divide2">
                     <svg id="legend"></svg>
                     <el-button type="info" plain size="mini" v-on:click="display"
-                               style="position:absolute;top:92px;left:40px;width: 80px;height: 30px">Load
+                               style="position:absolute;top:120px;left:40px;width: 80px;height: 30px">Load
                     </el-button>
                 </div>
 <!--                <div style="margin-top:20%;">-->

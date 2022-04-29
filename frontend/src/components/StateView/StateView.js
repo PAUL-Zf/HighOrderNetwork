@@ -98,15 +98,6 @@ export default {
 
         this.svg = svg;
 
-        // Add divider
-        let line = svg.append('line')
-            .style("Stroke", "black")
-            .style("opacity", 0.5)
-            .attr("x1", 600)
-            .attr("y1", 10)
-            .attr("x2", 600)
-            .attr("y2", this.height - 10)
-
         // 初始四个空位
         for(let i = 0; i < 4; i++){
             this.isEmpty[i] = true;
@@ -114,13 +105,6 @@ export default {
             this.fourPatterns[i] = {};
             this.fourRegionsFlow[i] = {};
         }
-
-        //初始化 indexMapKey和allData
-        for(let i = 0; i < 4; i++){
-            this.indexMapKey[i] = {};
-            this.allData[i] = {};
-        }
-
     },
 
     methods: {
@@ -189,6 +173,16 @@ export default {
             let preambleRadius = centerRadius / 2;
             let destRow = rowHeight / destinationNumber;
             let destRadius = destRow / 2 - 4;
+
+            // Add divider
+            let line = svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("class", "dendrogram")
+                .attr("x1", 600)
+                .attr("y1", 10)
+                .attr("x2", 600)
+                .attr("y2", this.height - 10)
 
             // Build the links
             let links = this.links;
