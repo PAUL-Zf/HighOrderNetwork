@@ -39,8 +39,8 @@ export default {
             showSegmentation: true,
             highOrderMode: false,
             number: 1,
-            choice: [1, 2, 3, 4],
-            entropy: 1,
+            choice: [1.0, 1.8, 2.2, 2.5],
+            entropy: 1.0,
             svg: null,
             trajNum: 0,
             regionId: -1,
@@ -86,6 +86,11 @@ export default {
         time() {
             const {startTime, timeLength} = this;
             return {startTime, timeLength};
+        },
+
+        signal(){
+            const {start, entropy} = this;
+            return {start, entropy};
         }
     },
 
@@ -110,14 +115,14 @@ export default {
             })
         },
 
-        start(val) {
+        signal(val) {
             let self = this;
             this.endTime = this.startTime + this.timeLength;
 
             // 每次self-organization算法，mapview数据都要更新
             this.selects = [];
             this.showHistory = false;
-            dataService.getSelfOrganization(Math.floor(this.startTime / 2), Math.floor(this.endTime / 2), response => {
+            dataService.getSelfOrganization(Math.floor(this.startTime / 2), Math.floor(this.endTime / 2), this.entropy, response => {
                 let result = response.data;
                 let segmentation = result.area;
                 let centroids = result.centroids;

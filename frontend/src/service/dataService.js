@@ -99,8 +99,8 @@ function getHighOrderByRegions (params, callback){
 }
 
 // 传递参数给 self-organization 算法
-function getSelfOrganization(start, end, callback) {
-    const url = `${dataServerUrl}/getSelfOrganization/${start}/${end}`
+function getSelfOrganization(start, end, entropy, callback) {
+    const url = `${dataServerUrl}/getSelfOrganization/${start}/${end}/${entropy}`
     const params = {}
     request(url, params, GET_REQUEST, callback)
 }

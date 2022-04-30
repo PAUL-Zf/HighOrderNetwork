@@ -5,27 +5,27 @@
                 <el-image :src="require('@/assets/mapview.jpg')"
                           style="width:4%;height:4%;left: -375px;bottom: 3px;"></el-image>
                 <h6 style="display: inline;font-weight: bolder;position: absolute; left: 50px;top: 7px">Map View</h6>
-                <span style="position: absolute; left: 150px; top: 8px">Show Segmentation</span>
-                <el-checkbox v-model="showSegmentation" style="left: 270px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
-                <span style="position: absolute; left: 300px; top: 8px">Show Boundary</span>
-                <el-checkbox v-model="showBoundary" style="left: 400px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
-                <span style="position: absolute; left: 430px; top: 8px">Show HFlow</span>
-                <el-checkbox v-model="showFlow" style="left: 510px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
-                <span style="position: absolute; left: 545px; top: 8px">Show History</span>
-                <el-checkbox v-model="showHistory" style="left: 630px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 140px; top: 8px">Show Segmentation</span>
+                <el-checkbox v-model="showSegmentation" style="left: 260px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 280px; top: 8px">Show Boundary</span>
+                <el-checkbox v-model="showBoundary" style="left: 375px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 400px; top: 8px">Show HFlow</span>
+                <el-checkbox v-model="showFlow" style="left: 476px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
+                <span style="position: absolute; left: 500px; top: 8px">Show History</span>
+                <el-checkbox v-model="showHistory" style="left: 580px;top: 7px; font-weight: bold;position: absolute;"></el-checkbox>
                 <el-button type="info" plain size="mini" v-on:click="generateHighOrder"
-                           style="position: absolute;width: 80px;height: 30px;left: 700px;top: 2px">Generate
+                           style="position: absolute;width: 80px;height: 30px;left: 750px;top: 2px">Generate
                 </el-button>
-<!--                <span style="margin-left: 10px">Num of comparison</span>-->
-<!--                <el-select v-model="number" filterable placeholder="" size="mini"-->
-<!--                           style="width: 70px;height: 30px;left:-10px;padding-left: 15px;padding-bottom: 20px">-->
-<!--                    <el-option-->
-<!--                            v-for="item in choice"-->
-<!--                            :key="item"-->
-<!--                            :label="item"-->
-<!--                            :value="item">-->
-<!--                    </el-option>-->
-<!--                </el-select>-->
+                <span style="position: absolute; left: 605px; top: 8px">Entropy</span>
+                <el-select v-model="entropy" filterable placeholder="" size="mini"
+                           style="position: absolute;width: 70px;height: 30px;left: 660px;top: 2px">
+                    <el-option
+                            v-for="item in choice"
+                            :key="item"
+                            :label="item"
+                            :value="item">
+                    </el-option>
+                </el-select>
             </div>
         </div>
         <div class="card-block" id="faceContainer">
