@@ -880,12 +880,13 @@ def _getRegionInOut():
     return json.dumps(result)
 
 
-@app.route('/getSelfOrganization/<start>/<end>', methods=['GET'])
-def _getSelfOrganization(start, end):
+@app.route('/getSelfOrganization/<start>/<end>/<entropy>', methods=['GET'])
+def _getSelfOrganization(start, end, entropy):
     # start = int(start)
     # end = int(end)
+    # entropy = int(entropy)
     # merged_df_od_duration, merged_area = SO.Self_Organization(
-    #     start, end, entropy_threshold=entropy_threshold)
+    #     start, end, entropy_threshold=entropy)
 
     # merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
     # merged_area.to_csv("app/static/merged_area.csv")

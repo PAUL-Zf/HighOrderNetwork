@@ -309,13 +309,13 @@ export default {
             let pattern = this.fourPatterns[index];
             let regionsFlow = this.fourRegionsFlow[index];
 
+            console.log("-------------Pattern RegionsId-----------------");
+            console.log(pattern);
+            console.log("-------------Pattern RegionsId-----------------");
+
             let columnNumber = pattern['preamble'].length + 1;
             let destNumber = pattern['destinations'].length;
             let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
-            let destHeight = (patternHeight - margin.top - margin.bottom) / destNumber;
-            let padding = 2
-            let preambleRadius = ((patternHeight - margin.top - margin.bottom) / 2 - padding * 2) / 2;
-            let radius = (destNumber > 2) ? (destHeight - padding * 2) / 2 : preambleRadius;
 
             // draw flow
             let total = 0;
@@ -323,51 +323,171 @@ export default {
                 total += pattern['destinations'][i]['count'];
             }
 
-            // draw preamble flow
-            for(let i = 0; i < pattern['preamble'].length - 1; i++){
-                svg.append('line')
-                    .attr("class", 'pattern')
-                    .style("Stroke", "lightsteelblue")
-                    .attr("stroke-width", preambleRadius - 6)
-                    .style("opacity", 1)
-                    .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
-                    .attr("y1", cy + patternHeight / 2)
-                    .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
-                    .attr("y2", cy + patternHeight / 2)
+            // Find special pattern type by check pattern
+            let patternType = 0;    // patternType = 0 means no special
+            let preamble = pattern['preamble'];
+            let destinations = pattern['destinations'];
+
+            // Type 1: A->B->A
+            if (preamble.length === 2){
+                let s = preamble[0];
+                for (let i = 0; i < destinations.length; i++){
+                    if(destinations[i]['regionId'] === s){
+                        patternType = 1;
+                        console.log("--------A->B->A-------");
+                        destNumber--;
+                    }
+                }
             }
 
-            // draw destination flow
-            for(let i = 0; i < pattern['destinations'].length; i++){
-                let regionId = pattern['destinations'][i]['regionId'];
-                let flow = pattern['destinations'][i]['count'];
-                let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
-                let y = cy + margin.top + destHeight * i + destHeight / 2;
-                svg.append('line')
-                    .attr("class", 'pattern')
-                    .style("Stroke", "lightsteelblue")
-                    .attr("stroke-width", (preambleRadius - 6) * flow / total)
-                    .style("opacity", 1)
-                    .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
-                    .attr("y1", cy + patternHeight / 2)
-                    .attr("x2", x)
-                    .attr("y2", y)
+            // Type 2: A->B->A->C
+            if (preamble.length === 3){
+                if(preamble[0] === preamble[2]){
+                    patternType = 2;
+                }
             }
 
-            // draw preamble glyph
-            for(let i = 0; i < pattern['preamble'].length; i++){
-                let regionId = pattern['preamble'][i];
-                let x = cx + margin.left + i * columnWidth + columnWidth / 2;
-                let y = cy + patternHeight / 2;
-                this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', preambleRadius - 6, preambleRadius);
+            // 所有glyph的半径需要保持一致
+            let destHeight = (patternHeight - margin.top - margin.bottom) / destNumber;
+            let padding = 2
+            let preambleRadius = ((patternHeight - margin.top - margin.bottom) / 2 - padding * 2) / 2;
+            let radius = (destNumber > 2) ? (destHeight - padding * 2) / 2 : preambleRadius;
+
+            if(patternType === 0){
+                // draw preamble flow
+                for(let i = 0; i < pattern['preamble'].length - 1; i++){
+                    svg.append('line')
+                        .attr("class", 'pattern')
+                        .style("Stroke", "lightsteelblue")
+                        .attr("stroke-width", preambleRadius - 6)
+                        .style("opacity", 1)
+                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+                        .attr("y1", cy + patternHeight / 2)
+                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+                        .attr("y2", cy + patternHeight / 2)
+                }
+
+                // draw destination flow
+                for(let i = 0; i < pattern['destinations'].length; i++){
+                    let regionId = pattern['destinations'][i]['regionId'];
+                    let flow = pattern['destinations'][i]['count'];
+                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+                    let y = cy + margin.top + destHeight * i + destHeight / 2;
+                    svg.append('line')
+                        .attr("class", 'pattern')
+                        .style("Stroke", "lightsteelblue")
+                        .attr("stroke-width", (preambleRadius - 6) * flow / total)
+                        .style("opacity", 1)
+                        .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
+                        .attr("y1", cy + patternHeight / 2)
+                        .attr("x2", x)
+                        .attr("y2", y)
+                }
+
+                // draw preamble glyph
+                for(let i = 0; i < pattern['preamble'].length; i++){
+                    let regionId = pattern['preamble'][i];
+                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+                    let y = cy + patternHeight / 2;
+                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+                }
+
+                // draw destination glyph
+                for(let i = 0; i < pattern['destinations'].length; i++){
+                    let regionId = pattern['destinations'][i]['regionId'];
+                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+                    let y = cy + margin.top + destHeight * i + destHeight / 2;
+                    this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
+                }
+            } else if(patternType === 1){
+                // draw preamble flow
+                for(let i = 0; i < pattern['preamble'].length - 1; i++){
+                    svg.append('line')
+                        .attr("class", 'pattern')
+                        .style("Stroke", "lightsteelblue")
+                        .attr("stroke-width", preambleRadius - 6)
+                        .style("opacity", 1)
+                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+                        .attr("y1", cy + patternHeight / 2)
+                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+                        .attr("y2", cy + patternHeight / 2)
+                }
+
+                // draw destination flow
+                let order = 0;
+                let backCount = 0;
+                let startId = preamble[0];
+                for(let i = 0; i < destNumber; i++){
+                    let regionId = pattern['destinations'][i]['regionId'];
+                    let flow = pattern['destinations'][i]['count'];
+
+                    // 遇到回去的regionId则跳过不画直线
+                    if(regionId === startId){
+                        backCount = flow;
+                        console.log(backCount);
+                        continue;
+                    }
+                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+                    let y = cy + margin.top + destHeight * order + destHeight / 2;
+                    order++;
+                    svg.append('line')
+                        .attr("class", 'pattern')
+                        .style("Stroke", "lightsteelblue")
+                        .attr("stroke-width", (preambleRadius - 6) * flow / total)
+                        .style("opacity", 1)
+                        .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
+                        .attr("y1", cy + patternHeight / 2)
+                        .attr("x2", x)
+                        .attr("y2", y)
+                }
+
+                // draw back flow
+                let lineGenerator = d3.line()
+                    .x(function(d) {
+                        return d[0];
+                    })
+                    .y(function(d) {
+                        return d[1];
+                    })
+
+                const curvePoints = [
+                    [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+                    [cx + margin.left + columnWidth, cy + patternHeight / 4],
+                    [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
+                ];
+
+                console.log(curvePoints);
+
+                const lines = svg.append('path')
+                    .attr("class", "backFlow")
+                    .attr("stroke", 'lightsteelblue')
+                    .attr("stroke-width", (preambleRadius - 6) * backCount / total)
+                    .attr("fill", 'none')
+                    .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+
+                // draw preamble glyph
+                for(let i = 0; i < pattern['preamble'].length; i++){
+                    let regionId = pattern['preamble'][i];
+                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+                    let y = cy + patternHeight / 2;
+                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+                }
+
+                // draw destination glyph
+                order = 0
+                for(let i = 0; i < pattern['destinations'].length; i++){
+                    let regionId = pattern['destinations'][i]['regionId'];
+                    // 遇到回去的regionId则跳过不画glyph
+                    if(regionId === startId){
+                        continue;
+                    }
+                    order++;
+                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+                    let y = cy + margin.top + destHeight * order + destHeight / 2;
+                    this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
+                }
             }
 
-            // draw destination glyph
-            for(let i = 0; i < pattern['destinations'].length; i++){
-                let regionId = pattern['destinations'][i]['regionId'];
-                let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
-                let y = cy + margin.top + destHeight * i + destHeight / 2;
-                this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
-            }
         },
 
         findPosition: function (patternId){
