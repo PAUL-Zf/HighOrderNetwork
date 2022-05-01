@@ -225,30 +225,30 @@ def getHighOrder(start, length, region, groupId):
             if(KLD[k] > threshold):
                 valid_order[k] = v
                 valid_kld[k] = KLD[k]
+                
+    # # 统计四阶数据
+    # order_4 = {}
+    # for k, v in abstract_data.items():
+    #     dest = v[max_order]
+    #     path = ''
+    #     for i in range(max_order-4, max_order):
+    #         if(v[i] == -1):
+    #             break
+    #         path += str(v[i]) + '_'
+    #     if path:
+    #         if path not in order_4:
+    #             order_4[path] = [0 for x in range(region_number)]
+    #         order_4[path][id_to_index[dest]] += 1
 
-    # 统计四阶数据
-    order_4 = {}
-    for k, v in abstract_data.items():
-        dest = v[max_order]
-        path = ''
-        for i in range(max_order-4, max_order):
-            if(v[i] == -1):
-                break
-            path += str(v[i]) + '_'
-        if path:
-            if path not in order_4:
-                order_4[path] = [0 for x in range(region_number)]
-            order_4[path][id_to_index[dest]] += 1
-
-    # 计算四阶KLD
-    for k, v in order_4.items():
-        pre = k.split('_', 1)[1]
-        if pre in valid_order:
-            KLD[k] = computeKLD(v, valid_order[pre])
-            # 根据KLD更新数据
-            if(KLD[k] > threshold):
-                valid_order[k] = v
-                valid_kld[k] = KLD[k]
+    # # 计算四阶KLD
+    # for k, v in order_4.items():
+    #     pre = k.split('_', 1)[1]
+    #     if pre in valid_order:
+    #         KLD[k] = computeKLD(v, valid_order[pre])
+    #         # 根据KLD更新数据
+    #         if(KLD[k] > threshold):
+    #             valid_order[k] = v
+    #             valid_kld[k] = KLD[k]
 
     # 遍历 valid_order，计算所有entropy
     valid_entropy = {}
@@ -340,7 +340,6 @@ def getHighOrder(start, length, region, groupId):
                     glyph['column'] = i - len(r) + 1
                     glyphs.append(glyph)
 
-            # todo
             coord.append(centroids[int(id)])
         destCount = 0
         for i in range(len(v)):
