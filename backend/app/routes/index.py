@@ -525,10 +525,24 @@ def _getCheckin(date):
 
 @app.route('/getSankey/<date>/<number>', methods=['GET'])
 def _getSankey(date, number):
+    def getHeatMapData(data, start, end):
+        between = data[(data['previous_center'] == start)
+                       & (data['next_hop_center'] == end)]
+        between.checkin_time = pd.to_datetime(between.checkin_time)
+        flows = [0 for x in range(24)]
+        for i in range(24):
+            count = len(between[(between.checkin_time.dt.hour >= i) & (
+                between.checkin_time.dt.hour < i+1)])
+            flows[i] = count
+        return flows
+
+    # main
     if (date == 'Weekdays'):
         filename = "app/static/weekdays_overview.json"
+        data = pd.read_csv("app/static/weekdays_threshold_1.0_clustering.csv")
     else:
         filename = "app/static/holidays_overview.json"
+        data = pd.read_csv("app/static/holidays_threshold_1.0_clustering.csv")
 
     with open(filename, 'r') as f:
         patterns = json.load(f)
@@ -606,6 +620,7 @@ def _getSankey(date, number):
 
     # 计算rects
     rects = []
+    heatMap = []
     for i in range(1, 4):
         coord = 0
         for key, value in pattern_count.items():
@@ -617,6 +632,23 @@ def _getSankey(date, number):
                 rect['x'] = coord
                 rect['time'] = pattern_time[key]
                 rect['length'] = pattern_count[key] % 3 + 1
+
+                # Heat Map
+                start = key[i - 1]
+                end = key[i]
+                flows = getHeatMapData(data, start, end)
+
+                for j in range(24):
+                    h = {}
+                    h['id'] = pattern_id[key]
+                    h['order'] = i - 1
+                    h['width'] = pattern_count[key]
+                    h['x'] = coord
+                    h['time'] = pattern_time[key]
+                    h['length'] = pattern_count[key] % 3 + 1
+                    h['index'] = j
+                    h['count'] = flows[j]
+                    heatMap.append(h)
 
                 r = {}
                 r['x'] = rect['x'] + rect['width']/2
@@ -757,6 +789,7 @@ def _getSankey(date, number):
     result['rects'] = rects
     result['timeRects'] = timeRects
     result['links'] = links
+    result['heatMap'] = heatMap
 
     return json.dumps(result)
 

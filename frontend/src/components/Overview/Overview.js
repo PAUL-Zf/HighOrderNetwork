@@ -18,6 +18,7 @@ export default {
             links: null,
             nodes: null,
             regions: null,
+            heatMap: null,
         }
     },
     watch: {
@@ -31,6 +32,7 @@ export default {
                 this.links = sankey.links;
                 this.nodes = sankey.nodes;
                 this.regions = sankey.regions;
+                this.heatMap = sankey.heatMap;
 
                 // this.drawGradient();
                 this.updateSvg();
@@ -254,16 +256,16 @@ export default {
                 .on("mouseover", function (d) {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD').attr('opacity', 1);
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
+                    // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
+                    // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
                     // add line to show time interval
                     self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
                 })
                 .on("mouseout", function (d) {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2').attr('opacity', 0);
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
+                    // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
+                    // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
                     d3.select("#sankeyView").selectAll(".dashedLine").remove();
                 })
                 .on("click", function (d) {
@@ -281,71 +283,103 @@ export default {
                 .attr("class", d => 'rect' + d.id)
                 .attr("x", d => margin.left + d.x * rectScale + d.id * rectPadding)
                 .attr("y", d => margin.top + nodeHeight + rowDistance * d.order + rectMargin)
-                .attr("rx", 2)
-                .attr("ry", 2)
+                .attr("rx", 1)
+                .attr("ry", 1)
                 .attr("width", d => d.width * rectScale)
                 .attr("height", rectHeight)
-                .attr("fill", 'lightsteelblue')
-                .attr("opacity", 0.5)
+                .attr("fill", 'white')
+                .attr("opacity", 1)
                 .attr("stroke", '#505254')
                 .attr("stroke-width", 1)
-                .on("mouseover", function (d) {
-                    d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD');
-                    d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
-                    // add line to show time interval
-                    self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
-                })
-                .on("mouseout", function (d) {
-                    d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2');
-                    d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
-                    d3.select("#sankeyView").selectAll(".dashedLine").remove();
-                })
-                .on("click", function (d) {
-                    self.$emit("conveyTimeInterval", d.time, d.length);
-                    self.$emit("conveyPatternId", d.id);
-                })
+                // .on("mouseover", function (d) {
+                //     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD');
+                //     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
+                //     d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
+                //     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
+                //     // add line to show time interval
+                //     self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
+                // })
+                // .on("mouseout", function (d) {
+                //     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2');
+                //     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
+                //     d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
+                //     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
+                //     d3.select("#sankeyView").selectAll(".dashedLine").remove();
+                // })
+                // .on("click", function (d) {
+                //     self.$emit("conveyTimeInterval", d.time, d.length);
+                //     self.$emit("conveyPatternId", d.id);
+                // })
 
-            // draw timeRects
-            let timeRects = svg.append("g")
-                .classed('timeRects', true)
-                .selectAll('timeRects')
-                .data(this.timeRects)
+            // 统计最大值和最小值
+            let min = this.heatMap[0]['count'];
+            let max = this.heatMap[0]['count'];
+            for (let i = 0; i < this.heatMap.length; i++){
+                let count = this.heatMap[i]['count'];
+                max = (count > max) ? count : max;
+                min = (count < min) ? count : min;
+            }
+
+            // Build color scale
+            let myColor = d3.scaleLinear()
+                .range(["#FFF7BC", "#FD5D5D"])
+                .domain([min, max])
+
+            // draw HeatMap
+            let heatMap = svg.append("g")
+                .classed('flows', true)
+                .selectAll('flows')
+                .data(this.heatMap)
                 .enter()
                 .append("rect")
-                .attr("class", d => 'timeRect' + d.id)
+                .attr("class", d => 'rect' + d.id)
                 .attr("x", d => margin.left + d.x * rectScale + d.id * rectPadding)
-                .attr("y", d => margin.top + nodeHeight + rectMargin + d.time / 24 * rectHeight - d.length / 24 * rectHeight / 2)
-                .attr("rx", 2)
-                .attr("ry", 2)
+                .attr("y", d => margin.top + nodeHeight + rowDistance * d.order + rectMargin + rectHeight / 24 * d.index)
                 .attr("width", d => d.width * rectScale)
-                .attr("height", d => d.length / 24 * rectHeight)
-                .attr("fill", 'red')
-                .attr("opacity", 0.5)
-                .attr("stroke", '#505254')
-                .attr("stroke-width", 1)
-                .on("mouseover", function (d) {
-                    d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD');
-                    d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
-                    // add line to show time interval
-                    self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
-                })
-                .on("mouseout", function (d) {
-                    d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2');
-                    d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
-                    d3.select("#sankeyView").selectAll(".dashedLine").remove();
-                })
-                .on("click", function (d) {
-                    self.$emit("conveyTimeInterval", d.time, d.length);
-                    self.$emit("conveyPatternId", d.id);
-                })
+                .attr("height", rectHeight / 24)
+                .attr("fill", d => myColor(d.count))
+                .attr("opacity", 1)
+                // .attr("stroke", '#505254')
+                // .attr("stroke-width", 0)
+
+
+            // // draw timeRects
+            // let timeRects = svg.append("g")
+            //     .classed('timeRects', true)
+            //     .selectAll('timeRects')
+            //     .data(this.timeRects)
+            //     .enter()
+            //     .append("rect")
+            //     .attr("class", d => 'timeRect' + d.id)
+            //     .attr("x", d => margin.left + d.x * rectScale + d.id * rectPadding)
+            //     .attr("y", d => margin.top + nodeHeight + rectMargin + d.time / 24 * rectHeight - d.length / 24 * rectHeight / 2)
+            //     .attr("rx", 2)
+            //     .attr("ry", 2)
+            //     .attr("width", d => d.width * rectScale)
+            //     .attr("height", d => d.length / 24 * rectHeight)
+            //     .attr("fill", 'red')
+            //     .attr("opacity", 0.5)
+            //     .attr("stroke", '#505254')
+            //     .attr("stroke-width", 1)
+            //     .on("mouseover", function (d) {
+            //         d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD');
+            //         d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
+            //         d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
+            //         d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
+            //         // add line to show time interval
+            //         self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
+            //     })
+            //     .on("mouseout", function (d) {
+            //         d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2');
+            //         d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
+            //         d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
+            //         d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
+            //         d3.select("#sankeyView").selectAll(".dashedLine").remove();
+            //     })
+            //     .on("click", function (d) {
+            //         self.$emit("conveyTimeInterval", d.time, d.length);
+            //         self.$emit("conveyPatternId", d.id);
+            //     })
 
             // Build the links
             let link = d3.linkVertical();
@@ -372,14 +406,14 @@ export default {
                 .on("mouseover", function (d) {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD');
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
+                    // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
+                    // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
                 })
                 .on("mouseout", function (d) {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2');
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
-                    d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
+                    // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
+                    // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
                 })
 
 

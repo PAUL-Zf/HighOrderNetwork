@@ -159,33 +159,33 @@ export default {
                 .attr("stroke-width", 2.5)
 
 
-            // add text
-            let startTime = svg.append('text')
-                .attr("y", this.height - bottomMargin)
-                .attr("x", leftMargin - 15)
-                .attr('text-anchor', 'middle')
-                .attr("class", 'timeText')
-                .text("00:00")
-                .style("font-size", 10)
-            let endTime = svg.append('text')
-                .attr("y", this.height - bottomMargin)
-                .attr("x", leftMargin + axisMargin + axisLength + 5)
-                .attr('text-anchor', 'middle')
-                .attr("class", 'timeText')
-                .text("24:00")
-                .style("font-size", 10)
+            // // add text
+            // let startTime = svg.append('text')
+            //     .attr("y", this.height - bottomMargin)
+            //     .attr("x", leftMargin - 15)
+            //     .attr('text-anchor', 'middle')
+            //     .attr("class", 'timeText')
+            //     .text("00:00")
+            //     .style("font-size", 10)
+            // let endTime = svg.append('text')
+            //     .attr("y", this.height - bottomMargin)
+            //     .attr("x", leftMargin + axisMargin + axisLength + 5)
+            //     .attr('text-anchor', 'middle')
+            //     .attr("class", 'timeText')
+            //     .text("24:00")
+            //     .style("font-size", 10)
 
             // Add time label
-            let timeLabels = ["01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00",
+            let timeLabels = ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00",
                 "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00",
-                "21:00", "22:00", "23:00"]
+                "21:00", "22:00", "23:00", "24:00"]
 
             let timeLabel = svg.selectAll("whatever")
                 .data(timeLabels)
                 .enter()
                 .append('text')
                 .attr("y", this.height - bottomMargin / 2)
-                .attr("x", function(d, i) {return leftMargin + axisMargin + slotWidth * 2 * (i + 1)})
+                .attr("x", function(d, i) {return leftMargin + axisMargin + slotWidth * 2 * i})
                 .attr('text-anchor', 'middle')
                 .attr("class", 'timeText')
                 .text(d => d)
