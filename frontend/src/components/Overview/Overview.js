@@ -152,7 +152,7 @@ export default {
                 "#ccebc5",
                 "#ffed6f"]
 
-            const margin = {top: 30, bottom: 20, left: 40, right: 10};
+            const margin = {top: 30, bottom: 20, left: 60, right: 10};
             const nodePadding = 5;
             const rectPadding = 5;
             const scale = (this.width - margin.left - margin.right - nodePadding * 3) / this.sum;
@@ -163,44 +163,90 @@ export default {
             const rectHeight = rowDistance - nodeHeight - rectMargin * 2;
             const linkWidth = 4;
 
-            // draw time axis
-            let line = svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", margin.left * 6 / 8)
-                .attr("y1", margin.top + nodeHeight + rectMargin)
-                .attr("x2", margin.left * 6 / 8)
-                .attr("y2", margin.top + nodeHeight + rectMargin + rectHeight)
-            let SLine = svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", margin.left * 6 / 8)
-                .attr("y1", margin.top + nodeHeight + rectMargin)
-                .attr("x2", margin.left * 7 / 8)
-                .attr("y2", margin.top + nodeHeight + rectMargin)
-            let ELine = svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", margin.left * 6 / 8)
-                .attr("y1", margin.top + nodeHeight + rectMargin + rectHeight)
-                .attr("x2", margin.left * 7 / 8)
-                .attr("y2", margin.top + nodeHeight + rectMargin + rectHeight)
+            const axisLength = rowDistance * 3 + nodeHeight;
 
-            // add text
-            let startTime = svg.append('text')
-                .attr("y", margin.top + nodeHeight + rectMargin)
-                .attr("x", margin.left * 6 / 8 - 2)
-                .attr('text-anchor', 'end')
-                .attr("class", 'timeText')
-                .text("00:00")
-                .style("font-size", 8)
-            let endTime = svg.append('text')
-                .attr("y", margin.top + nodeHeight + rectMargin + rectHeight + 5)
-                .attr("x", margin.left * 6 / 8 - 2)
-                .attr('text-anchor', 'end')
-                .attr("class", 'timeText')
-                .text("24:00")
-                .style("font-size", 8)
+            // draw big time axis
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", margin.left / 3)
+                .attr("y1", margin.top)
+                .attr("x2", margin.left / 3)
+                .attr("y2", margin.top + axisLength)
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", margin.left / 3 - 5)
+                .attr("y1", margin.top)
+                .attr("x2", margin.left / 3 + 5)
+                .attr("y2", margin.top)
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", margin.left / 3 - 5)
+                .attr("y1", margin.top + axisLength)
+                .attr("x2", margin.left / 3 + 5)
+                .attr("y2", margin.top + axisLength)
+
+            // draw timeRects
+            let timeRects = svg.append("g")
+                .classed('timeRects', true)
+                .selectAll('timeRects')
+                .data(this.timeRects)
+                .enter()
+                .append("rect")
+                .attr("class", d => 'timeRect' + d.id)
+                .attr("x", margin.left / 3 - 5)
+                .attr("y", d => margin.top + d.time / 24 * axisLength - d.length / 24 * axisLength / 2)
+                .attr("rx", 2)
+                .attr("ry", 2)
+                .attr("width", 10)
+                .attr("height", d => d.length / 24 * axisLength)
+                .attr("fill", 'red')
+                .attr("opacity", 0)
+                .attr("stroke", '#505254')
+                .attr("stroke-width", 1)
+
+            // draw time axis
+            for (let i = 0; i < 3; i++){
+                svg.append('line')
+                    .style("Stroke", "black")
+                    .style("opacity", 0.5)
+                    .attr("x1", margin.left * 6 / 8)
+                    .attr("y1", margin.top + nodeHeight + rectMargin + rowDistance * i)
+                    .attr("x2", margin.left * 6 / 8)
+                    .attr("y2", margin.top + nodeHeight + rectMargin + rectHeight + rowDistance * i)
+                svg.append('line')
+                    .style("Stroke", "black")
+                    .style("opacity", 0.5)
+                    .attr("x1", margin.left * 6 / 8)
+                    .attr("y1", margin.top + nodeHeight + rectMargin + rowDistance * i)
+                    .attr("x2", margin.left * 7 / 8)
+                    .attr("y2", margin.top + nodeHeight + rectMargin + rowDistance * i)
+                svg.append('line')
+                    .style("Stroke", "black")
+                    .style("opacity", 0.5)
+                    .attr("x1", margin.left * 6 / 8)
+                    .attr("y1", margin.top + nodeHeight + rectMargin + rectHeight + rowDistance * i)
+                    .attr("x2", margin.left * 7 / 8)
+                    .attr("y2", margin.top + nodeHeight + rectMargin + rectHeight + rowDistance * i)
+
+                // add text
+                svg.append('text')
+                    .attr("y", margin.top + nodeHeight + rectMargin + rowDistance * i - 2)
+                    .attr("x", margin.left * 6 / 8)
+                    .attr('text-anchor', 'middle')
+                    .attr("class", 'timeText')
+                    .text("00:00")
+                    .style("font-size", 8)
+                svg.append('text')
+                    .attr("y", margin.top + nodeHeight + rectMargin + rectHeight + 8 + rowDistance * i)
+                    .attr("x", margin.left * 6 / 8)
+                    .attr('text-anchor', 'middle')
+                    .attr("class", 'timeText')
+                    .text("24:00")
+                    .style("font-size", 8)
+            }
 
             // draw regions
             let regions = svg.append("g")
@@ -257,16 +303,22 @@ export default {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD').attr('opacity', 1);
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
                     // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
-                    // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
+
+                    // 选中的opacity置为1，其余置为0
+                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
                     // add line to show time interval
-                    self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
+                    // self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
                 })
                 .on("mouseout", function (d) {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2').attr('opacity', 0);
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
                     // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
                     // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
-                    d3.select("#sankeyView").selectAll(".dashedLine").remove();
+
+                    // 选中的opacity置为1，其余置为0
+                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0);
+
+                    // d3.select("#sankeyView").selectAll(".dashedLine").remove();
                 })
                 .on("click", function (d) {
                     self.$emit("conveyTimeInterval", d.time, d.length);
@@ -341,7 +393,6 @@ export default {
                 .attr("opacity", 1)
                 // .attr("stroke", '#505254')
                 // .attr("stroke-width", 0)
-
 
             // // draw timeRects
             // let timeRects = svg.append("g")

@@ -390,6 +390,14 @@ export default {
                     let x = cx + margin.left + i * columnWidth + columnWidth / 2;
                     let y = cy + patternHeight / 2;
                     this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+
+                    svg.append('text')
+                        .attr("class", "pattern")
+                        .attr("y", y + radius + 10)
+                        .attr("x", x)
+                        .attr('text-anchor', 'middle')
+                        .text("R" + regionId)
+                        .style("font-size", 8)
                 }
 
                 // draw destination glyph
@@ -468,6 +476,14 @@ export default {
                     let x = cx + margin.left + i * columnWidth + columnWidth / 2;
                     let y = cy + patternHeight / 2;
                     this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+
+                    svg.append('text')
+                        .attr("class", "pattern")
+                        .attr("y", y + radius + 10)
+                        .attr("x", x)
+                        .attr('text-anchor', 'middle')
+                        .text("R" + regionId)
+                        .style("font-size", 8)
                 }
 
                 // draw destination glyph
@@ -478,9 +494,9 @@ export default {
                     if(regionId === startId){
                         continue;
                     }
-                    order++;
                     let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
                     let y = cy + margin.top + destHeight * order + destHeight / 2;
+                    order++;
                     this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
                 }
             }
@@ -581,6 +597,14 @@ export default {
                     let x = cx + margin.left + i * columnWidth + columnWidth / 2;
                     let y = cy + patternHeight / 2;
                     this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+
+                    svg.append('text')
+                        .attr("class", "pattern")
+                        .attr("y", y + radius + 10)
+                        .attr("x", x)
+                        .attr('text-anchor', 'middle')
+                        .text("R" + regionId)
+                        .style("font-size", 8)
                 }
 
                 // draw destination glyph
