@@ -225,7 +225,7 @@ def getHighOrder(start, length, region, groupId):
             if(KLD[k] > threshold):
                 valid_order[k] = v
                 valid_kld[k] = KLD[k]
-                
+
     # # 统计四阶数据
     # order_4 = {}
     # for k, v in abstract_data.items():
@@ -258,7 +258,7 @@ def getHighOrder(start, length, region, groupId):
     sort_entropy = dict(sorted(valid_entropy.items(), key=lambda e: e[1]))
 
     result = {}
-    top = 4
+    top = 3
     index = 0
     for k, v in sort_entropy.items():
         if(index >= top):
@@ -384,8 +384,8 @@ def getHighOrder(start, length, region, groupId):
         patternNumber = 3    # patternNumber限制为3条
         # patternNumber += 1
         destinationNumber = destinationNumber > destCount and destinationNumber or destCount
-        
-        if(count < 3): 
+
+        if(count < 3):
             columnNumber = columnNumber > columnCount and columnNumber or columnCount
 
         patterns.append(pattern)
@@ -619,7 +619,7 @@ def computeKLD(high, low):
 
     # For the destination is only one place
     if(len(nonzero_high) == 1):
-        if(nonzero_high[0] > 1):
+        if(nonzero_high[0] > 2):
             return 1
 
     for i in range(len(nonzero_high)):
@@ -642,6 +642,10 @@ def computeEntropy(data):
 
     # compute entropy
     if sum == 0:
+        return 0
+    
+    # 通过将sum < 3的方式过滤轨迹
+    if sum < 3:
         return 0
     for d in nonzero_data:
         entropy += (-1) * (d / sum) * math.log(d / sum, 2)
