@@ -75,6 +75,37 @@ export default {
             return hour + ":" + (minute === 1 ? "30" : "00");
         },
 
+        addTimeSlotLabel: function (id, margin, axisLength) {
+            let svg = this.svg;
+            let interval = d3.select("#sankeyView").select(".timeRect" + id);
+            let x1 = margin.left / 3;
+            let y1 = Number(interval.attr("y"));
+            let x2 = interval.attr("x");
+            let y2 = Number(interval.attr("y")) + Number(interval.attr("height"));
+            let startTime = Math.round((y1 - margin.top) / axisLength * 48)
+            let endTime = Math.round((y2 - margin.top) / axisLength * 48)
+
+            // modify time text format
+            startTime = this.generateTimeText(startTime);
+            endTime = this.generateTimeText(endTime);
+
+            // add text
+            svg.append('text')
+                .attr("class", 'dashedLine')
+                .attr("y", y1 - 2)
+                .attr("x", x1)
+                .attr('text-anchor', 'middle')
+                .text(startTime)
+                .style("font-size", 8)
+            svg.append('text')
+                .attr("class", 'dashedLine')
+                .attr("y", y2 + 8)
+                .attr("x", x1)
+                .attr('text-anchor', 'middle')
+                .text(endTime)
+                .style("font-size", 8)
+        },
+
         drawDashedLine: function (id, margin, nodeHeight, rectMargin, rectHeight){
             let svg = this.svg;
             let interval = d3.select("#sankeyView").select(".timeRect" + id);
@@ -152,7 +183,7 @@ export default {
                 "#ccebc5",
                 "#ffed6f"]
 
-            const margin = {top: 30, bottom: 20, left: 60, right: 10};
+            const margin = {top: 30, bottom: 20, left: 80, right: 10};
             const nodePadding = 5;
             const rectPadding = 5;
             const scale = (this.width - margin.left - margin.right - nodePadding * 3) / this.sum;
@@ -188,6 +219,23 @@ export default {
                 .attr("x2", margin.left / 3 + 5)
                 .attr("y2", margin.top + axisLength)
 
+            // draw big time axis labels
+            svg.append('text')
+                .attr("y", margin.top - 2)
+                .attr("x", margin.left / 3)
+                .attr('text-anchor', 'middle')
+                .attr("class", 'timeText')
+                .text("00:00")
+                .style("font-size", 8)
+
+            svg.append('text')
+                .attr("y", margin.top + axisLength + 8)
+                .attr("x", margin.left / 3)
+                .attr('text-anchor', 'middle')
+                .attr("class", 'timeText')
+                .text("24:00")
+                .style("font-size", 8)
+
             // draw timeRects
             let timeRects = svg.append("g")
                 .classed('timeRects', true)
@@ -212,40 +260,31 @@ export default {
                 svg.append('line')
                     .style("Stroke", "black")
                     .style("opacity", 0.5)
-                    .attr("x1", margin.left * 6 / 8)
+                    .attr("x1", margin.left * 9 / 10)
                     .attr("y1", margin.top + nodeHeight + rectMargin + rowDistance * i)
-                    .attr("x2", margin.left * 6 / 8)
-                    .attr("y2", margin.top + nodeHeight + rectMargin + rectHeight + rowDistance * i)
-                svg.append('line')
-                    .style("Stroke", "black")
-                    .style("opacity", 0.5)
-                    .attr("x1", margin.left * 6 / 8)
-                    .attr("y1", margin.top + nodeHeight + rectMargin + rowDistance * i)
-                    .attr("x2", margin.left * 7 / 8)
-                    .attr("y2", margin.top + nodeHeight + rectMargin + rowDistance * i)
-                svg.append('line')
-                    .style("Stroke", "black")
-                    .style("opacity", 0.5)
-                    .attr("x1", margin.left * 6 / 8)
-                    .attr("y1", margin.top + nodeHeight + rectMargin + rectHeight + rowDistance * i)
-                    .attr("x2", margin.left * 7 / 8)
+                    .attr("x2", margin.left * 9 / 10)
                     .attr("y2", margin.top + nodeHeight + rectMargin + rectHeight + rowDistance * i)
 
-                // add text
-                svg.append('text')
-                    .attr("y", margin.top + nodeHeight + rectMargin + rowDistance * i - 2)
-                    .attr("x", margin.left * 6 / 8)
-                    .attr('text-anchor', 'middle')
-                    .attr("class", 'timeText')
-                    .text("00:00")
-                    .style("font-size", 8)
-                svg.append('text')
-                    .attr("y", margin.top + nodeHeight + rectMargin + rectHeight + 8 + rowDistance * i)
-                    .attr("x", margin.left * 6 / 8)
-                    .attr('text-anchor', 'middle')
-                    .attr("class", 'timeText')
-                    .text("24:00")
-                    .style("font-size", 8)
+                // add labels
+                let timeLabel = ["00:00", "06:00", "12:00", "18:00", "24:00"];
+                let distance = rectHeight / 4;
+                for (let j = 0; j < 5; j++){
+                    svg.append('line')
+                        .style("Stroke", "black")
+                        .style("opacity", 0.5)
+                        .attr("x1", margin.left * 9 / 10)
+                        .attr("y1", margin.top + nodeHeight + rectMargin + rowDistance * i + distance * j)
+                        .attr("x2", margin.left * 9 / 10 + 3)
+                        .attr("y2", margin.top + nodeHeight + rectMargin + rowDistance * i + distance * j)
+
+                    svg.append('text')
+                        .attr("y", margin.top + nodeHeight + rectMargin + rowDistance * i + distance * j + 2.5)
+                        .attr("x", margin.left * 9 / 10 - 3)
+                        .attr('text-anchor', 'end')
+                        .attr("class", 'timeText')
+                        .text(timeLabel[j])
+                        .style("font-size", 7)
+                }
             }
 
             // draw regions
@@ -304,6 +343,8 @@ export default {
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
                     // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
 
+                    self.addTimeSlotLabel(d.id, margin, axisLength);
+
                     // 选中的opacity置为1，其余置为0
                     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
                     // add line to show time interval
@@ -318,7 +359,7 @@ export default {
                     // 选中的opacity置为1，其余置为0
                     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0);
 
-                    // d3.select("#sankeyView").selectAll(".dashedLine").remove();
+                    d3.select("#sankeyView").selectAll(".dashedLine").remove();
                 })
                 .on("click", function (d) {
                     self.$emit("conveyTimeInterval", d.time, d.length);
