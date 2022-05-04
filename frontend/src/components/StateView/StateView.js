@@ -15,7 +15,7 @@ import he from "element-ui/src/locale/lang/he";
 export default {
     name: 'AudioView',
     components: {},
-    props: ['content', 'region', 'number', 'index', 'finish', 'glyphs', 'links', 'destLinks'],
+    props: ['content', 'region', 'number', 'index', 'finish', 'glyphs', 'links', 'destLinks', 'startTime', 'timeLength'],
 
     watch: {
         // content(val) {
@@ -616,6 +616,81 @@ export default {
                 }
             }
 
+            // draw time axis
+            let axisLength = patternWidth - margin.left * 4 - margin.right * 4;
+            let y = cy + patternHeight - margin.bottom / 2;
+            let x = cx + margin.left * 4;
+            console.log(this.startTime);
+            let startTime = this.generateTimeText(this.startTime);
+            let endTime = this.generateTimeText(this.startTime + this.timeLength);
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", x)
+                .attr("y1", y)
+                .attr("x2", x + axisLength)
+                .attr("y2", y)
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", x)
+                .attr("y1", y - 5)
+                .attr("x2", x)
+                .attr("y2", y + 5)
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", x + axisLength)
+                .attr("y1", y - 5)
+                .attr("x2", x +  axisLength)
+                .attr("y2", y + 5)
+
+            svg.append('text')
+                .attr("y", y + 3)
+                .attr("x", x - 3)
+                .attr('text-anchor', 'end')
+                .attr("class", 'timeText')
+                .text("00:00")
+                .style("font-size", 8)
+
+            svg.append('text')
+                .attr("y", y + 3)
+                .attr("x", x + axisLength + 3)
+                .attr('text-anchor', 'start')
+                .attr("class", 'timeText')
+                .text("24:00")
+                .style("font-size", 8)
+
+            // draw timeRects
+            let timeInterval = svg.append("rect")
+                .attr("class", "interval")
+                .attr("x", x + this.startTime / 48 * axisLength)
+                .attr("y", y - 5)
+                .attr("rx", 2)
+                .attr("ry", 2)
+                .attr("width", axisLength / 48 * this.timeLength)
+                .attr("height", 10)
+                .attr("fill", 'red')
+                .attr("opacity", 1)
+                .attr("stroke", '#505254')
+                .attr("stroke-width", 1)
+
+            svg.append('text')
+                .attr("y", y + 8)
+                .attr("x", x + this.startTime / 48 * axisLength - 3)
+                .attr('text-anchor', 'end')
+                .attr("class", 'timeText')
+                .text(startTime)
+                .style("font-size", 8)
+
+            svg.append('text')
+                .attr("y", y + 8)
+                .attr("x", x + this.startTime / 48 * axisLength + axisLength / 48 * this.timeLength + 3)
+                .attr('text-anchor', 'start')
+                .attr("class", 'timeText')
+                .text(endTime)
+                .style("font-size", 8)
+
         },
 
         findPosition: function (patternId){
@@ -1126,6 +1201,16 @@ export default {
                 }
             }
             return false;
+        },
+
+        generateTimeText: function(time){
+            let hour, minute;
+            hour = Math.round(time / 2);
+            minute = time % 2;
+            if (hour < 10){
+                hour = "0" + hour;
+            }
+            return hour + ":" + (minute === 1 ? "30" : "00");
         },
     }
 }

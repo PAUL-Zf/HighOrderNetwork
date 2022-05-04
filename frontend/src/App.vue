@@ -50,6 +50,7 @@
             </div>
           </div>
           <StateView v-on:conveySelected="conveySelected"
+                     v-bind:startTime="startTime" v-bind:timeLength="timeLength"
                      v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
                      v-bind:finish="finish" v-bind:glyphs="glyphs" v-bind:links="links" v-bind:destLinks="destLinks"
                      :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></StateView>

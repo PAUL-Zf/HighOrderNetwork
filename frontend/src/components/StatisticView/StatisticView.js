@@ -131,7 +131,7 @@ export default {
             const leftMargin = 20;
             const middleMargin = 10;
             const margin = 10;
-            const axisMargin = 20;
+            const axisMargin = 30;
             const startHeight = this.height / 8
             const axisLength = this.height - topMargin;
             const maxWidth = this.width / 2 -  leftMargin - margin;
@@ -186,7 +186,7 @@ export default {
                 .enter()
                 .append("text")
                 .attr("x", this.width / 2 - middleMargin)
-                .attr("y", function (d, i) {return startHeight + axisMargin + i * slotHeight * 3 - 8})
+                .attr("y", function (d, i) {return startHeight + axisMargin + i * slotHeight * 3 - 15})
                 .text(function(d){ return d.category})
                 .attr("text-anchor", "end")
                 // .attr("font-weight", 400)
@@ -199,7 +199,7 @@ export default {
                 .enter()
                 .append("text")
                 .attr("x", this.width / 2 + middleMargin)
-                .attr("y", function (d, i) {return startHeight + axisMargin + i * slotHeight * 3 - 8})
+                .attr("y", function (d, i) {return startHeight + axisMargin + i * slotHeight * 3 - 15})
                 .text(function(d){ return d.category})
                 .attr("text-anchor", "start")
                 .attr("font-size", 10)
