@@ -162,6 +162,7 @@ export default {
                 .attr("opacity", 1)
                 .attr("stroke", '#505254')
                 .attr("stroke-width", 0.5)
+                .on("mouseover", function(d) {console.log(d['count'])})
 
             // draw access rects
             let AccessRects = svg.append("g")
@@ -179,6 +180,7 @@ export default {
                 .attr("opacity", 1)
                 .attr("stroke", '#505254')
                 .attr("stroke-width", 0.5)
+                .on("mouseover", function(d) {console.log(d['count'])})
 
             // add POI text
             svg.selectAll("POILabels")

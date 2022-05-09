@@ -57,11 +57,11 @@ export default {
 
         // 向父组件传参：user_id and date
         display: function (event) {
-            dataService.getOverview(this.valueOfDate, response => {
-                this.overview = response.data;
-                // console.log(this.overview);
-                // this.drawChord(this.overview[0], this.overview[1], this.overview[2], this.overview[3], this.overview[4]);
-            })
+            // dataService.getOverview(this.valueOfDate, response => {
+            //     this.overview = response.data;
+            //     // console.log(this.overview);
+            //     // this.drawChord(this.overview[0], this.overview[1], this.overview[2], this.overview[3], this.overview[4]);
+            // })
             this.$emit("conveyData", this.valueOfDate, this.level);
 
             this.load++;

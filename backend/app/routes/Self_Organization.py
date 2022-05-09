@@ -24,7 +24,7 @@ from tkinter import _flatten
 warnings.filterwarnings('ignore')
 
 
-def Self_Organization(start_time, end_time, entropy_threshold):
+def Self_Organization(start_time, end_time, entropy_threshold, dateType):
 
     def matching_point_to_region(df, lng, lat, ST_tree):
         blocks = {}
@@ -130,7 +130,16 @@ def Self_Organization(start_time, end_time, entropy_threshold):
     blocks = matching_point_to_region(
         df_stop, 'LONGITUDE', 'LATITUDE', ST_tree)
     df_stop['blocks'] = blocks.values()
-    df_od_duration = pd.read_csv('app/static/df_od_duration_large_nyc.csv')
+
+    if(dateType == 'Weekdays'):
+        df_od_duration = pd.read_csv(
+            'app/static/df_od_duration_large_nyc_weekdays.csv')
+        print('Here is weekdays!')
+    else:
+        df_od_duration = pd.read_csv(
+            'app/static/df_od_duration_large_nyc_holidays.csv')
+        print('Here is holidays!')
+
     blocks = matching_point_to_region(
         df_od_duration, 'longitude', 'latitude', ST_tree)
     df_od_duration['previous_blocks'] = blocks.values()
