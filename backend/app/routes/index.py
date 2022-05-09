@@ -46,8 +46,10 @@ category_map = {'Food': 0,
                 'Event': 9,
                 }
 
+# 日期类型
+dateType = ''
+
 slotNum = 48
-entropy_threshold = 1.0
 merged_df_od_duration = {}
 merged_area = {}
 id_pattern = {}
@@ -349,6 +351,7 @@ def _getOverview(type):
         od_data = pd.read_csv("app/static/weekdays.csv")
     else:
         od_data = pd.read_csv("app/static/holidays.csv")
+
     region_number = 13
     category_number = 10
     matrix = [[] for x in range(region_number)]
@@ -512,6 +515,10 @@ def _getRegionFlow():
 
 @app.route('/getCheckin/<date>', methods=['GET'])
 def _getCheckin(date):
+    # 赋值给全局变量
+    global dateType
+    dateType = date
+
     if (date == 'Weekdays'):
         filename = "app/static/weekdays_checkin_statistic.json"
     else:
@@ -537,6 +544,11 @@ def _getSankey(date, number):
         return flows
 
     # main
+
+    # 赋值给全局变量
+    global dateType
+    dateType = date
+
     if (date == 'Weekdays'):
         filename = "app/static/weekdays_overview.json"
         data = pd.read_csv("app/static/weekdays_threshold_1.0_clustering.csv")
@@ -915,14 +927,16 @@ def _getRegionInOut():
 
 @app.route('/getSelfOrganization/<start>/<end>/<entropy>', methods=['GET'])
 def _getSelfOrganization(start, end, entropy):
-    # start = int(start)
-    # end = int(end)
-    # entropy = int(entropy)
-    # merged_df_od_duration, merged_area = SO.Self_Organization(
-    #     start, end, entropy_threshold=entropy)
+    start = int(start)
+    end = int(end)
+    entropy = int(entropy)
+    global dateType
 
-    # merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
-    # merged_area.to_csv("app/static/merged_area.csv")
+    merged_df_od_duration, merged_area = SO.Self_Organization(
+        start, end, entropy_threshold=entropy, dateType=dateType)
+
+    merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
+    merged_area.to_csv("app/static/merged_area.csv")
 
     with open("app/static/merged_area.geojson", "r") as f:
         area = json.load(f)
