@@ -11,7 +11,14 @@ export default {
             dataset: '',
             datasets: ['NYC', 'Manhattan'],
             value: [0, 6],
-            marks: {0: 'min', 1: '5', 2: '10', 3: '15', 5: '60', 6: 'max'},
+            marks: {
+                0: {style: "font-size: 8px", label: 'min'},
+                1: {style: "font-size: 8px", label: '5'},
+                2: {style: "font-size: 8px", label: '10'},
+                3: {style: "font-size: 8px", label: '15'},
+                5: {style: "font-size: 8px", label: '60'},
+                6: {style: "font-size: 8px", label: 'max'}
+            },
             users: [],
             dates: ['Weekdays', 'Holidays'],
             valueOfUser: '',
@@ -22,8 +29,7 @@ export default {
         }
     },
 
-    watch: {
-    },
+    watch: {},
 
     methods: {
         // drawGradient: function (){
@@ -86,7 +92,7 @@ export default {
                 .style("fill", '#8dd3c7')
 
             svg.append("text")
-                .attr("x", 15)
+                .attr("x", 18)
                 .attr("y", 15)
                 .style("fill", '#8dd3c7')
                 .text('Food')
@@ -95,13 +101,13 @@ export default {
                 .style("font-size", 10)
 
             svg.append("circle")
-                .attr("cx", 70)
+                .attr("cx", 80)
                 .attr("cy", 15)
                 .attr("r", 3)
                 .style("fill", '#bebada')
 
             svg.append("text")
-                .attr("x", 75)
+                .attr("x", 88)
                 .attr("y", 15)
                 .style("fill", '#bebada')
                 .text('Nightlife Spot')
@@ -111,13 +117,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 30)
+                .attr("cy", 37)
                 .attr("r", 3)
                 .style("fill", '#fb8072')
 
             svg.append("text")
-                .attr("x", 15)
-                .attr("y", 30)
+                .attr("x", 18)
+                .attr("y", 37)
                 .style("fill", '#fb8072')
                 .text('Residence')
                 .attr("text-anchor", "left")
@@ -125,14 +131,14 @@ export default {
                 .style("font-size", 10)
 
             svg.append("circle")
-                .attr("cx", 70)
-                .attr("cy", 30)
+                .attr("cx", 80)
+                .attr("cy", 37)
                 .attr("r", 3)
                 .style("fill", '#80b1d3')
 
             svg.append("text")
-                .attr("x", 75)
-                .attr("y", 30)
+                .attr("x", 88)
+                .attr("y", 37)
                 .style("fill", '#80b1d3')
                 .text('Shop & Service')
                 .attr("text-anchor", "left")
@@ -141,13 +147,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 45)
+                .attr("cy", 59)
                 .attr("r", 3)
                 .style("fill", '#fdb462')
 
             svg.append("text")
-                .attr("x", 15)
-                .attr("y", 45)
+                .attr("x", 18)
+                .attr("y", 59)
                 .style("fill", '#fdb462')
                 .text('Professional & Other Places')
                 .attr("text-anchor", "left")
@@ -156,13 +162,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 60)
+                .attr("cy", 81)
                 .attr("r", 3)
                 .style("fill", '#b3de69')
 
             svg.append("text")
-                .attr("x", 15)
-                .attr("y", 60)
+                .attr("x", 18)
+                .attr("y", 81)
                 .style("fill", '#b3de69')
                 .text('Outdoors & Recreation')
                 .attr("text-anchor", "left")
@@ -171,13 +177,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 75)
+                .attr("cy", 103)
                 .attr("r", 3)
                 .style("fill", '#fccde5')
 
             svg.append("text")
-                .attr("x", 15)
-                .attr("y", 75)
+                .attr("x", 18)
+                .attr("y", 103)
                 .style("fill", '#fccde5')
                 .text('Arts & Entertainment')
                 .attr("text-anchor", "left")
@@ -186,13 +192,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 90)
+                .attr("cy", 125)
                 .attr("r", 3)
                 .style("fill", '#d9d9d9')
 
             svg.append("text")
-                .attr("x", 15)
-                .attr("y", 90)
+                .attr("x", 18)
+                .attr("y", 125)
                 .style("fill", '#d9d9d9')
                 .text('College & University')
                 .attr("text-anchor", "left")
@@ -201,13 +207,13 @@ export default {
 
             svg.append("circle")
                 .attr("cx", 10)
-                .attr("cy", 105)
+                .attr("cy", 147)
                 .attr("r", 3)
                 .style("fill", '#bc80bd')
 
             svg.append("text")
-                .attr("x", 15)
-                .attr("y", 105)
+                .attr("x", 18)
+                .attr("y", 147)
                 .style("fill", '#bc80bd')
                 .text('Travel & Transport')
                 .attr("text-anchor", "left")
@@ -372,7 +378,7 @@ export default {
 
     mounted: function () {
         const width = 280;
-        const height = 130;
+        const height = 200;
         const svg = d3.select("#legend")
             .attr("width", width)
             .attr("height", height);

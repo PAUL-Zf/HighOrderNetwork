@@ -165,7 +165,7 @@ def computeKLD(high, low):
 
 
 def computeEntropy(data):
-    # 筛选出非零值
+    # 筛选出非零
     sum = 0
     nonzero_data = []
     entropy = 0
@@ -239,7 +239,6 @@ def _getAllUsers():
     return json.dumps(user_id)
 
 
-# 根据userid 获取对应的有效 dates
 @app.route('/getDatesByUser/<user_id>', methods=['GET'])
 def _getDatesByUser(user_id):
     dates = []
@@ -253,8 +252,6 @@ def _getDatesByUser(user_id):
         tmp['label'] = date
         dates.append(tmp)
     return json.dumps(dates)
-
-# 根据userid和date获取对应的轨迹数据
 
 
 @app.route('/display/<user_id>/<date>', methods=['GET'])
@@ -421,8 +418,6 @@ def _getOverview(type):
 
     return json.dumps(result)
 
-# 取 VanAreasMap geoJson数据
-
 
 @app.route('/getVanAreasMap/<entropy>', methods=['GET'])
 def _getVanAreasMap(entropy):
@@ -455,9 +450,6 @@ def _getBoundary():
     result['belong'] = belong
 
     return json.dumps(result)
-
-
-# 取 map.geoJson数据
 
 
 @app.route('/getMap', methods=['GET'])
@@ -495,7 +487,7 @@ def _getRegionFlow():
         pickup_centroid = row['previous_blocks']
         dropoff_centroid = row['next_hop_blocks']
 
-        # 判断当前点的 checkin_time 是否与前一个点的 next_hop_checkin_time相同
+        # 判断当前点的 checkin_time 是否与前一个点的next_hop_checkin_time相同
         # 相同则不重复计算
         if pickup_centroid in participates:
             if (checkin_time != last_time):
@@ -570,7 +562,7 @@ def _getSankey(date, number):
     order_3 = patterns['order3']
     order_2 = patterns['order2']
 
-    # 排序并取top k的数据
+    # 排序并取top k的数量
     pattern_time = {}
     pattern_count = {}
     order3_time = {}
@@ -846,7 +838,7 @@ def _getStatistic():
     return json.dumps([poi_order_data, access_order_data, poi_data, access_data])
 
 
-# 根据 date和region 获取对应region的 in and out流量数据
+# 根据 date和region 获取对应region in and out流量数据
 
 
 @app.route('/getRegionInOut', methods=['POST'])
@@ -929,7 +921,7 @@ def _getRegionInOut():
 def _getSelfOrganization(start, end, entropy):
     start = int(start)
     end = int(end)
-    entropy = int(entropy)
+    entropy = float(entropy)
     global dateType
 
     merged_df_od_duration, merged_area = SO.Self_Organization(
