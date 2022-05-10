@@ -592,8 +592,10 @@ export default {
         },
 
         findMax: function (a) {
+            let start = this.startTime;
+            let length = this.timeLength;
             let max = 0;
-            for (let i = 0; i < a.length; i++) {
+            for (let i = start; i < start + length; i++) {
                 let slot = a[i];
                 let sum = 0;
                 for (let j = 0; j < slot.length; j++) {

@@ -73,26 +73,37 @@ text {
   width: 100%;
 }
 
+.el-slider__marks-text {
+  font-size: 8px;
+}
+
 .divide1 {
   position: relative;
   float: left;
-  width: 60%;
+  width: 55%;
   height: 100%;
 }
 
 .divide2 {
   position: relative;
   float: left;
-  width: 40%;
+  width: 45%;
   height: 100%;
 }
 
-.select {
+.select1 {
   position: relative;
   float: left;
-  width: 50%;
+  width: 40%;
   height: 30%;
   /*background-color: #1d68cd;*/
+}
+
+.select2 {
+  position: relative;
+  float: left;
+  width: 60%;
+  height: 30%;
 }
 
 
