@@ -67,7 +67,7 @@ export default {
     methods: {
         generateTimeText: function(time){
             let hour, minute;
-            hour = Math.round(time / 2);
+            hour = Math.floor(time / 2);
             minute = time % 2;
             if (hour < 10){
                 hour = "0" + hour;
@@ -236,6 +236,28 @@ export default {
                 .text("24:00")
                 .style("font-size", 8)
 
+            // add big time axis labels
+            let labels = ['06:00', "12:00", "18:00"];
+            for(let i = 0; i < 3; i++){
+                // add line
+                svg.append('line')
+                    .attr("class", "lines")
+                    .style("Stroke", "black")
+                    .attr("opacity", 0.5)
+                    .attr("x1", margin.left / 3 - 3)
+                    .attr("y1", margin.top + axisLength / 4 * (i + 1))
+                    .attr("x2", margin.left / 3 + 3)
+                    .attr("y2", margin.top + axisLength / 4 * (i + 1))
+
+                svg.append('text')
+                    .attr("class", "labels")
+                    .attr("y", margin.top + axisLength / 4 * (i + 1) - 2)
+                    .attr("x", margin.left / 3)
+                    .attr('text-anchor', 'middle')
+                    .text(labels[i])
+                    .style("font-size", 8)
+            }
+
             // draw timeRects
             let timeRects = svg.append("g")
                 .classed('timeRects', true)
@@ -341,6 +363,8 @@ export default {
                 .on("mouseover", function (d) {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD').attr('opacity', 1);
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
+                    d3.select("#sankeyView").selectAll(".labels").attr('opacity', 0);
+                    d3.select("#sankeyView").selectAll(".lines").attr('opacity', 0);
                     // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
 
                     self.addTimeSlotLabel(d.id, margin, axisLength);
@@ -353,6 +377,8 @@ export default {
                 .on("mouseout", function (d) {
                     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2').attr('opacity', 0);
                     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
+                    d3.select("#sankeyView").selectAll(".labels").attr('opacity', 1);
+                    d3.select("#sankeyView").selectAll(".lines").attr('opacity', 0.5);
                     // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
                     // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
 
