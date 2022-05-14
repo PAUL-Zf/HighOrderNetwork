@@ -9,7 +9,7 @@ export default {
     data() {
         return {
             width: 373,
-            height: 758,
+            height: 800,
             svg: null,
             number: 10,
             options: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -50,6 +50,7 @@ export default {
                 this.links = sankey.links;
                 this.nodes = sankey.nodes;
                 this.regions = sankey.regions;
+                this.heatMap = sankey.heatMap;
 
                 this.updateSvg();
                 this.drawSankey();
@@ -65,11 +66,11 @@ export default {
     },
 
     methods: {
-        generateTimeText: function(time){
+        generateTimeText: function (time) {
             let hour, minute;
             hour = Math.floor(time / 2);
             minute = time % 2;
-            if (hour < 10){
+            if (hour < 10) {
                 hour = "0" + hour;
             }
             return hour + ":" + (minute === 1 ? "30" : "00");
@@ -106,7 +107,7 @@ export default {
                 .style("font-size", 8)
         },
 
-        drawDashedLine: function (id, margin, nodeHeight, rectMargin, rectHeight){
+        drawDashedLine: function (id, margin, nodeHeight, rectMargin, rectHeight) {
             let svg = this.svg;
             let interval = d3.select("#sankeyView").select(".timeRect" + id);
             let x1 = margin.left * 6 / 8;
@@ -183,11 +184,12 @@ export default {
                 "#ccebc5",
                 "#ffed6f"]
 
-            const margin = {top: 30, bottom: 20, left: 80, right: 10};
+            const margin = {top: 150, bottom: 20, left: 50, right: 10};
             const nodePadding = 5;
             const rectPadding = 5;
+            const base = 10;
             const scale = (this.width - margin.left - margin.right - nodePadding * 3) / this.sum;
-            const rectScale = (this.width - margin.left- margin.right - rectPadding * this.number) / this.sum;
+            const rectScale = (this.width - margin.left - margin.right - rectPadding * this.number) / this.sum;
             const nodeHeight = 15;
             const rowDistance = (this.height - margin.top - margin.bottom) / 3 - 10;
             const rectMargin = 40;
@@ -196,89 +198,8 @@ export default {
 
             const axisLength = rowDistance * 3 + nodeHeight;
 
-            // draw big time axis
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", margin.left / 3)
-                .attr("y1", margin.top)
-                .attr("x2", margin.left / 3)
-                .attr("y2", margin.top + axisLength)
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", margin.left / 3 - 5)
-                .attr("y1", margin.top)
-                .attr("x2", margin.left / 3 + 5)
-                .attr("y2", margin.top)
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", margin.left / 3 - 5)
-                .attr("y1", margin.top + axisLength)
-                .attr("x2", margin.left / 3 + 5)
-                .attr("y2", margin.top + axisLength)
-
-            // draw big time axis labels
-            svg.append('text')
-                .attr("y", margin.top - 2)
-                .attr("x", margin.left / 3)
-                .attr('text-anchor', 'middle')
-                .attr("class", 'timeText')
-                .text("00:00")
-                .style("font-size", 8)
-
-            svg.append('text')
-                .attr("y", margin.top + axisLength + 8)
-                .attr("x", margin.left / 3)
-                .attr('text-anchor', 'middle')
-                .attr("class", 'timeText')
-                .text("24:00")
-                .style("font-size", 8)
-
-            // add big time axis labels
-            let labels = ['06:00', "12:00", "18:00"];
-            for(let i = 0; i < 3; i++){
-                // add line
-                svg.append('line')
-                    .attr("class", "lines")
-                    .style("Stroke", "black")
-                    .attr("opacity", 0.5)
-                    .attr("x1", margin.left / 3 - 3)
-                    .attr("y1", margin.top + axisLength / 4 * (i + 1))
-                    .attr("x2", margin.left / 3 + 3)
-                    .attr("y2", margin.top + axisLength / 4 * (i + 1))
-
-                svg.append('text')
-                    .attr("class", "labels")
-                    .attr("y", margin.top + axisLength / 4 * (i + 1) - 2)
-                    .attr("x", margin.left / 3)
-                    .attr('text-anchor', 'middle')
-                    .text(labels[i])
-                    .style("font-size", 8)
-            }
-
-            // draw timeRects
-            let timeRects = svg.append("g")
-                .classed('timeRects', true)
-                .selectAll('timeRects')
-                .data(this.timeRects)
-                .enter()
-                .append("rect")
-                .attr("class", d => 'timeRect' + d.id)
-                .attr("x", margin.left / 3 - 5)
-                .attr("y", d => margin.top + d.time / 24 * axisLength - d.length / 24 * axisLength / 2)
-                .attr("rx", 2)
-                .attr("ry", 2)
-                .attr("width", 10)
-                .attr("height", d => d.length / 24 * axisLength)
-                .attr("fill", 'red')
-                .attr("opacity", 0)
-                .attr("stroke", '#505254')
-                .attr("stroke-width", 1)
-
             // draw time axis
-            for (let i = 0; i < 3; i++){
+            for (let i = 0; i < 3; i++) {
                 svg.append('line')
                     .style("Stroke", "black")
                     .style("opacity", 0.5)
@@ -290,7 +211,7 @@ export default {
                 // add labels
                 let timeLabel = ["00:00", "06:00", "12:00", "18:00", "24:00"];
                 let distance = rectHeight / 4;
-                for (let j = 0; j < 5; j++){
+                for (let j = 0; j < 5; j++) {
                     svg.append('line')
                         .style("Stroke", "black")
                         .style("opacity", 0.5)
@@ -339,7 +260,12 @@ export default {
                 .attr("x", d => margin.left + d.x * scale + d.index * nodePadding + 1)
                 .attr("y", d => margin.top + d.order * rowDistance + 10)
                 .attr('text-anchor', 'start')
-                .text(d => "R" + d.community)
+                .text(d => {
+                    if((d.community >= 10 && d.width * scale < 15) || (d.community < 10 && d.width * scale < 10))
+                        return null;
+                    else
+                        return "R" + d.community;
+                })
                 .style("font-size", 7)
 
             // draw nodes
@@ -360,33 +286,8 @@ export default {
                 .attr("opacity", 0)
                 .attr("stroke", '#505254')
                 .attr("stroke-width", 0.5)
-                .on("mouseover", function (d) {
-                    d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD').attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".labels").attr('opacity', 0);
-                    d3.select("#sankeyView").selectAll(".lines").attr('opacity', 0);
-                    // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
-
-                    self.addTimeSlotLabel(d.id, margin, axisLength);
-
-                    // 选中的opacity置为1，其余置为0
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
-                    // add line to show time interval
-                    // self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
-                })
-                .on("mouseout", function (d) {
-                    d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2').attr('opacity', 0);
-                    d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
-                    d3.select("#sankeyView").selectAll(".labels").attr('opacity', 1);
-                    d3.select("#sankeyView").selectAll(".lines").attr('opacity', 0.5);
-                    // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
-                    // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
-
-                    // 选中的opacity置为1，其余置为0
-                    d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0);
-
-                    d3.select("#sankeyView").selectAll(".dashedLine").remove();
-                })
+                .on("mouseover", d => this.mouseover(d))
+                .on("mouseout", d => this.mouseout(d))
                 .on("click", function (d) {
                     self.$emit("conveyTimeInterval", d.time, d.length);
                     self.$emit("conveyPatternId", d.id);
@@ -410,44 +311,33 @@ export default {
                 .attr("opacity", 1)
                 .attr("stroke", '#505254')
                 .attr("stroke-width", 1)
-                // .on("mouseover", function (d) {
-                //     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD');
-                //     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
-                //     d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
-                //     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
-                //     // add line to show time interval
-                //     self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
-                // })
-                // .on("mouseout", function (d) {
-                //     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2');
-                //     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
-                //     d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
-                //     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
-                //     d3.select("#sankeyView").selectAll(".dashedLine").remove();
-                // })
-                // .on("click", function (d) {
-                //     self.$emit("conveyTimeInterval", d.time, d.length);
-                //     self.$emit("conveyPatternId", d.id);
-                // })
+            // .on("mouseover", function (d) {
+            //     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD');
+            //     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
+            //     d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
+            //     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 1);
+            //     // add line to show time interval
+            //     self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
+            // })
+            // .on("mouseout", function (d) {
+            //     d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2');
+            //     d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
+            //     d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
+            //     d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
+            //     d3.select("#sankeyView").selectAll(".dashedLine").remove();
+            // })
+            // .on("click", function (d) {
+            //     self.$emit("conveyTimeInterval", d.time, d.length);
+            //     self.$emit("conveyPatternId", d.id);
+            // })
 
-            // 统计最大值和最小值
-            let min = this.heatMap[0]['count'];
-            let max = this.heatMap[0]['count'];
-            for (let i = 0; i < this.heatMap.length; i++){
-                let count = this.heatMap[i]['count'];
-                max = (count > max) ? count : max;
-                min = (count < min) ? count : min;
-            }
-
-            // Build color scale
-            let myColor = d3.scaleLinear()
-                .range(["#FFF7BC", "#FD5D5D"])
-                .domain([min, max])
+            // draw grid
+            this.drawGrids();
 
             // draw HeatMap
             let heatMap = svg.append("g")
-                .classed('flows', true)
-                .selectAll('flows')
+                .attr("class", 'heatmap')
+                .selectAll('whatever')
                 .data(this.heatMap)
                 .enter()
                 .append("rect")
@@ -456,10 +346,15 @@ export default {
                 .attr("y", d => margin.top + nodeHeight + rowDistance * d.order + rectMargin + rectHeight / 24 * d.index)
                 .attr("width", d => d.width * rectScale)
                 .attr("height", rectHeight / 24)
-                .attr("fill", d => myColor(d.count))
+                .attr("fill", function (d) {
+                    let myColor = d3.scaleLinear()
+                        .range(["#FFF7BC", "#FD5D5D"])
+                        .domain([d.min, d.max])
+                    return myColor(d.count);
+                })
                 .attr("opacity", 1)
-                // .attr("stroke", '#505254')
-                // .attr("stroke-width", 0)
+            // .attr("stroke", '#505254')
+            // .attr("stroke-width", 0)
 
             // // draw timeRects
             // let timeRects = svg.append("g")
@@ -510,10 +405,10 @@ export default {
                 .attr("class", d => "link" + d.id)
                 .attr("d", d => {
                     let l = {source: [0, 0], target: [0, 0]};
-                    l.source[0] = margin.left * ((d.type===0) ? 1 : 1) + d.startX * ((d.type===0) ? scale : rectScale) + d.startIndex * ((d.type===0) ? nodePadding : rectPadding);
-                    l.source[1] = margin.top + d.order * rowDistance + nodeHeight + ((d.type===0) ? 0 : (rectMargin + rectHeight));
-                    l.target[0] = margin.left * ((d.type===0) ? 1 : 1) + d.endX * ((d.type===0) ? rectScale : scale) + d.endIndex * ((d.type===0) ? rectPadding : nodePadding);
-                    l.target[1] = margin.top + ((d.type===0) ? d.order : d.order + 1) * rowDistance + ((d.type===0) ? (nodeHeight + rectMargin) : 0);
+                    l.source[0] = margin.left * ((d.type === 0) ? 1 : 1) + d.startX * ((d.type === 0) ? scale : rectScale) + d.startIndex * ((d.type === 0) ? nodePadding : rectPadding);
+                    l.source[1] = margin.top + d.order * rowDistance + nodeHeight + ((d.type === 0) ? 0 : (rectMargin + rectHeight));
+                    l.target[0] = margin.left * ((d.type === 0) ? 1 : 1) + d.endX * ((d.type === 0) ? rectScale : scale) + d.endIndex * ((d.type === 0) ? rectPadding : nodePadding);
+                    l.target[1] = margin.top + ((d.type === 0) ? d.order : d.order + 1) * rowDistance + ((d.type === 0) ? (nodeHeight + rectMargin) : 0);
                     return link(l);
                 })
                 .attr("fill", "none")
@@ -593,6 +488,120 @@ export default {
             //         self.$emit("conveyTimeInterval", d.time, d.half_time_length);
             //     })
 
+        },
+
+        drawGrids: function () {
+            let svg = this.svg;
+            let margin = {top: 20, bottom: 20, left: 50, right: 20}
+            let height = 110;
+            let width = this.width - margin.left - margin.right;
+            let columnNumber = 6;
+            let rowNumber = this.number;
+            let gridHeight = height / rowNumber;
+            let gridWidth = width / columnNumber;
+
+            let gridsData = [];
+            for (let i = 0; i < rowNumber; i++) {
+                for (let j = 0; j < columnNumber; j++) {
+                    let grid = {row: 0, column: 0};
+                    grid.row = i;
+                    grid.column = j;
+                    gridsData.push(grid);
+                }
+            }
+
+            let grids = svg.append("g")
+                .attr("class", "grids")
+                .selectAll('grids')
+                .data(gridsData)
+                .enter()
+                .append("rect")
+                .attr("class", "grid")
+                .attr("x", d => margin.left + d.column * gridWidth)
+                .attr("y", d => margin.top + d.row * gridHeight)
+                .attr("rx", 2)
+                .attr("ry", 2)
+                .attr("width", gridWidth)
+                .attr("height", gridHeight)
+                .attr("fill", "#F7F5F2")
+                .attr("opacity", 1)
+                .attr("stroke", '#505254')
+                .attr("stroke-width", 1)
+
+            // draw timeRects
+            let timeRects = svg.append("g")
+                .classed('timeRects', true)
+                .selectAll('timeRects')
+                .data(this.timeRects)
+                .enter()
+                .append("rect")
+                .attr("class", d => 'timeRect' + d.id)
+                .attr("x", d => margin.left + d.time / 24 * width - d.length / 24 * width / 2)
+                .attr("y", d => margin.top + d.id * gridHeight)
+                .attr("rx", 2)
+                .attr("ry", 2)
+                .attr("width", d => d.length / 24 * width)
+                .attr("height", gridHeight)
+                .attr("fill", '#FF6363')
+                // .attr("opacity", 0.6)
+                .attr("stroke", '#505254')
+                .attr("stroke-width", 1)
+                .on("mouseover", d => this.mouseover(d))
+                .on("mouseout", d => this.mouseout(d))
+
+            // add time label
+            let timeLabel = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"];
+            for (let i = 0; i <= columnNumber; i++) {
+                svg.append('text')
+                    .attr("y", margin.top - 5)
+                    .attr("x", margin.left + i * gridWidth)
+                    .attr('text-anchor', 'middle')
+                    .attr("class", 'timeLabel')
+                    .text(timeLabel[i])
+                    .style("font-size", 7)
+            }
+
+            // add pattern id label
+            for (let i = 0; i < this.number; i++) {
+                svg.append('text')
+                    .attr("y", margin.top + gridHeight * i + 8)
+                    .attr("x", margin.left - 3)
+                    .attr('text-anchor', 'end')
+                    .attr("class", 'patternLabel')
+                    .text(i)
+                    .style("font-size", 7)
+            }
+
+
+        },
+
+        mouseover: function (d){
+            d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#DDDDDD').attr('opacity', 1);
+            d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 1);
+            d3.select("#sankeyView").selectAll(".labels").attr('opacity', 0);
+            d3.select("#sankeyView").selectAll(".lines").attr('opacity', 0);
+            // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 1);
+
+            // self.addTimeSlotLabel(d.id, margin, axisLength);
+
+            // 选中的opacity置为1，其余置为0
+            d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('fill', 'red');
+            // add line to show time interval
+            // self.drawDashedLine(d.id, margin, nodeHeight, rectMargin, rectHeight);
+        },
+
+        mouseout: function (d){
+            d3.select("#sankeyView").selectAll(".node" + d.id).attr('fill', '#F7F5F2').attr('opacity', 0);
+            d3.select("#sankeyView").selectAll(".link" + d.id).attr('opacity', 0.3);
+            d3.select("#sankeyView").selectAll(".labels").attr('opacity', 1);
+            d3.select("#sankeyView").selectAll(".lines").attr('opacity', 0.5);
+            // d3.select("#sankeyView").selectAll(".rect" + d.id).attr('opacity', 0.5);
+            // d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('opacity', 0.5);
+
+            // 选中的opacity置为1，其余置为0
+            d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('fill', '#FF6363');
+
+            // d3.select("#sankeyView").selectAll(".dashedLine").remove();
         }
     }
 }

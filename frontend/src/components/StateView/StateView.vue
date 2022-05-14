@@ -29,7 +29,7 @@
 
     #audioContainer {
         /* height: 243px; */
-        height: 220px;
+        height: 262px;
     }
 
     #audioGraph {
