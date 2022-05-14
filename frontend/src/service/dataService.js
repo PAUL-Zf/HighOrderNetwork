@@ -3,6 +3,7 @@ import axios from 'axios'
 // import dataService from "@/service/dataService";
 const GET_REQUEST = 'get'
 const POST_REQUEST = 'post'
+// const dataServerUrl = 'http://10.20.57.100:8888'
 const dataServerUrl = 'http://127.0.0.1:8888'
 import Vue from 'vue'
 import VueResource from 'vue-resource'

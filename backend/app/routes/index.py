@@ -628,19 +628,23 @@ def _getSankey(date, number):
     for i in range(1, 4):
         coord = 0
         for key, value in pattern_count.items():
-            if (len(key) > i):
-                rect = {}
-                rect['id'] = pattern_id[key]
-                rect['order'] = i - 1
-                rect['width'] = pattern_count[key]
-                rect['x'] = coord
-                rect['time'] = pattern_time[key]
-                rect['length'] = pattern_count[key] % 3 + 1
+            rect = {}
+            rect['id'] = pattern_id[key]
+            rect['order'] = i - 1
+            rect['width'] = pattern_count[key]
+            rect['x'] = coord
+            rect['time'] = pattern_time[key]
+            rect['length'] = pattern_count[key] % 3 + 1
+
+            if(len(key) > i):
+                rects.append(rect)
 
                 # Heat Map
                 start = key[i - 1]
                 end = key[i]
                 flows = getHeatMapData(data, start, end)
+                maxCount = max(flows)
+                minCount = min(flows)
 
                 for j in range(24):
                     h = {}
@@ -652,6 +656,8 @@ def _getSankey(date, number):
                     h['length'] = pattern_count[key] % 3 + 1
                     h['index'] = j
                     h['count'] = flows[j]
+                    h['max'] = maxCount
+                    h['min'] = minCount
                     heatMap.append(h)
 
                 r = {}
@@ -659,8 +665,7 @@ def _getSankey(date, number):
                 r['index'] = rect['id']
                 rect_record[rect['order']][rect['id']] = r
 
-                rects.append(rect)
-                coord += pattern_count[key]
+            coord += pattern_count[key]
 
     # 计算 timeRects
     timeRects = []

@@ -43,7 +43,7 @@ text {
 
 #OverviewContainer {
   /* height: 243px; */
-  height: 758px;
+  height: 800px;
 }
 
 #my-player {
