@@ -852,7 +852,19 @@ export default {
                         // onEachFeature: self.onEachFeature,
                     }
                 ).addTo(map);
+
+                let boundaryLayer = L.geoJson(segmentation, {
+                    style: function (feature) {
+                        return {
+                            weight: 0.5,
+                            color: 'black',
+                            fillOpacity: 0,
+                        }
+                    }
+                })
+
                 this.segmentationLayer = segmentationLayer;
+                this.boundaryLayer = boundaryLayer;
 
                 // // 底图，不允许修改
                 // let segmentationLayer = L.geoJson(segmentation, {

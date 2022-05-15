@@ -19,6 +19,9 @@ export default {
             nodes: null,
             regions: null,
             heatMap: null,
+            drawSignal: 0,
+            overviewPattern: null,
+            categoryDistribution: null,
         }
     },
     watch: {
@@ -33,6 +36,7 @@ export default {
                 this.nodes = sankey.nodes;
                 this.regions = sankey.regions;
                 this.heatMap = sankey.heatMap;
+                this.categoryDistribution = sankey.regionsFlow;
 
                 // this.drawGradient();
                 this.updateSvg();
@@ -51,6 +55,7 @@ export default {
                 this.nodes = sankey.nodes;
                 this.regions = sankey.regions;
                 this.heatMap = sankey.heatMap;
+                this.regionsFlow = sankey.regionsFlow;
 
                 this.updateSvg();
                 this.drawSankey();
@@ -288,10 +293,11 @@ export default {
                 .attr("stroke-width", 0.5)
                 .on("mouseover", d => this.mouseover(d))
                 .on("mouseout", d => this.mouseout(d))
-                .on("click", function (d) {
-                    self.$emit("conveyTimeInterval", d.time, d.length);
-                    self.$emit("conveyPatternId", d.id);
-                })
+                .on("click", d => this.click(d))
+                // .on("click", function (d) {
+                //     self.$emit("conveyTimeInterval", d.time, d.length);
+                //     self.$emit("conveyPatternId", d.id);
+                // })
 
             // draw rects
             let rects = svg.append("g")
@@ -526,7 +532,7 @@ export default {
                 .attr("fill", "#F7F5F2")
                 .attr("opacity", 1)
                 .attr("stroke", '#505254')
-                .attr("stroke-width", 1)
+                .attr("stroke-width", 0.5)
 
             // draw timeRects
             let timeRects = svg.append("g")
@@ -548,6 +554,7 @@ export default {
                 .attr("stroke-width", 1)
                 .on("mouseover", d => this.mouseover(d))
                 .on("mouseout", d => this.mouseout(d))
+                .on("click", d => this.click(d))
 
             // add time label
             let timeLabel = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"];
@@ -602,6 +609,19 @@ export default {
             d3.select("#sankeyView").selectAll(".timeRect" + d.id).attr('fill', '#FF6363');
 
             // d3.select("#sankeyView").selectAll(".dashedLine").remove();
+        },
+
+        click: function (d) {
+            this.overviewPattern = this.patterns[d.id];
+            this.drawSignal++;
+
+            let start = this.timeRects[d.id].time * 2 - this.timeRects[d.id].length;
+            let length = this.timeRects[d.id].length * 2;
+
+            this.$emit("conveyOverviewPattern", this.drawSignal, this.overviewPattern,
+                this.categoryDistribution, start, length);
+            this.$emit("conveyTimeInterval", d.time, d.length);
+            this.$emit("conveyPatternId", d.id);
         }
     }
 }

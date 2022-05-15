@@ -473,6 +473,17 @@ def _getRegionFlow():
 
     # compute region flow
 
+    category_map = {'Food': 0,
+                    'Shop & Service': 1,
+                    'Outdoors & Recreation': 2,
+                    'Professional & Other Places': 3,
+                    'Travel & Transport': 4,
+                    'Nightlife Spot': 5,
+                    'Arts & Entertainment': 6,
+                    'College & University': 7,
+                    'Residence': 8,
+                    }
+
     for p in participates:
         regionsFlow[p] = [0 for x in range(len(category_map))]
 
@@ -490,16 +501,17 @@ def _getRegionFlow():
         # 判断当前点的 checkin_time 是否与前一个点的next_hop_checkin_time相同
         # 相同则不重复计算
         if pickup_centroid in participates:
-            if (checkin_time != last_time):
+            if (checkin_time != last_time and pre_category != "Event"):
                 regionsFlow[pickup_centroid][category_map[pre_category]] += 1
-        if dropoff_centroid in participates:
+        if dropoff_centroid in participates and next_category != "Event":
             regionsFlow[dropoff_centroid][category_map[next_category]] += 1
         # 考虑group
         if pickup_centroid in group and len(group) > 1:
-            if (checkin_time != last_time):
+            if (checkin_time != last_time and pre_category != "Event"):
                 regionsFlow[groupId][category_map[pre_category]] += 1
         if dropoff_centroid in group and len(group) > 1:
-            regionsFlow[groupId][category_map[next_category]] += 1
+            if next_category != "Event":
+                regionsFlow[groupId][category_map[next_category]] += 1
 
         last_time = next_hop_checkin_time
     return json.dumps(regionsFlow)
@@ -535,7 +547,41 @@ def _getSankey(date, number):
             flows[i] = count
         return flows
 
-    # main
+    def getRegionFlows(data, community_number):
+        category_map = {'Food': 0,
+                        'Shop & Service': 1,
+                        'Outdoors & Recreation': 2,
+                        'Professional & Other Places': 3,
+                        'Travel & Transport': 4,
+                        'Nightlife Spot': 5,
+                        'Arts & Entertainment': 6,
+                        'College & University': 7,
+                        'Residence': 8,
+                        }
+        regionsFlow = [[0 for _ in range(len(category_map))]
+                       for x in range(community_number)]
+
+        last_time = 0
+
+        for index, row in data.iterrows():
+            user_id = row['user_id']
+            checkin_time = row['checkin_time']
+            next_hop_checkin_time = row['next_hop_checkin_time']
+            pre_category = row['previous_category']
+            next_category = row['next_hop_category']
+            pickup_centroid = row['previous_center']
+            dropoff_centroid = row['next_hop_center']
+
+            # 判断当前点的 checkin_time 是否与前一个点的next_hop_checkin_time相同
+            # 相同则不重复计算
+
+            if (checkin_time != last_time and pre_category != 'Event'):
+                regionsFlow[pickup_centroid][category_map[pre_category]] += 1
+            if next_category != 'Event':
+                regionsFlow[dropoff_centroid][category_map[next_category]] += 1
+
+            last_time = next_hop_checkin_time
+        return regionsFlow
 
     # 赋值给全局变量
     global dateType
@@ -554,6 +600,9 @@ def _getSankey(date, number):
     # 前端传来的参数
     pattern_number = int(number)
     community_number = 19
+
+    # get regions flow
+    regionsFlow = getRegionFlows(data, community_number)
 
     # 确定二阶轨迹和三阶轨迹的数量
     order3_num = int(pattern_number / 3)
@@ -615,9 +664,11 @@ def _getSankey(date, number):
     # 赋予pattern id
     pattern_id = {}
     id = 0
+    patterns = []
     for key, value in pattern_count.items():
         pattern_id[key] = id
         id_pattern[id] = key
+        patterns.append(key)
         id += 1
 
     rect_record = [[{}] * pattern_number for i in range(3)]
@@ -792,6 +843,8 @@ def _getSankey(date, number):
         id += 1
 
     result = {}
+    result['patterns'] = patterns
+    result['regionsFlow'] = regionsFlow
     result['sum'] = flow_sum
     result['nodes'] = nodes
     result['regions'] = regions
