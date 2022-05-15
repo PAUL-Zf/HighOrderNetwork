@@ -17,6 +17,7 @@
           <Overview v-on:conveyTimeInterval="conveyTimeInterval" v-bind:date="date" v-bind:region="region"
                     v-bind:load="load"
                     v-on:conveyPattern="conveyPattern" v-on:conveyPatternId="conveyPatternId"
+                    v-on:conveyOverviewPattern="conveyOverviewPattern"
           ></Overview>
         </div>
         <div class="col-9 content" style="padding-left: 0px; padding-right: 0px">
@@ -51,6 +52,9 @@
           </div>
           <StateView v-on:conveySelected="conveySelected"
                      v-bind:startTime="startTime" v-bind:timeLength="timeLength"
+                     v-bind:categoryDistribution="categoryDistribution"
+                     v-bind:overviewStart="overviewStart" v-bind:overviewLength="overviewLength"
+                     v-bind:drawSignal="drawSignal" v-bind:overviewPattern="overviewPattern"
                      v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
                      v-bind:finish="finish" v-bind:glyphs="glyphs" v-bind:links="links" v-bind:destLinks="destLinks"
                      :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></StateView>
@@ -92,6 +96,11 @@ export default {
       halfInterval: null,
       pattern: null,
       patternId: null,
+      drawSignal: null,
+      overviewPattern: null,
+      categoryDistribution: null,
+      overviewStart: null,
+      overviewLength: null,
       generate: null,
       start: null,
       finish: null,
@@ -153,6 +162,14 @@ export default {
     conveyTimeInterval(time, halfInterval) {
       this.time = time;
       this.halfInterval = halfInterval;
+    },
+
+    conveyOverviewPattern(drawSignal, overviewPattern, categoryDistribution, start, length){
+      this.drawSignal = drawSignal;
+      this.overviewPattern = overviewPattern;
+      this.categoryDistribution = categoryDistribution;
+      this.overviewStart = start;
+      this.overviewLength = length;
     },
 
     conveyPatternId(patternId){

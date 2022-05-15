@@ -303,8 +303,8 @@ export default {
 
             c.attr("width", 2 * this.halfInterval * this.slotWidth + 12);
             s.attr("width", 2 * this.halfInterval * this.slotWidth);
-            s.attr("x", this.margin + this.axisMargin + this.time * 2 * this.slotWidth)
-            c.attr("x", this.margin + this.axisMargin + this.time * 2 * this.slotWidth)
+            s.attr("x", this.margin + this.axisMargin + this.time * 2 * this.slotWidth - this.halfInterval * this.slotWidth);
+            c.attr("x", this.margin + this.axisMargin + this.time * 2 * this.slotWidth - this.halfInterval * this.slotWidth - 6);
         },
 
         drawTimeSlot: function (inData, outData, width, height) {
