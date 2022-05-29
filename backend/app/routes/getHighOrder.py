@@ -326,6 +326,10 @@ def getHighOrder(start, length, region, groupId):
 
             circle['coordinate'] = centroids[int(id)]
             circle['radius'] = count
+            if i == 0:
+                circle['type'] = 0
+            else:
+                circle['type'] = 1
             circles.append(circle)
             preamble.append(int(id))
 
@@ -342,6 +346,12 @@ def getHighOrder(start, length, region, groupId):
 
             coord.append(centroids[int(id)])
         destCount = 0
+
+        # compute total
+        totalCount = 0
+        for num in v:
+            totalCount += num
+
         for i in range(len(v)):
             if v[i]:
                 c = copy.deepcopy(coord)
@@ -374,10 +384,13 @@ def getHighOrder(start, length, region, groupId):
                     destLink['column'] = columnNumber - 1
                     destLinks.append(destLink)
 
-                circle = {}
-                circle['coordinate'] = centroids[index_to_id[i]]
-                circle['radius'] = count
-                circles.append(circle)
+                    circle = {}
+                    circle['coordinate'] = centroids[index_to_id[i]]
+                    circle['radius'] = count
+                    circle['index'] = destCount - 1
+                    circle['type'] = 2
+                    circle['entropy'] = v[i] / totalCount
+                    circles.append(circle)
 
         pattern['preamble'] = preamble
         pattern['destinations'] = destinations
@@ -643,7 +656,7 @@ def computeEntropy(data):
     # compute entropy
     if sum == 0:
         return 0
-    
+
     # 通过将sum < 3的方式过滤轨迹
     if sum < 3:
         return 0

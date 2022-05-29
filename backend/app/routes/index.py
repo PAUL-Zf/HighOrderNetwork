@@ -285,11 +285,17 @@ def _getPattern(patternId):
         if center not in center_list:
             center_list.append(center)
 
+    cnt = 0
     for id in center_list:
         circle = {}
         circle['coordinate'] = centroids[id]
         circle['id'] = id
+        if cnt == 0:
+            circle['type'] = 0
+        else:
+            circle['type'] = 1
         circles.append(circle)
+        cnt += 1
 
     # 添加曲线信息
     lines = []
@@ -665,10 +671,12 @@ def _getSankey(date, number):
     pattern_id = {}
     id = 0
     patterns = []
+    flowsCount = []
     for key, value in pattern_count.items():
         pattern_id[key] = id
         id_pattern[id] = key
         patterns.append(key)
+        flowsCount.append(value)
         id += 1
 
     rect_record = [[{}] * pattern_number for i in range(3)]
@@ -844,6 +852,7 @@ def _getSankey(date, number):
 
     result = {}
     result['patterns'] = patterns
+    result['flows'] = flowsCount
     result['regionsFlow'] = regionsFlow
     result['sum'] = flow_sum
     result['nodes'] = nodes
@@ -865,8 +874,10 @@ def _getStatistic():
 
     poi_data = []
     access_data = []
-    poi_order_data = []
-    access_order_data = []
+    poi_order_poi = []
+    poi_order_access = []
+    access_order_poi = []
+    access_order_access = []
 
     # Order in category_map
     # Order in count
@@ -875,11 +886,15 @@ def _getStatistic():
 
     for value in poi_order:
         p = {'category': value[0], 'count': value[1]}
-        poi_order_data.append(p)
+        q = {'category': value[0], 'count': access[value[0]]}
+        poi_order_poi.append(p)
+        poi_order_access.append(q)
 
     for value in access_order:
         p = {'category': value[0], 'count': value[1]}
-        access_order_data.append(p)
+        q = {'category': value[0], 'count': poi[value[0]]}
+        access_order_access.append(p)
+        access_order_poi.append(q)
 
     global category_map
 
@@ -893,7 +908,7 @@ def _getStatistic():
             p = {'category': k, 'count': access[k]}
             access_data.append(p)
 
-    return json.dumps([poi_order_data, access_order_data, poi_data, access_data])
+    return json.dumps([poi_order_poi, poi_order_access, access_order_poi, access_order_access])
 
 
 # 根据 date和region 获取对应region in and out流量数据
@@ -977,16 +992,16 @@ def _getRegionInOut():
 
 @app.route('/getSelfOrganization/<start>/<end>/<entropy>', methods=['GET'])
 def _getSelfOrganization(start, end, entropy):
-    start = int(start)
-    end = int(end)
-    entropy = float(entropy)
-    global dateType
+    # start = int(start)
+    # end = int(end)
+    # entropy = float(entropy)
+    # global dateType
 
-    merged_df_od_duration, merged_area = SO.Self_Organization(
-        start, end, entropy_threshold=entropy, dateType=dateType)
+    # merged_df_od_duration, merged_area = SO.Self_Organization(
+    #     start, end, entropy_threshold=entropy, dateType=dateType)
 
-    merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
-    merged_area.to_csv("app/static/merged_area.csv")
+    # merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
+    # merged_area.to_csv("app/static/merged_area.csv")
 
     with open("app/static/merged_area.geojson", "r") as f:
         area = json.load(f)

@@ -1,5 +1,7 @@
 import dataService from "@/service/dataService";
 import response from "vue-resource/src/http/response";
+import {left} from "d3-sankey/src/align";
+import ta from "element-ui/src/locale/lang/ta";
 
 export default {
     name: 'StatisticView',
@@ -8,12 +10,16 @@ export default {
     data() {
         return {
             width: 279,
-            height: 500,
+            height: 600,
             svg: null,
-            POI: null,
-            access: null,
-            POIOrder: null,
-            accessOrder: null,
+            POIOrder_poi: null,
+            POIOrder_access: null,
+            accessOrder_poi: null,
+            accessOrder_access: null,
+            history_POIOrder_poi: null,
+            history_POIOrder_access: null,
+            history_accessOrder_poi: null,
+            history_accessOrder_access: null,
             inOrder: false,
             category_map: {'Food': 0,
                 'Shop & Service': 1,
@@ -25,35 +31,48 @@ export default {
                 'College & University': 7,
                 'Residence': 8,
             },
-            color: ['#8dd3c7', '#80b1d3', '#b3de69', '#fdb462', '#bc80bd',
-                '#bebada', '#fccde5', '#d9d9d9', '#fb8072']
+            color: ['#8dd3c7', '#fb8072', '#b3de69', '#fdb462', '#bc80bd', '#bebada',
+                '#fccde5', '#d9d9d9', '#80b1d3', '#F7F5F2', '#666666', '#99CC66', '#CCCC99'],
         }
     },
     watch: {
         generate(val) {
             let params = {selects: this.selects, startTime: this.startTime, timeLength: this.timeLength};
+            this.history_POIOrder_poi = this.POIOrder_poi;
+            this.history_POIOrder_access = this.POIOrder_access;
+            this.history_accessOrder_poi = this.accessOrder_poi;
+            this.history_accessOrder_access = this.accessOrder_access;
             dataService.getStatistic(params, response => {
-                this.POIOrder = response.data[0];
-                this.accessOrder = response.data[1];
-                this.POI = response.data[2];
-                this.access = response.data[3];
+                this.POIOrder_poi = response.data[0];
+                this.POIOrder_access = response.data[1];
+                this.accessOrder_poi = response.data[2];
+                this.accessOrder_access = response.data[3];
                 console.log("------------Statistic View-------------");
-                console.log(this.POI);
-                console.log(this.access);
-                console.log(this.POIOrder);
-                console.log(this.accessOrder);
+                console.log(this.POIOrder_poi);
+                console.log(this.POIOrder_access);
+                console.log(this.accessOrder_poi);
+                console.log(this.accessOrder_access);
                 console.log("------------Statistic View-------------");
                 this.updateSvg();
-                this.drawLine();
-                this.drawBarchart(this.POI, this.access);
+                this.drawBarchart(this.POIOrder_poi, this.POIOrder_access, 0);
+                if(val > 1) this.drawBarchart(this.history_POIOrder_poi, this.history_POIOrder_access, 1);
             })
         },
 
         inOrder(value) {
             this.updateSvg();
-            this.drawLine();
-            if (value) this.drawBarchart(this.POIOrder, this.accessOrder);
-            else this.drawBarchart(this.POI, this.access);
+            if (value) {
+                this.drawBarchart(this.accessOrder_poi, this.accessOrder_access, 0);
+                if(this.generate > 1) {
+                    this.drawBarchart(this.history_accessOrder_poi, this.history_accessOrder_access, 1);
+                }
+            }
+            else {
+                this.drawBarchart(this.POIOrder_poi, this.POIOrder_access, 0);
+                if(this.generate > 1) {
+                    this.drawBarchart(this.history_POIOrder_poi, this.history_POIOrder_access, 1);
+                }
+            }
         },
     },
 
@@ -62,6 +81,8 @@ export default {
             .attr("width", this.width)
             .attr("height", this.height);
         this.svg = svg;
+
+        // this.drawLine()
     },
 
     methods: {
@@ -85,127 +106,174 @@ export default {
             return max;
         },
 
-        drawLine: function () {
+        drawLine: function (cy) {
             let svg = this.svg;
-            const topMargin = 20;
+            const topMargin = 40;
             const leftMargin = 20;
+            const tableWidth = this.width - leftMargin * 2;
+            const tableHeight = this.height / 2;
+            const columnWidth = tableWidth / 3;
+            const rowHeight = (tableHeight - topMargin) / 9;
 
             let HLine = svg.append('line')
-                .style("Stroke", "black")
+                .style("Stroke", "grey")
                 .style("stroke-width", 1)
                 .style("opacity", 1)
                 .attr("x1", leftMargin)
-                .attr("y1", this.height / 8)
+                .attr("y1", cy + topMargin)
                 .attr("x2", this.width - leftMargin)
-                .attr("y2", this.height / 8)
+                .attr("y2", cy + topMargin)
 
-            let VLine = svg.append('line')
-                .style("Stroke", "black")
+            let VLine1 = svg.append('line')
+                .style("Stroke", "grey")
                 .style("stroke-width", 1)
                 .style("opacity", 1)
-                .attr("x1", this.width / 2)
-                .attr("y1", topMargin)
-                .attr("x2", this.width / 2)
-                .attr("y2", this.height / 8)
+                .attr("x1", leftMargin + columnWidth)
+                .attr("y1", cy + topMargin / 2)
+                .attr("x2", leftMargin + columnWidth)
+                .attr("y2", cy + topMargin)
+
+            let VLine2 = svg.append('line')
+                .style("Stroke", "grey")
+                .style("stroke-width", 1)
+                .style("opacity", 1)
+                .attr("x1", leftMargin + columnWidth * 2)
+                .attr("y1", cy + topMargin / 2)
+                .attr("x2", leftMargin + columnWidth * 2)
+                .attr("y2", cy + topMargin)
 
             // Add Text
-            let startTime = svg.append('text')
-                .attr("y", this.height / 8 - topMargin)
-                .attr("x", leftMargin + 20)
-                .attr('text-anchor', 'right')
+            svg.append('text')
+                .attr("y", cy + topMargin - 8)
+                .attr("x", leftMargin + columnWidth / 2)
+                .attr('text-anchor', 'middle')
                 .attr("class", 'Text')
-                .text("POI Statistic")
-                .style("font-size", 14)
-            let endTime = svg.append('text')
-                .attr("y", this.height / 8 - topMargin)
-                .attr("x", this.width / 2 + 20)
-                .attr('text-anchor', 'left')
+                .text("Category")
+                .style("font-size", 12)
+            svg.append('text')
+                .attr("y", cy + topMargin - 8)
+                .attr("x", leftMargin + columnWidth / 2 * 3)
+                .attr('text-anchor', 'middle')
                 .attr("class", 'Text')
-                .text("Access Statistic")
-                .style("font-size", 14)
+                .text("POI")
+                .style("font-size", 12)
+            svg.append('text')
+                .attr("y", cy + topMargin - 8)
+                .attr("x", leftMargin + columnWidth / 2 * 5)
+                .attr('text-anchor', 'middle')
+                .attr("class", 'Text')
+                .text("Access")
+                .style("font-size", 12)
+
         },
 
-        drawBarchart: function (poi, access){
+        drawBarchart: function (poi, access, index){
             let svg = this.svg;
-            const topMargin = 20;
+            const topMargin = 40;
             const leftMargin = 20;
-            const middleMargin = 10;
-            const margin = 10;
-            const axisMargin = 30;
-            const startHeight = this.height / 8
-            const axisLength = this.height - topMargin;
-            const maxWidth = this.width / 2 -  leftMargin - margin;
-            const slotNum = 9;
+            const tableWidth = this.width - leftMargin * 2;
+            const tableHeight = this.height / 2;
+            const columnWidth = tableWidth / 3;
+            const rowHeight = (tableHeight - topMargin) / 9;
             const baseWidth = 10;
+            let cy = index * tableHeight - 5;
 
-            const slotHeight= (axisLength - 2 * axisMargin) / slotNum / 3;
-            const slotPadding = slotHeight * 2;
+            let max1 = this.POIOrder_poi[0]['count'];
+            if (index === 1) max1 = this.history_POIOrder_poi[0]['count'];
+            let max2 = this.accessOrder_access[0]['count'];
+            if (index === 1) max2 = this.history_accessOrder_access[0]['count'];
+            let scale1 = (columnWidth - baseWidth) / max1;
+            let scale2 = (columnWidth - baseWidth) / max2;
 
-            let max1 = this.POIOrder[0]['count'];
-            let max2 = this.accessOrder[0]['count'];
-            let scale1 = (maxWidth - baseWidth) / max1 * 2 / 3;
-            let scale2 = (maxWidth - baseWidth) / max2;
+            this.drawLine(cy);
 
-            // draw POI rects
+            let grids = svg.append("g")
+                .selectAll('whatever')
+                .data(poi)
+                .enter()
+                .append("rect")
+                .attr("class", "tables")
+                .attr("x", leftMargin)
+                .attr("y", (d, i) => cy + topMargin + i * rowHeight + 2)
+                .attr("rx", 4)
+                .attr("ry", 4)
+                .attr("width", tableWidth)
+                .attr("height", rowHeight - 2)
+                .attr("fill", "white")
+                .attr("opacity", 1)
+                .attr("stroke", 'grey')
+                // .attr("stroke", '#505254')
+                .attr("stroke-width", 1)
+
+            // Add category text
+            for(let i = 0; i < poi.length; i++){
+                let text = poi[i].category;
+                if(text.length < 18){
+                    svg.append("text")
+                        .attr("x", leftMargin + columnWidth / 2)
+                        .attr("y", cy + topMargin + i * rowHeight + rowHeight / 2)
+                        .style("fill", 'black')
+                        .text(text)
+                        .attr("text-anchor", "middle")
+                        .style("alignment-baseline", "middle")
+                        .style("font-size", 10)
+                } else {
+                    let index = text.indexOf('&');
+                    let high = text.slice(0, index + 2);
+                    let low = text.slice(index + 2)
+                    svg.append("text")
+                        .attr("x", leftMargin + columnWidth / 2)
+                        .attr("y", cy + topMargin + i * rowHeight + 11)
+                        .style("fill", 'black')
+                        .text(high)
+                        .attr("text-anchor", "middle")
+                        .style("alignment-baseline", "middle")
+                        .style("font-size", 10)
+
+                    svg.append("text")
+                        .attr("x", leftMargin + columnWidth / 2)
+                        .attr("y", cy + topMargin + i * rowHeight + 21)
+                        .style("fill", 'black')
+                        .text(low)
+                        .attr("text-anchor", "middle")
+                        .style("alignment-baseline", "middle")
+                        .style("font-size", 10)
+                }
+            }
+
             let POIRects = svg.append("g")
-                .classed("rects", true)
-                .selectAll("rect")
+                .selectAll('whatever')
                 .data(poi)
                 .enter()
                 .append("rect")
-                .classed("rect", true)
-                .attr("x", d => this.width / 2 - middleMargin - (d['count'] * scale1 + baseWidth))
-                .attr("y", function (d, i){return startHeight + axisMargin + i * slotHeight * 3})
-                .attr("width", d => d['count'] * scale1 + baseWidth)
-                .attr("height", slotHeight)
-                .attr("fill", d => this.color[this.category_map[d.category]])
+                .attr("class", "tables")
+                .attr("x", leftMargin + columnWidth)
+                .attr("y", (d, i) => cy + topMargin + i * rowHeight + 4)
+                .attr("rx", 4)
+                .attr("ry", 4)
+                .attr("width", d => d.count * scale1 + baseWidth)
+                .attr("height", rowHeight - 6)
+                .attr("fill", (d, i) => this.color[this.category_map[d.category]])
                 .attr("opacity", 1)
                 .attr("stroke", '#505254')
-                .attr("stroke-width", 0.5)
-                .on("mouseover", function(d) {console.log(d['count'])})
+                .attr("stroke-width", 1)
 
-            // draw access rects
-            let AccessRects = svg.append("g")
-                .classed("rects", true)
-                .selectAll("rect")
+            let accessRects = svg.append("g")
+                .selectAll('whatever')
                 .data(access)
                 .enter()
                 .append("rect")
-                .classed("rect", true)
-                .attr("x", this.width / 2 + middleMargin)
-                .attr("y", function (d, i){return startHeight + axisMargin + i * slotHeight * 3})
-                .attr("width", d => d['count'] * scale2 + baseWidth)
-                .attr("height", slotHeight)
-                .attr("fill", d => this.color[this.category_map[d.category]])
+                .attr("class", "tables")
+                .attr("x", d => leftMargin + columnWidth * 3 - (d.count * scale2 + baseWidth))
+                .attr("y", (d, i) => cy + topMargin + i * rowHeight + 4)
+                .attr("rx", 4)
+                .attr("ry", 4)
+                .attr("width", d => d.count * scale2 + baseWidth)
+                .attr("height", rowHeight - 6)
+                .attr("fill", (d, i) => this.color[this.category_map[d.category]])
                 .attr("opacity", 1)
                 .attr("stroke", '#505254')
-                .attr("stroke-width", 0.5)
-                .on("mouseover", function(d) {console.log(d['count'])})
-
-            // add POI text
-            svg.selectAll("POILabels")
-                .data(poi)
-                .enter()
-                .append("text")
-                .attr("x", this.width / 2 - middleMargin)
-                .attr("y", function (d, i) {return startHeight + axisMargin + i * slotHeight * 3 - 15})
-                .text(function(d){ return d.category})
-                .attr("text-anchor", "end")
-                // .attr("font-weight", 400)
-                .attr("font-size", 10)
-                .style("alignment-baseline", "middle")
-
-            // add access text
-            svg.selectAll("accessLabels")
-                .data(access)
-                .enter()
-                .append("text")
-                .attr("x", this.width / 2 + middleMargin)
-                .attr("y", function (d, i) {return startHeight + axisMargin + i * slotHeight * 3 - 15})
-                .text(function(d){ return d.category})
-                .attr("text-anchor", "start")
-                .attr("font-size", 10)
-                .style("alignment-baseline", "middle")
+                .attr("stroke-width", 1)
         },
 
         computePosition: function (inData, outData, scale1, scale2, zero) {

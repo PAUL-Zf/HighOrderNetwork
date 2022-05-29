@@ -248,8 +248,8 @@ export default {
                 .attr("opacity", 0.1)
 
             // Drag and resize
-            d3.select(".square").call(this.drag(leftMargin, axisMargin, slotWidth));
-            d3.select(".resizingSquare").call(this.resize(leftMargin, axisMargin, slotWidth));
+            d3.select("#timeView").select(".square").call(this.drag(leftMargin, axisMargin, slotWidth));
+            d3.select("#timeView").select(".resizingSquare").call(this.resize(leftMargin, axisMargin, slotWidth));
         },
 
         drawLegend: function () {

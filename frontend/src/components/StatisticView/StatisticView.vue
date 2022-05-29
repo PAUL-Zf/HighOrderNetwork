@@ -43,7 +43,7 @@ text {
 
 #StatisticViewContainer {
   /* height: 243px; */
-  height: 537px;
+  height: 600px;
 }
 
 #my-player {
