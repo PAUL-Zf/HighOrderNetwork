@@ -14,6 +14,7 @@ export default {
             number: 10,
             options: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             sum: null,
+            patterns: null,
             rects: null,
             links: null,
             nodes: null,
@@ -41,6 +42,7 @@ export default {
                 // this.drawGradient();
                 this.updateSvg();
                 this.drawSankey();
+                console.log(response);
             })
         },
 

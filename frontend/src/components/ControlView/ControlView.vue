@@ -41,7 +41,7 @@
 .toolName {
   font-weight: bold;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .card-block {
@@ -57,17 +57,14 @@ text {
 
 #videoPlayerContainer {
   /* height: 243px; */
-  height: 167px;
+  /*height: 167px;*/
+  /*height: 1005px;*/
+  height: 905px;
 }
 
-#my-player {
-  position: absolute;
-  height: 100%;
-  width: 100%;
-}
 
 .labelsContainer {
-  position: absolute;
+  position: relative;
   /*top: 0px;*/
   height: 100%;
   width: 100%;
@@ -76,49 +73,64 @@ text {
 .el-slider__marks-text {
   font-size: 8px;
 }
-
-.divide1 {
+.divider {
   position: relative;
   float: left;
-  width: 55%;
-  height: 100%;
+  width: 100%;
+  height: 30px;
 }
 
-.divide2 {
+.filterDiv {
   position: relative;
   float: left;
-  width: 45%;
-  height: 100%;
+  width: 100%;
+  height: 12%;
 }
 
-.select1 {
+.timeDiv {
   position: relative;
   float: left;
-  width: 40%;
+  width: 100%;
+  height: 20%;
+  top: 9%;
+}
+
+.gridDiv {
+  position: relative;
+  float: left;
+  width: 100%;
   height: 30%;
-  /*background-color: #1d68cd;*/
 }
 
-.select2 {
+.legendDiv {
   position: relative;
   float: left;
-  width: 60%;
-  height: 30%;
+  top: 8%;
+  width: 100%;
+  height: 20%;
 }
 
+.select {
+  position: relative;
+  float: left;
+  width: 50%;
+  height: 50%;
+}
 
 .periods {
   position: relative;
-  top: 45%;
-  height: 15%;
+  float: left;
+  height: 50%;
+  width: 100%;
   /*background-color: #0f6674;*/
 }
 
 span {
   position: relative;
-  float: left;
-  left: 5px;
-  top: 5px;
+  display: block;
+  text-align: left;
+  padding-left: 32px;
+  top: 8px;
   /*width: 100px;*/
 }
 

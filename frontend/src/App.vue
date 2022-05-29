@@ -1,32 +1,36 @@
 <template>
   <div id="app" style="width: 1500px">
-    <!--    <nav class="navbar sticky-top navbar-dark bg-dark"-->
-    <!--         style="padding-top: 1px; padding-bottom: 1px; margin-bottom: 5px;">-->
-    <!--      <div style="margin-top:5px; margin-left: 5px;">-->
-    <!--        <span style="color:white; font-size:1.25rem; font-weight:500; user-select: none">OD Diagram</span>-->
-    <!--      </div>-->
-    <!--    </nav>-->
+        <nav class="navbar sticky-top navbar-dark bg-dark"
+             style="padding-top: 1px; padding-bottom: 1px; margin-bottom: 0px;">
+          <div style="margin-top:5px; margin-left: 0px;">
+            <span style="color:white; font-size:1.25rem; font-weight:500; user-select: none">HoLens</span>
+          </div>
+        </nav>
     <div class="container-fluid" style="padding-left: 0px; padding-right: 0px">
       <div class="row" style="margin-left: 0px; margin-right: 0px">
         <div class="col-3 content" style="padding-left: 0px; padding-right: 0px">
           <ControlView v-on:conveyData="updateData" v-on:highlightRegion="highlightRegion"
-                       v-on:conveyLoad="conveyLoad"
+                       v-on:conveyLoad="conveyLoad" v-on:conveyStart="conveyStart"
+                       v-on:passTime="updateTime" v-on:conveyTimeInterval="conveyTimeInterval"
+                       v-on:conveyOverviewPattern="conveyOverviewPattern"
+                       v-on:conveyPatternId="conveyPatternId" v-on:conveyHeatmap="conveyHeatmap"
+                       v-bind:generate="generate" v-bind:selects="selects"
                        :videoList="videoList" :videoId="videoId" :videoData="videoData"
                        :w="width" :h="height"
                        @changemap='changemap'></ControlView>
-          <Overview v-on:conveyTimeInterval="conveyTimeInterval" v-bind:date="date" v-bind:region="region"
-                    v-bind:load="load"
-                    v-on:conveyPattern="conveyPattern" v-on:conveyPatternId="conveyPatternId"
-                    v-on:conveyOverviewPattern="conveyOverviewPattern"
-          ></Overview>
+<!--          <Overview v-on:conveyTimeInterval="conveyTimeInterval" v-bind:date="date" v-bind:region="region"-->
+<!--                    v-bind:load="load"-->
+<!--                    v-on:conveyPattern="conveyPattern" v-on:conveyPatternId="conveyPatternId"-->
+<!--                    v-on:conveyOverviewPattern="conveyOverviewPattern"-->
+<!--          ></Overview>-->
         </div>
         <div class="col-9 content" style="padding-left: 0px; padding-right: 0px">
-          <TemporalView v-on:passTime="updateTime" v-on:conveyIndex="updateIndex" v-on:conveyType="updateType"
-                        v-on:conveyStart="conveyStart"
-                        v-bind:region="region" v-bind:date="date" v-bind:number="number" v-bind:generate="generate"
-                        v-bind:load="load" v-bind:selects="selects"
-                        v-bind:coords="coords" v-bind:time="time" v-bind:halfInterval="halfInterval" @change="change">
-          </TemporalView>
+<!--          <TemporalView v-on:passTime="updateTime" v-on:conveyIndex="updateIndex" v-on:conveyType="updateType"-->
+<!--                        v-on:conveyStart="conveyStart"-->
+<!--                        v-bind:region="region" v-bind:date="date" v-bind:number="number" v-bind:generate="generate"-->
+<!--                        v-bind:load="load" v-bind:selects="selects"-->
+<!--                        v-bind:coords="coords" v-bind:time="time" v-bind:halfInterval="halfInterval" @change="change">-->
+<!--          </TemporalView>-->
           <div class="row" style="margin-left: 0px; margin-right: 0px">
             <div class="col-9 content" style="padding-left: 0px; padding-right: 0px">
               <MapView v-on:conveyRegion="updateRegion"
@@ -36,6 +40,8 @@
                        v-on:conveyGenerate="conveyGenerate"
                        v-on:conveyFinish="conveyFinish"
                        v-on:conveySelects="conveySelects"
+                       v-on:conveyPatternId="conveyPatternId"
+                       v-on:conveyMapviewPatternId="conveyMapviewPatternId"
                        v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
                        v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
                        v-bind:level="level" v-bind:pattern="pattern" v-bind:patternId="patternId" v-bind:load="load"
@@ -51,10 +57,12 @@
             </div>
           </div>
           <StateView v-on:conveySelected="conveySelected"
-                     v-bind:startTime="startTime" v-bind:timeLength="timeLength"
-                     v-bind:categoryDistribution="categoryDistribution"
+                     v-bind:startTime="startTime" v-bind:timeLength="timeLength" v-bind:heatMap="heatMap"
+                     v-bind:categoryDistribution="categoryDistribution" v-bind:flowCounts="flowCounts"
                      v-bind:overviewStart="overviewStart" v-bind:overviewLength="overviewLength"
                      v-bind:drawSignal="drawSignal" v-bind:overviewPattern="overviewPattern"
+                     v-bind:patternType="patternType" v-bind:glyphIndex="glyphIndex"
+                     v-bind:mapviewPatternId="mapviewPatternId" v-bind:drawMapviewSignal="drawMapviewSignal"
                      v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
                      v-bind:finish="finish" v-bind:glyphs="glyphs" v-bind:links="links" v-bind:destLinks="destLinks"
                      :videoId="videoId" :videoData="videoData" v-bind:nodes="nodes"></StateView>
@@ -96,14 +104,20 @@ export default {
       halfInterval: null,
       pattern: null,
       patternId: null,
+      mapviewPatternId: null,
       drawSignal: null,
       overviewPattern: null,
+      flowCounts: null,
       categoryDistribution: null,
+      heatMap: null,
       overviewStart: null,
       overviewLength: null,
       generate: null,
       start: null,
       finish: null,
+      drawMapviewSignal: null,
+      patternType: null,
+      glyphIndex: null,
       load: null,
       info: {
         user_id: 0,
@@ -159,14 +173,20 @@ export default {
       this.selects = selects;
     },
 
+    conveyHeatmap(heatmap){
+      this.heatMap = heatmap;
+    },
+
     conveyTimeInterval(time, halfInterval) {
       this.time = time;
       this.halfInterval = halfInterval;
     },
 
-    conveyOverviewPattern(drawSignal, overviewPattern, categoryDistribution, start, length){
+    conveyOverviewPattern(drawSignal, overviewPattern, flowCounts, heatMap, categoryDistribution, start, length){
       this.drawSignal = drawSignal;
       this.overviewPattern = overviewPattern;
+      this.flowCounts = flowCounts;
+      this.heatMap = heatMap;
       this.categoryDistribution = categoryDistribution;
       this.overviewStart = start;
       this.overviewLength = length;
@@ -176,8 +196,11 @@ export default {
       this.patternId = patternId;
     },
 
-    conveyPattern(pattern) {
-      this.pattern = pattern;
+    conveyMapviewPatternId(drawMapviewSignal, patternType, glyphIndex, mapviewPatternId) {
+      this.glyphIndex = glyphIndex;
+      this.patternType = patternType;
+      this.drawMapviewSignal = drawMapviewSignal;
+      this.mapviewPatternId = mapviewPatternId;
     },
 
     conveySelected(select, selectedData) {

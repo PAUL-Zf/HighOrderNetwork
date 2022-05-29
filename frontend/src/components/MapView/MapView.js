@@ -33,6 +33,7 @@ export default {
             segmentation: null,
             generate: 0,    // work as generate signal
             finish: 0,    // getHighOrder Finishing and finish++
+            drawMapviewSignal: 0,    // work as draw mapview pattern signal
             showBoundary: false,
             showFlow: true,
             showHistory: false,
@@ -55,8 +56,8 @@ export default {
             groupId: 100000,
             overviewColors : ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9',
                 '#bc80bd','#ccebc5','#ffed6f','#b3e2cd','#fdcdac','#cbd5e8','#f4cae4','#e6f5c9', '#1f78b4', '#33a02c'],
-            colors: ['#99CCCC', '#FFCC99', '#FFCCCC', '#0099cc', '#CC9999', '#FF6666',
-                '#FFFF99', '#CCCCFF', '#CC9966', '#CCCCCC', '#666666', '#99CC66', '#CCCC99'],
+            colors: ['#8dd3c7', '#fb8072', '#b3de69', '#fdb462', '#bc80bd', '#bebada',
+                '#fccde5', '#d9d9d9', '#80b1d3', '#CCCCCC', '#666666', '#99CC66', '#CCCC99'],
             category_map: {
                 'Food': 0,
                 'Shop & Service': 1,
@@ -108,16 +109,21 @@ export default {
         // },
 
         patternId(val) {
-            dataService.getPattern(this.patternId, response => {
-                this.highOrder = response.data.lines;
-                this.circles = response.data.circles;
-                this.drawOverview();
-            })
+            if(!this.highOrderMode) {
+                dataService.getPattern(this.patternId, response => {
+                    this.highOrder = response.data.lines;
+                    this.circles = response.data.circles;
+                    console.log(this.circles);
+                    this.drawOverview();
+                })
+            }
         },
 
         signal(val) {
             let self = this;
             this.endTime = this.startTime + this.timeLength;
+
+            this.highOrderMode = true;
 
             // 每次self-organization算法，mapview数据都要更新
             this.selects = [];
@@ -176,6 +182,7 @@ export default {
             // 传给后端：Weekdays or Holidays
             // 后端返回：region flow data
             this.drawSegmentation();
+            this.highOrderMode = false;
         },
 
         pattern(value) {
@@ -440,6 +447,16 @@ export default {
                     return map.latLngToLayerPoint(d).y;
                 })
 
+            const borders = svg.selectAll('whatever')
+                .data(this.highOrder)
+                .enter()
+                .append('path')
+                .attr("class", "HFlow")
+                .attr("stroke", 'black')
+                .attr("stroke-width", 6)
+                .attr("fill", 'none')
+                .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+
             const lines = svg.selectAll('whatever')
                 .data(this.highOrder)
                 .enter()
@@ -450,6 +467,7 @@ export default {
                 .attr("fill", 'none')
                 .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
 
+
             // draw circles
             const nodes = svg.selectAll('whatever')
                 .data(this.circles)
@@ -459,13 +477,16 @@ export default {
                 .attr("fill", d => self.overviewColors[d.id])
                 // .attr("fill", d => color[d.radius])
                 .attr("stroke", "black")
-                .attr("stroke-width", 0)
+                .attr("stroke-width", d => (d.type === 0) ? 2 : 1)
                 .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
                 .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
                 .attr("r", 10)
             // .attr("r", d => radius[d.radius])
 
             const update = (level) => {
+                borders
+                    .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+
                 lines
                     .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
 
@@ -666,6 +687,16 @@ export default {
                     return map.latLngToLayerPoint(d).y;
                 })
 
+            const borders = svg.selectAll('whatever')
+                .data(this.highOrder)
+                .enter()
+                .append('path')
+                .attr("class", "HFlow")
+                .attr("stroke", 'black')
+                .attr("stroke-width", d => lineWidth[d.id] + 1)
+                .attr("fill", 'none')
+                .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+
             const lines = svg.selectAll('whatever')
                 .data(this.highOrder)
                 .enter()
@@ -686,12 +717,52 @@ export default {
                 .attr("class", "HFlow")
                 .attr("fill", d => color[d.radius])
                 .attr("stroke", "black")
-                .attr("stroke-width", 0)
+                .attr("stroke-width", d => (d.type === 0) ? 2 : 1)
                 .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
                 .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
                 .attr("r", d => radius[d.radius])
+                .on("click", function(d){
+                    if(d.type !== 1){
+                        self.drawMapviewSignal++;
+                        self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.type, d.index, d.radius);
+                    }
+                    console.log("--------Here is information----------");
+                    console.log(d.type);
+                    console.log(d.index);
+                    console.log(d.entropy);
+                    console.log("--------Here is information----------");
+                })
+
+            // draw entropy circle
+            let myColor = d3.scaleLinear()
+                .range(["#CCF3EE", "#0AA1DD"])
+                .domain([0, 1])
+
+            const entropyCircle = svg.selectAll('whatever')
+                .data(this.circles)
+                .enter()
+                .append('circle')
+                .attr("class", "HFlow")
+                .attr("fill", d => myColor(d.entropy))
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+                .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
+                .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
+                .attr("r", d => (d.type === 2) ? 3 : 0)
+                .on("click", function(d){
+                    self.drawMapviewSignal++;
+                    self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.radius);
+                    console.log("--------Here is information----------");
+                    console.log(d.type);
+                    console.log(d.index);
+                    console.log(d.entropy);
+                    console.log("--------Here is information----------");
+                })
 
             const update = (level) => {
+                borders
+                    .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+
                 lines
                     .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
 
@@ -772,6 +843,8 @@ export default {
             g.append('circle')
                 .attr("class", "circle")
                 .attr("r", innerRadius)
+                .attr("stroke", 'black')
+                .attr("stroke-width", 1)
                 .attr("fill", "#EF6D6D")
                 .attr("opacity", 1)      // 可以通过设置opacity为0将圆圈隐去
                 .on("click", function () {
@@ -791,6 +864,10 @@ export default {
         },
 
         drawSegmentation() {
+            // 更新地图
+            this.mymap.remove();
+            this.mymap = this.init('mapDiv');
+
             let map = this.mymap;
             let self = this;
 
