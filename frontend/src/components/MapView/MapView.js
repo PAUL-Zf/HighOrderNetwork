@@ -31,7 +31,7 @@ export default {
             circles: null,
             highOrder: null,
             segmentation: null,
-            generate: 0,    // work as generate signal
+            generate: -1,    // work as generate signal
             finish: 0,    // getHighOrder Finishing and finish++
             drawMapviewSignal: 0,    // work as draw mapview pattern signal
             showBoundary: false,
@@ -40,7 +40,7 @@ export default {
             showSegmentation: true,
             highOrderMode: false,
             number: 1,
-            choice: [1.0, 1.8, 2.2, 2.5],
+            choice: [1, 2, 3, 4],
             entropy: 1.0,
             svg: null,
             trajNum: 0,
@@ -128,7 +128,20 @@ export default {
             // 每次self-organization算法，mapview数据都要更新
             this.selects = [];
             this.showHistory = false;
-            dataService.getSelfOrganization(Math.floor(this.startTime / 2), Math.floor(this.endTime / 2), this.entropy, response => {
+
+            // map value to real entropy
+            let entropy;
+            if(this.entropy === 1){
+                entropy = 1.0;
+            } else if(this.entropy === 2){
+                entropy = 1.8;
+            } else if(this.entropy === 3){
+                entropy = 2.2;
+            } else if(this.entropy === 4){
+                entropy = 2.5;
+            }
+
+            dataService.getSelfOrganization(Math.floor(this.startTime / 2), Math.floor(this.endTime / 2), entropy, response => {
                 let result = response.data;
                 let segmentation = result.area;
                 let centroids = result.centroids;
@@ -146,7 +159,7 @@ export default {
                                 color: 'black',
                                 fill: true,
                                 fillColor: self.colors[self.category_map[feature.properties.category]],
-                                fillOpacity: 1,
+                                fillOpacity: 0.8,
                             }
                         },
                         onEachFeature: self.onEachFeature,
@@ -750,8 +763,10 @@ export default {
                 .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
                 .attr("r", d => (d.type === 2) ? 3 : 0)
                 .on("click", function(d){
-                    self.drawMapviewSignal++;
-                    self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.radius);
+                    if(d.type !== 1){
+                        self.drawMapviewSignal++;
+                        self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.type, d.index, d.radius);
+                    }
                     console.log("--------Here is information----------");
                     console.log(d.type);
                     console.log(d.index);
@@ -767,6 +782,10 @@ export default {
                     .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
 
                 nodes
+                    .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
+                    .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
+
+                entropyCircle
                     .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
                     .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
             }

@@ -37,7 +37,9 @@ export default {
             load: 0,    // 每次点击load都自增
             start: 0,    // work as start algorithm signal
             drawSignal: 0,
+            isDisplay: false,
 
+            distribution: null,
             heatMap: null,
             overviewPattern: null,
             flowCount: null,
@@ -77,6 +79,9 @@ export default {
                 this.regions = sankey.regions;
                 this.heatMap = sankey.heatMap;
                 this.categoryDistribution = sankey.regionsFlow;
+                this.distribution = sankey.distribution;
+
+                this.isDisplay = false;
 
                 // this.drawGradient();
                 this.$emit("conveyHeatmap", this.heatMap);
@@ -171,38 +176,72 @@ export default {
             let margin = {top: 20, bottom: 30, left: 32, right: 32}
             let height = 301 - margin.top - margin.bottom;
             let width = 373 - margin.left - margin.right;
-            let columnNumber = 6;
+            let columnNumber = 24;
             let rowNumber = this.number;
             let gridHeight = height / rowNumber;
-            let gridWidth = width / columnNumber;
+            let gridWidth = width / 24;
 
-            let gridsData = [];
-            for (let i = 0; i < rowNumber; i++) {
-                for (let j = 0; j < columnNumber; j++) {
-                    let grid = {row: 0, column: 0};
-                    grid.row = i;
-                    grid.column = j;
-                    gridsData.push(grid);
+            let max = this.distribution[0][0];
+            let min = this.distribution[0][0];
+            for (let i = 0; i < this.number; i++) {
+                for (let j = 0; j < 24; j++) {
+                    max = max > this.distribution[i][j] ? max : this.distribution[i][j];
+                    min = min < this.distribution[i][j] ? min : this.distribution[i][j];
                 }
             }
 
-            let grids = svg.append("g")
-                .attr("class", "grids")
-                .selectAll('grids')
-                .data(gridsData)
-                .enter()
-                .append("rect")
-                .attr("class", "grid")
-                .attr("x", d => margin.left + d.column * gridWidth)
-                .attr("y", d => margin.top + d.row * gridHeight)
-                .attr("rx", 2)
-                .attr("ry", 2)
-                .attr("width", gridWidth)
-                .attr("height", gridHeight)
-                .attr("fill", "#F7F5F2")
-                .attr("opacity", 1)
-                .attr("stroke", '#505254')
-                .attr("stroke-width", 1)
+            let myColor = d3.scaleLinear()
+                .range(["#FFF7BC", "#FD5D5D"])
+                .domain([min, max])
+
+
+            // let gridsData = [];
+            // for (let i = 0; i < rowNumber; i++) {
+            //     for (let j = 0; j < columnNumber; j++) {
+            //         let grid = {row: 0, column: 0};
+            //         grid.row = i;
+            //         grid.column = j;
+            //         gridsData.push(grid);
+            //     }
+            // }
+
+            for (let i = 0; i < this.number; i++) {
+                svg.append("g")
+                    .attr("class", "grids")
+                    .selectAll('grids')
+                    .data(this.distribution[i])
+                    .enter()
+                    .append("rect")
+                    .attr("class", "grid")
+                    .attr("x", (d,i) => margin.left + i * gridWidth)
+                    .attr("y", d => margin.top + i * gridHeight)
+                    .attr("rx", 2)
+                    .attr("ry", 2)
+                    .attr("width", gridWidth)
+                    .attr("height", gridHeight)
+                    .attr("fill", d => myColor(d))
+                    .attr("opacity", 1)
+                    .attr("stroke", '#505254')
+                    .attr("stroke-width", 1)
+            }
+
+            // let grids = svg.append("g")
+            //     .attr("class", "grids")
+            //     .selectAll('grids')
+            //     .data(this.distribution)
+            //     .enter()
+            //     .append("rect")
+            //     .attr("class", "grid")
+            //     .attr("x", d => margin.left + d.column * gridWidth)
+            //     .attr("y", d => margin.top + d.row * gridHeight)
+            //     .attr("rx", 2)
+            //     .attr("ry", 2)
+            //     .attr("width", gridWidth)
+            //     .attr("height", gridHeight)
+            //     .attr("fill", "#F7F5F2")
+            //     .attr("opacity", 1)
+            //     .attr("stroke", '#505254')
+            //     .attr("stroke-width", 1)
 
             // add pattern id label
             for (let i = 0; i < this.number; i++) {
@@ -238,6 +277,8 @@ export default {
                     .on("mouseout", d => this.mouseout(d))
                     .on("click", d => this.click(d))
             }
+
+            this.isDisplay = true;
         },
 
         drawHeatMap: function(){
@@ -882,6 +923,12 @@ export default {
     },
 
     mounted: function () {
+        dataService.initialization(response => {
+            console.log("---------System Start----------");
+        })
+
+        this.isDisplay = false;
+
         const legendView = d3.select("#legendView")
             .attr("width", 373)
             .attr("height", 200);

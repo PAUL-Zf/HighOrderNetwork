@@ -52,11 +52,12 @@
             </div>
             <div class="col-3 content" style="padding-left: 0px; padding-right: 0px">
               <StatisticView v-bind:date="date" v-bind:region="region" v-bind:selects="selects"
-                             v-bind:startTime="startTime" v-bind:timeLength="timeLength"
-                             v-bind:generate="generate"></StatisticView>
+                             v-bind:startTime="startTime" v-bind:timeLength="timeLength" v-bind:regionId="regionId"
+                             v-bind:generate="generate" v-bind:historyGenerate="historyGenenrate"></StatisticView>
             </div>
           </div>
           <StateView v-on:conveySelected="conveySelected"
+                     v-on:conveyRegionId="conveyRegionId" v-bind:generate="generate"
                      v-bind:startTime="startTime" v-bind:timeLength="timeLength" v-bind:heatMap="heatMap"
                      v-bind:categoryDistribution="categoryDistribution" v-bind:flowCounts="flowCounts"
                      v-bind:overviewStart="overviewStart" v-bind:overviewLength="overviewLength"
@@ -118,6 +119,8 @@ export default {
       drawMapviewSignal: null,
       patternType: null,
       glyphIndex: null,
+      regionId: null,
+      historyGenenrate: null,
       load: null,
       info: {
         user_id: 0,
@@ -175,6 +178,11 @@ export default {
 
     conveyHeatmap(heatmap){
       this.heatMap = heatmap;
+    },
+
+    conveyRegionId(regionId, historyGenerate){
+      this.regionId = regionId;
+      this.historyGenenrate = historyGenerate;
     },
 
     conveyTimeInterval(time, halfInterval) {
