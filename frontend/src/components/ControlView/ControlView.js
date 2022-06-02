@@ -222,7 +222,7 @@ export default {
                     .attr("fill", d => myColor(d))
                     .attr("opacity", 1)
                     .attr("stroke", '#505254')
-                    .attr("stroke-width", 1)
+                    .attr("stroke-width", 0.5)
             }
 
             // let grids = svg.append("g")
@@ -306,13 +306,13 @@ export default {
                 .attr("stroke", 'black')
                 .attr("stroke-width", 1)
 
-            svg.append("line")
-                .attr("x1", margin.left)
-                .attr("y1", baseline + 19)
-                .attr("x2", margin.left + width)
-                .attr("y2", baseline + 19)
-                .attr("stroke", 'black')
-                .attr("stroke-width", 1)
+            // svg.append("line")
+            //     .attr("x1", margin.left)
+            //     .attr("y1", baseline + 19)
+            //     .attr("x2", margin.left + width)
+            //     .attr("y2", baseline + 19)
+            //     .attr("stroke", 'black')
+            //     .attr("stroke-width", 1)
 
             // let timeSlider = svg.append("rect")
             //     .attr("x", margin.left)
