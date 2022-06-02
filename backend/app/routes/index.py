@@ -49,6 +49,10 @@ category_map = {'Food': 0,
 # 日期类型
 dateType = ''
 
+# 记录所有挖掘出的regions的category分布
+# generate作为数组index
+regionsCategory = []
+
 slotNum = 48
 merged_df_od_duration = {}
 merged_area = {}
@@ -223,9 +227,62 @@ def computeEntropy(data):
 # def _get_pose_data(video_id):
 #     result = dataService.get_pose_data(video_id)
 #     return json.dumps(result)
-#
+
+@app.route('/initialization', methods=['GET'])
+def _initialization():
+    global regionsCategory
+    regionsCategory = []
+
+    return json.dumps(regionsCategory)
+
+
+@app.route('/getRegionCategory/<index>/<regionId>', methods=['GET'])
+def _getRegionCategory(index, regionId):
+    global regionsCategory
+    poi = regionsCategory[int(index)][int(regionId)][0]
+    access = regionsCategory[int(index)][int(regionId)][1]
+
+    poi_data = []
+    access_data = []
+    poi_order_poi = []
+    poi_order_access = []
+    access_order_poi = []
+    access_order_access = []
+
+    # Order in category_map
+    # Order in count
+    poi_order = sorted(poi.items(), key=lambda x: x[1], reverse=True)
+    access_order = sorted(access.items(), key=lambda x: x[1], reverse=True)
+
+    for value in poi_order:
+        p = {'category': value[0], 'count': value[1]}
+        q = {'category': value[0], 'count': access[value[0]]}
+        poi_order_poi.append(p)
+        poi_order_access.append(q)
+
+    for value in access_order:
+        p = {'category': value[0], 'count': value[1]}
+        q = {'category': value[0], 'count': poi[value[0]]}
+        access_order_access.append(p)
+        access_order_poi.append(q)
+
+    global category_map
+
+    for k in category_map.keys():
+        if k in poi:
+            p = {'category': k, 'count': poi[k]}
+            poi_data.append(p)
+
+    for k in category_map.keys():
+        if k in access:
+            p = {'category': k, 'count': access[k]}
+            access_data.append(p)
+
+    return json.dumps([poi_order_poi, poi_order_access, access_order_poi, access_order_access])
 
 # 初始化获取所有userid
+
+
 @app.route('/getAllUsers', methods=['GET'])
 def _getAllUsers():
     user_id = []
@@ -341,6 +398,19 @@ def _getHighOrderByRegions():
     result = gho.getHighOrder(startTime, timeLength, regionsId, groupId)
     global participates
     participates = result['regions']
+
+    # record all regionsCategory
+    global regionsCategory
+    regionCategory = {}
+    for r in participates:
+        arr = []
+        arr.append(r)
+        if(r >= 100000):
+            poi, access = st.statistic(regionsId, startTime, timeLength)
+        else:
+            poi, access = st.statistic(arr, startTime, timeLength)
+        regionCategory[r] = [poi, access]
+    regionsCategory.append(regionCategory)
 
     return json.dumps(result)
 
@@ -542,17 +612,6 @@ def _getCheckin(date):
 
 @app.route('/getSankey/<date>/<number>', methods=['GET'])
 def _getSankey(date, number):
-    def getHeatMapData(data, start, end):
-        between = data[(data['previous_center'] == start)
-                       & (data['next_hop_center'] == end)]
-        between.checkin_time = pd.to_datetime(between.checkin_time)
-        flows = [0 for x in range(24)]
-        for i in range(24):
-            count = len(between[(between.checkin_time.dt.hour >= i) & (
-                between.checkin_time.dt.hour < i+1)])
-            flows[i] = count
-        return flows
-
     def getRegionFlows(data, community_number):
         category_map = {'Food': 0,
                         'Shop & Service': 1,
@@ -595,10 +654,12 @@ def _getSankey(date, number):
 
     if (date == 'Weekdays'):
         filename = "app/static/weekdays_overview.json"
-        data = pd.read_csv("app/static/weekdays_threshold_1.0_clustering.csv")
+        data = pd.read_csv(
+            "app/static/weekdays_threshold_1.0_clustering.csv")
     else:
         filename = "app/static/holidays_overview.json"
-        data = pd.read_csv("app/static/holidays_threshold_1.0_clustering.csv")
+        data = pd.read_csv(
+            "app/static/holidays_threshold_1.0_clustering.csv")
 
     with open(filename, 'r') as f:
         patterns = json.load(f)
@@ -679,188 +740,13 @@ def _getSankey(date, number):
         flowsCount.append(value)
         id += 1
 
-    rect_record = [[{}] * pattern_number for i in range(3)]
+    if (date == 'Weekdays'):
+        filename = "app/static/overview_weekdays.json"
+    else:
+        filename = "app/static/overview_holidays.json"
 
-    # 计算rects
-    rects = []
-    heatMap = []
-    for i in range(1, 4):
-        coord = 0
-        for key, value in pattern_count.items():
-            rect = {}
-            rect['id'] = pattern_id[key]
-            rect['order'] = i - 1
-            rect['width'] = pattern_count[key]
-            rect['x'] = coord
-            rect['time'] = pattern_time[key]
-            rect['length'] = pattern_count[key] % 3 + 1
-
-            if(len(key) > i):
-                rects.append(rect)
-
-                # Heat Map
-                start = key[i - 1]
-                end = key[i]
-                flows = getHeatMapData(data, start, end)
-                maxCount = max(flows)
-                minCount = min(flows)
-
-                for j in range(24):
-                    h = {}
-                    h['id'] = pattern_id[key]
-                    h['order'] = i - 1
-                    h['width'] = pattern_count[key]
-                    h['x'] = coord
-                    h['time'] = pattern_time[key]
-                    h['length'] = pattern_count[key] % 3 + 1
-                    h['index'] = j
-                    h['count'] = flows[j]
-                    h['max'] = maxCount
-                    h['min'] = minCount
-                    heatMap.append(h)
-
-                r = {}
-                r['x'] = rect['x'] + rect['width']/2
-                r['index'] = rect['id']
-                rect_record[rect['order']][rect['id']] = r
-
-            coord += pattern_count[key]
-
-    # 计算 timeRects
-    timeRects = []
-    coord = 0
-    for key, value in pattern_count.items():
-        timeRect = {}
-        timeRect['id'] = pattern_id[key]
-        timeRect['time'] = pattern_time[key]
-        timeRect['length'] = pattern_count[key] % 3 + 1
-        timeRect['width'] = pattern_count[key]
-        timeRect['x'] = coord
-
-        timeRects.append(timeRect)
-        coord += pattern_count[key]
-
-    # 计算flow_sum
-    flow_sum = 0
-    for value in pattern_count.values():
-        flow_sum += value
-
-    # 计算node位置，按community排列
-
-    node_record = [[{}] * pattern_number for i in range(4)]
-    nodes = []
-
-    for i in range(4):
-        node_count = [[] * community_number for _ in range(community_number)]
-        for c in pattern_count.keys():
-            if(len(c) > i):
-                community = c[i]
-                node_count[community].append(c)
-
-        # 按community顺序添加node
-        index = 0
-        coord = 0
-        for j in range(community_number):
-            community = node_count[j]
-            for c in community:
-                node = {}
-                node['id'] = pattern_id[c]
-                node['order'] = i
-                node['community'] = j
-                node['width'] = pattern_count[c]
-                node['x'] = coord
-                node['index'] = index
-                node['time'] = pattern_time[c]
-                node['length'] = pattern_count[c] % 3 + 1
-
-                n = {}
-                n['x'] = node['x'] + node['width']/2
-                n['index'] = index
-                node_record[node['order']][node['id']] = n
-
-                nodes.append(node)
-                coord += pattern_count[c]
-            if community:
-                index += 1
-
-    # merge all nodes which belong to the same region
-    regions = []
-    last = nodes[0]
-    width = last['width']
-    x = last['x']
-    index = last['index']
-    order = last['order']
-    community = last['community']
-    for i in range(1, len(nodes)):
-        now = nodes[i]
-
-        if(now['index'] != last['index'] or now['order'] != last['order']):
-            r = {}
-            r['index'] = index
-            r['width'] = width
-            r['x'] = x
-            r['order'] = order
-            r['community'] = community
-            regions.append(r)
-
-            width = now['width']
-            index = now['index']
-            x = now['x']
-            order = now['order']
-            community = now['community']
-        else:
-            width += now['width']
-
-        last = now
-    finalRegion = {}
-    finalRegion['index'] = index
-    finalRegion['width'] = width
-    finalRegion['x'] = x
-    finalRegion['order'] = order
-    finalRegion['community'] = community
-    regions.append(finalRegion)
-
-    # 计算links
-    links = []
-    id = 0
-    for pattern in pattern_count.keys():
-        for i in range(len(pattern) - 1):
-            link = {}
-            start = node_record[i][id]
-            end = rect_record[i][id]
-            link['id'] = id
-            link['order'] = i
-            link['type'] = 0
-            link['startX'] = start['x']
-            link['startIndex'] = start['index']
-            link['endX'] = end['x']
-            link['endIndex'] = end['index']
-            links.append(link)
-
-            link = {}
-            start = rect_record[i][id]
-            end = node_record[i+1][id]
-            link['id'] = id
-            link['order'] = i
-            link['type'] = 1
-            link['startX'] = start['x']
-            link['startIndex'] = start['index']
-            link['endX'] = end['x']
-            link['endIndex'] = end['index']
-            links.append(link)
-        id += 1
-
-    result = {}
-    result['patterns'] = patterns
-    result['flows'] = flowsCount
-    result['regionsFlow'] = regionsFlow
-    result['sum'] = flow_sum
-    result['nodes'] = nodes
-    result['regions'] = regions
-    result['rects'] = rects
-    result['timeRects'] = timeRects
-    result['links'] = links
-    result['heatMap'] = heatMap
+    with open(filename, 'r') as f:
+        result = json.load(f)
 
     return json.dumps(result)
 

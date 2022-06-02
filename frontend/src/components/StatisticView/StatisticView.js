@@ -6,7 +6,7 @@ import ta from "element-ui/src/locale/lang/ta";
 export default {
     name: 'StatisticView',
     components: {},
-    props: ['region', 'date', 'generate', 'selects', 'startTime', 'timeLength'],
+    props: ['region', 'date', 'generate', 'selects', 'startTime', 'timeLength', 'regionId', 'historyGenerate'],
     data() {
         return {
             width: 279,
@@ -43,6 +43,28 @@ export default {
             this.history_accessOrder_poi = this.accessOrder_poi;
             this.history_accessOrder_access = this.accessOrder_access;
             dataService.getStatistic(params, response => {
+                this.POIOrder_poi = response.data[0];
+                this.POIOrder_access = response.data[1];
+                this.accessOrder_poi = response.data[2];
+                this.accessOrder_access = response.data[3];
+                console.log("------------Statistic View-------------");
+                console.log(this.POIOrder_poi);
+                console.log(this.POIOrder_access);
+                console.log(this.accessOrder_poi);
+                console.log(this.accessOrder_access);
+                console.log("------------Statistic View-------------");
+                this.updateSvg();
+                this.drawBarchart(this.POIOrder_poi, this.POIOrder_access, 0);
+                if(val > 1) this.drawBarchart(this.history_POIOrder_poi, this.history_POIOrder_access, 1);
+            })
+        },
+
+        regionId(val) {
+            this.history_POIOrder_poi = this.POIOrder_poi;
+            this.history_POIOrder_access = this.POIOrder_access;
+            this.history_accessOrder_poi = this.accessOrder_poi;
+            this.history_accessOrder_access = this.accessOrder_access;
+            dataService.getRegionCategory(this.historyGenerate, val, response => {
                 this.POIOrder_poi = response.data[0];
                 this.POIOrder_access = response.data[1];
                 this.accessOrder_poi = response.data[2];

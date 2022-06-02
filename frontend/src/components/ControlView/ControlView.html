@@ -49,26 +49,26 @@
                                style="position:absolute;top:140px;left:10%;width: 80%;height: 30px">Load
                     </el-button>
                 </div>
-                <div class="divider" style="top:8%" v-show="load">
+                <div class="divider" style="top:8%" v-show="isDisplay">
                     <svg width="340" height="30">
                         <line x1="0" x2="340" y1="15" y2="15" style="stroke:grey;stroke-width: 1px;opacity: 0.5;"></line>
                     </svg>
                 </div>
-                <div class="timeDiv">
+                <div class="timeDiv" v-show="isDisplay">
                     <svg id="temporalView"></svg>
                 </div>
-                <el-button type="info" plain size="mini" v-on:click="startAlgorithm" v-show="load"
+                <el-button type="info" plain size="mini" v-on:click="startAlgorithm" v-show="isDisplay"
                            style="position:absolute;top:610px;left:10%;width: 80%;height: 30px">Start
                 </el-button>
-                <div class="gridDiv" v-show="load">
+                <div class="gridDiv" v-show="isDisplay">
                     <svg id="gridView"></svg>
                 </div>
-                <div class="divider" style="top:8%" v-show="load">
+                <div class="divider" style="top:8%" v-show="isDisplay">
                     <svg width="340" height="30">
                         <line x1="0" x2="340" y1="15" y2="15" style="stroke:grey;stroke-width: 1px;opacity: 0.5;"></line>
                     </svg>
                 </div>
-                <div class="legendDiv" v-show="load">
+                <div class="legendDiv" v-show="isDisplay">
                     <svg id="legendView"></svg>
                 </div>
 <!--                <div style="margin-top:20%;">-->

@@ -18,7 +18,7 @@ export default {
     props: ['content', 'region', 'number', 'index', 'finish', 'glyphs', 'links', 'destLinks', 'startTime',
         'timeLength', 'drawSignal', 'overviewPattern', 'flowCounts', 'categoryDistribution',
         'overviewStart', 'overviewLength', 'heatMap', 'mapviewPatternId', 'drawMapviewSignal',
-        'patternType', 'glyphIndex'],
+        'patternType', 'glyphIndex', 'generate'],
 
     watch: {
         drawSignal(val) {
@@ -30,6 +30,12 @@ export default {
                     this.fourPatternsId[i] = val;
                     this.fourPatterns[i] = this.overviewPattern;
                     this.fourRegionsFlow[i] = this.categoryDistribution;
+
+                    // 添加pattern的时间记录
+                    let time = [];
+                    time.push(this.startTime);
+                    time.push(this.timeLength);
+                    this.fourPatternsTime[i] = time;
 
                     this.drawOverview(i);
                     break;
@@ -46,6 +52,12 @@ export default {
                     this.fourPatternsId[i] = this.mapviewPatternId;
                     this.fourPatterns[i] = this.patterns[this.mapviewPatternId];
                     this.fourRegionsFlow[i] = this.regionsFlow;
+
+                    // 添加pattern的时间记录
+                    let time = [];
+                    time.push(this.startTime);
+                    time.push(this.timeLength);
+                    this.fourPatternsTime[i] = time;
 
                     this.drawMapviewPattern(i);
                     break;
@@ -82,6 +94,7 @@ export default {
             fourPatternsId: [],    //用来记录四个位置对应的patternId
             fourRegionsFlow: [],   //用来记录四个位置对应的patternRegionsFlow
             fourPatternsCount: [],
+            fourPatternsTime: [],    //用来记录四个位置对应的pattern时间戳
             isEmpty: [],    //用来判断四个位置是否为空
             allData: [],    //用来存储最多四个region的所有轨迹数据
             width: 1123,
@@ -129,6 +142,7 @@ export default {
                 this.fourPatternsId[i] = null;
                 this.fourPatterns[i] = null;
                 this.fourRegionsFlow[i] = null;
+                this.fourPatternsTime[i] = null;
             }
 
             // 删除patterns
@@ -212,7 +226,7 @@ export default {
             let regionHeight = patternHeight - margin.top - margin.bottom - padding * 2;
 
             for (let i = 0; i < pattern.length; i++) {
-                let index = i;
+                let num = i;
 
                 // // draw region category rect
                 // let region = this.regionsFlow[pattern[i]];
@@ -240,7 +254,7 @@ export default {
                 let heatPadding = 20;
                 let heatWidth = flowWidth - heatPadding * 2;
                 let regionId = pattern[i];
-                let x = cx + margin.left + index * columnWidth + regionWidth / 2;
+                let x = cx + margin.left + num * columnWidth + regionWidth / 2;
                 let y = cy + patternHeight / 2;
 
                 if(i < pattern.length - 1){
@@ -248,13 +262,13 @@ export default {
                         .style("Stroke", "lightsteelblue")
                         .attr("stroke-width", 6)
                         .style("opacity", 0.5)
-                        .attr("x1", cx + margin.left + index * columnWidth + regionWidth)
+                        .attr("x1", cx + margin.left + num * columnWidth + regionWidth)
                         .attr("y1", cy + patternHeight / 2)
                         .attr("x2", cx + margin.left + (i + 1) * columnWidth)
                         .attr("y2", cy + patternHeight / 2)
 
                     svg.append('rect')
-                        .attr("x", (d,i) => cx + margin.left + heatPadding + index * columnWidth + regionWidth + heatWidth / 24 * i)
+                        .attr("x", (d,i) => cx + margin.left + heatPadding + num * columnWidth + regionWidth + heatWidth / 24 * i)
                         .attr("y", cy + patternHeight / 2 - flowHeight / 2)
                         .attr('rx', 2)
                         .attr('ry', 2)
@@ -270,7 +284,7 @@ export default {
                         .data(flowData)
                         .enter()
                         .append("rect")
-                        .attr("x", (d,i) => cx + margin.left + heatPadding + index * columnWidth + regionWidth + heatWidth / 24 * i)
+                        .attr("x", (d,i) => cx + margin.left + heatPadding + num * columnWidth + regionWidth + heatWidth / 24 * i)
                         .attr("y", cy + patternHeight / 2 - flowHeight / 2)
                         .attr("width", heatWidth / 24)
                         .attr("height", flowHeight)
@@ -283,7 +297,7 @@ export default {
                         .attr("opacity", 1)
                 }
 
-                this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', 0, innerRadius, radius);
+                this.drawSingleGlyph(this.generate, regionId, patternId, x, y, true,'patterns', 0, innerRadius, radius);
 
                 // // draw outer rect
                 // svg.append("rect")
@@ -311,9 +325,10 @@ export default {
             }
 
             // draw time axis
-            let axisLength = patternWidth - margin.left * 2 - margin.right * 2;
+            let number = pattern.length;
+            let axisLength = (number === 3) ? 295 : 457;
             let y = cy + patternHeight - margin.bottom / 2;
-            let x = cx + margin.left * 2;
+            let x = cx + 43;
             let startTime = this.generateTimeText(this.overviewStart);
             let endTime = this.generateTimeText(this.overviewStart + this.overviewLength);
             svg.append('line')
@@ -428,7 +443,7 @@ export default {
             // draw destinations
             if(this.patternType === 0){
                 for (let i = 0; i < pattern['destinations'].length; i++){
-                    let index = pattern['preamble'].length;
+                    let num = pattern['preamble'].length;
 
                     // draw flow
                     let maxFlow = 5;
@@ -450,7 +465,7 @@ export default {
                     let heatPadding = 20;
                     let heatWidth = flowWidth - heatPadding * 2;
                     let regionId = pattern['destinations'][i]['regionId'];
-                    let x = cx + margin.left + index * columnWidth + regionWidth / 2;
+                    let x = cx + margin.left + num * columnWidth + regionWidth / 2;
                     let y = cy + (i + 1) * rowD;
 
                     svg.append('line')
@@ -459,7 +474,7 @@ export default {
                         .style("opacity", 0.5)
                         .attr("x1", x - columnWidth)
                         .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", cx + margin.left + heatPadding + (index - 1) * columnWidth + regionWidth)
+                        .attr("x2", cx + margin.left + heatPadding + (num - 1) * columnWidth + regionWidth)
                         .attr("y2", y)
 
                     svg.append('line')
@@ -472,7 +487,7 @@ export default {
                         .attr("y2", y)
 
                     svg.append('rect')
-                        .attr("x", cx + margin.left + heatPadding + (index - 1) * columnWidth + regionWidth)
+                        .attr("x", cx + margin.left + heatPadding + (num - 1) * columnWidth + regionWidth)
                         .attr("y", y - flowHeight / 2)
                         .attr('rx', 2)
                         .attr('ry', 2)
@@ -488,7 +503,7 @@ export default {
                         .data(flowData)
                         .enter()
                         .append("rect")
-                        .attr("x", (d,i) => cx + margin.left + heatPadding + (index - 1) * columnWidth + regionWidth + heatWidth / 24 * i)
+                        .attr("x", (d,i) => cx + margin.left + heatPadding + (num - 1) * columnWidth + regionWidth + heatWidth / 24 * i)
                         .attr("y", y - flowHeight / 2)
                         .attr("width", heatWidth / 24)
                         .attr("height", flowHeight)
@@ -500,10 +515,10 @@ export default {
                         })
                         .attr("opacity", 1)
 
-                    this.drawSingleGlyph(regionId, patternId, x, y, 'dest', entropy, innerRadius, radius);
+                    this.drawSingleGlyph(this.generate, regionId, patternId, x, y, true, 'dest', entropy, innerRadius, radius);
                 }
             } else {
-                let index = pattern['preamble'].length;
+                let num = pattern['preamble'].length;
 
                 // draw flow
                 let maxFlow = 5;
@@ -523,7 +538,7 @@ export default {
                 let heatPadding = 20;
                 let heatWidth = flowWidth - heatPadding * 2;
                 let regionId = pattern['destinations'][this.glyphIndex]['regionId'];
-                let x = cx + margin.left + index * columnWidth + regionWidth / 2;
+                let x = cx + margin.left + num * columnWidth + regionWidth / 2;
                 let y = cy + patternHeight / 2;
 
                 svg.append('line')
@@ -532,7 +547,7 @@ export default {
                     .style("opacity", 0.5)
                     .attr("x1", x - columnWidth)
                     .attr("y1", cy + patternHeight / 2)
-                    .attr("x2", cx + margin.left + heatPadding + (index - 1) * columnWidth + regionWidth)
+                    .attr("x2", cx + margin.left + heatPadding + (num - 1) * columnWidth + regionWidth)
                     .attr("y2", y)
 
                 svg.append('line')
@@ -545,7 +560,7 @@ export default {
                     .attr("y2", y)
 
                 svg.append('rect')
-                    .attr("x", cx + margin.left + heatPadding + (index - 1) * columnWidth + regionWidth)
+                    .attr("x", cx + margin.left + heatPadding + (num - 1) * columnWidth + regionWidth)
                     .attr("y", y - flowHeight / 2)
                     .attr('rx', 2)
                     .attr('ry', 2)
@@ -561,7 +576,7 @@ export default {
                     .data(flowData)
                     .enter()
                     .append("rect")
-                    .attr("x", (d,i) => cx + margin.left + heatPadding + (index - 1) * columnWidth + regionWidth + heatWidth / 24 * i)
+                    .attr("x", (d,i) => cx + margin.left + heatPadding + (num - 1) * columnWidth + regionWidth + heatWidth / 24 * i)
                     .attr("y", y - flowHeight / 2)
                     .attr("width", heatWidth / 24)
                     .attr("height", flowHeight)
@@ -573,14 +588,12 @@ export default {
                     })
                     .attr("opacity", 1)
 
-                this.drawSingleGlyph(regionId, patternId, x, y, 'dest', entropy, innerRadius, radius);
+                this.drawSingleGlyph(this.generate, regionId, patternId, x, y, true,'dest', entropy, innerRadius, radius);
             }
-
-
 
             // draw preamble
             for (let i = 0; i < pattern['preamble'].length; i++) {
-                let index = i;
+                let num = i;
 
                 // draw flow
                 let maxFlow = 5;
@@ -598,7 +611,7 @@ export default {
                 let heatPadding = 20;
                 let heatWidth = flowWidth - heatPadding * 2;
                 let regionId = pattern['preamble'][i];
-                let x = cx + margin.left + index * columnWidth + regionWidth / 2;
+                let x = cx + margin.left + num * columnWidth + regionWidth / 2;
                 let y = cy + patternHeight / 2;
 
                 if (i < pattern['preamble'].length - 1) {
@@ -606,13 +619,13 @@ export default {
                         .style("Stroke", "lightsteelblue")
                         .attr("stroke-width", 6)
                         .style("opacity", 0.5)
-                        .attr("x1", cx + margin.left + index * columnWidth + regionWidth)
+                        .attr("x1", cx + margin.left + num * columnWidth + regionWidth)
                         .attr("y1", cy + patternHeight / 2)
                         .attr("x2", cx + margin.left + (i + 1) * columnWidth)
                         .attr("y2", cy + patternHeight / 2)
 
                     svg.append('rect')
-                        .attr("x", cx + margin.left + heatPadding + index * columnWidth + regionWidth)
+                        .attr("x", cx + margin.left + heatPadding + num * columnWidth + regionWidth)
                         .attr("y", cy + patternHeight / 2 - flowHeight / 2)
                         .attr('rx', 2)
                         .attr('ry', 2)
@@ -628,7 +641,7 @@ export default {
                         .data(flowData)
                         .enter()
                         .append("rect")
-                        .attr("x", (d, i) => cx + margin.left + heatPadding + index * columnWidth + regionWidth + heatWidth / 24 * i)
+                        .attr("x", (d, i) => cx + margin.left + heatPadding + num * columnWidth + regionWidth + heatWidth / 24 * i)
                         .attr("y", cy + patternHeight / 2 - flowHeight / 2)
                         .attr("width", heatWidth / 24)
                         .attr("height", flowHeight)
@@ -641,10 +654,83 @@ export default {
                         .attr("opacity", 1)
                 }
 
-                this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', 0,innerRadius, radius);
+                this.drawSingleGlyph(this.generate, regionId, patternId, x, y, true, 'patterns', 0,innerRadius, radius);
             }
 
+            // draw time axis
+            let number = pattern['preamble'].length + 1;
+            let axisLength = (number === 3) ? 295 : 457;
+            let y = cy + patternHeight - margin.bottom / 2;
+            let x = cx + 43;
+            let startTime = this.generateTimeText(this.startTime);
+            let endTime = this.generateTimeText(this.startTime + this.timeLength);
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", x)
+                .attr("y1", y)
+                .attr("x2", x + axisLength)
+                .attr("y2", y)
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", x)
+                .attr("y1", y - 5)
+                .attr("x2", x)
+                .attr("y2", y + 5)
+            svg.append('line')
+                .style("Stroke", "black")
+                .style("opacity", 0.5)
+                .attr("x1", x + axisLength)
+                .attr("y1", y - 5)
+                .attr("x2", x + axisLength)
+                .attr("y2", y + 5)
 
+            svg.append('text')
+                .attr("y", y + 3)
+                .attr("x", x - 3)
+                .attr('text-anchor', 'end')
+                .attr("class", 'timeText')
+                .text("00:00")
+                .style("font-size", 8)
+
+            svg.append('text')
+                .attr("y", y + 3)
+                .attr("x", x + axisLength + 3)
+                .attr('text-anchor', 'start')
+                .attr("class", 'timeText')
+                .text("24:00")
+                .style("font-size", 8)
+
+            // draw timeRects
+            let timeInterval = svg.append("rect")
+                .attr("class", "interval")
+                .attr("x", x + this.startTime / 48 * axisLength)
+                .attr("y", y - 5)
+                .attr("rx", 2)
+                .attr("ry", 2)
+                .attr("width", axisLength / 48 * this.timeLength)
+                .attr("height", 10)
+                .attr("fill", 'red')
+                .attr("opacity", 1)
+                .attr("stroke", '#505254')
+                .attr("stroke-width", 1)
+
+            svg.append('text')
+                .attr("y", y + 8)
+                .attr("x", x + this.startTime / 48 * axisLength - 3)
+                .attr('text-anchor', 'end')
+                .attr("class", 'timeText')
+                .text(startTime)
+                .style("font-size", 8)
+
+            svg.append('text')
+                .attr("y", y + 8)
+                .attr("x", x + this.startTime / 48 * axisLength + axisLength / 48 * this.timeLength + 3)
+                .attr('text-anchor', 'start')
+                .attr("class", 'timeText')
+                .text(endTime)
+                .style("font-size", 8)
         },
 
         drawDendrogram: function () {
@@ -784,678 +870,11 @@ export default {
                     innerRadius = centerRadius - patternNumber * 4;
                     outerRadius = centerRadius;
                 }
-                this.drawSingleGlyph(regionId, patternId, cx, cy, 'dendrogram', innerRadius, outerRadius);
+                this.drawSingleGlyph(this.generate, regionId, patternId, cx, cy, false, 'dendrogram', innerRadius, outerRadius);
             }
         },
 
-        drawSinglePattern: function (index) {
-            let moduleWidth = 600;
-            let moduleHeight = 250;
-            let patternWidth = moduleWidth / 2;
-            let patternHeight = moduleHeight / 2;
-            let cx = index % 2 * patternWidth;
-            let cy = Math.floor(index / 2) * patternHeight;
-
-            let svg = this.svg;
-            // let g = svg.append("g")
-            //     .attr("class", 'pattern')
-            //     .attr("transform", "translate(" + cx + "," + cy + ")")
-
-            let margin = {left: 10, right: 10, top: 20, bottom: 20}
-
-            // data
-            let patternId = this.fourPatternsId[index];
-            let pattern = this.fourPatterns[index];
-            let regionsFlow = this.fourRegionsFlow[index];
-
-            console.log("-------------Pattern RegionsId-----------------");
-            console.log(pattern);
-            console.log("-------------Pattern RegionsId-----------------");
-
-
-            let columnNumber = pattern['preamble'].length + 1;
-            let destNumber = pattern['destinations'].length;
-            let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
-
-            // draw flow
-            let total = 0;
-            for (let i = 0; i < pattern['destinations'].length; i++) {
-                total += pattern['destinations'][i]['count'];
-            }
-
-            // Find special pattern type by check pattern
-            let patternType = 0;    // patternType = 0 means no special
-            let preamble = pattern['preamble'];
-            let destinations = pattern['destinations'];
-
-            // Type 1: A->B->A
-            if (preamble.length === 2) {
-                let s = preamble[0];
-                for (let i = 0; i < destinations.length; i++) {
-                    if (destinations[i]['regionId'] === s) {
-                        patternType = 1;
-                        destNumber--;
-                    }
-                }
-            }
-
-            // Type 2: A->B->A->C
-            if (preamble.length === 3) {
-                if (preamble[0] === preamble[2]) {
-                    patternType = 2;
-                }
-            }
-
-            // 所有glyph的半径需要保持一致
-            let destHeight = (patternHeight - margin.top - margin.bottom) / destNumber;
-            let padding = 2
-            let preambleRadius = ((patternHeight - margin.top - margin.bottom) / 2 - padding * 2) / 2;
-            let radius = (destNumber > 2) ? (destHeight - padding * 2) / 2 : preambleRadius;
-
-            if (patternType === 0) {
-                // draw preamble flow
-                for (let i = 0; i < pattern['preamble'].length - 1; i++) {
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", preambleRadius - 6)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
-                        .attr("y2", cy + patternHeight / 2)
-                }
-
-                // draw destination flow
-                for (let i = 0; i < pattern['destinations'].length; i++) {
-                    let regionId = pattern['destinations'][i]['regionId'];
-                    let flow = pattern['destinations'][i]['count'];
-                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
-                    let y = cy + margin.top + destHeight * i + destHeight / 2;
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", (preambleRadius - 6) * flow / total)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", x)
-                        .attr("y2", y)
-                }
-
-                // draw preamble glyph
-                for (let i = 0; i < pattern['preamble'].length; i++) {
-                    let regionId = pattern['preamble'][i];
-                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
-                    let y = cy + patternHeight / 2;
-                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
-
-                    svg.append('text')
-                        .attr("class", "pattern")
-                        .attr("y", y + radius + 10)
-                        .attr("x", x)
-                        .attr('text-anchor', 'middle')
-                        .text("R" + regionId)
-                        .style("font-size", 8)
-                }
-
-                // draw destination glyph
-                for (let i = 0; i < pattern['destinations'].length; i++) {
-                    let regionId = pattern['destinations'][i]['regionId'];
-                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
-                    let y = cy + margin.top + destHeight * i + destHeight / 2;
-                    this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
-                }
-            } else if (patternType === 1) {
-                // draw preamble flow
-                for (let i = 0; i < pattern['preamble'].length - 1; i++) {
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", preambleRadius - 6)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
-                        .attr("y2", cy + patternHeight / 2)
-                }
-
-                // draw destination flow
-                let order = 0;
-                let backCount = 0;
-                let startId = preamble[0];
-                for (let i = 0; i < pattern['destinations'].length; i++) {
-                    let regionId = pattern['destinations'][i]['regionId'];
-                    let flow = pattern['destinations'][i]['count'];
-
-                    // 遇到回去的regionId则跳过不画直线
-                    if (regionId === startId) {
-                        backCount = flow;
-                        continue;
-                    }
-                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
-                    let y = cy + margin.top + destHeight * order + destHeight / 2;
-                    order++;
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", (preambleRadius - 6) * flow / total)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", x)
-                        .attr("y2", y)
-                }
-
-                // draw back flow
-                let lineGenerator = d3.line()
-                    .x(function (d) {
-                        return d[0];
-                    })
-                    .y(function (d) {
-                        return d[1];
-                    })
-
-                const curvePoints = [
-                    [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
-                    [cx + margin.left + columnWidth, cy + patternHeight / 4],
-                    [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
-                ];
-
-                const lines = svg.append('path')
-                    .attr("class", "backFlow")
-                    .attr("stroke", 'lightsteelblue')
-                    .attr("stroke-width", (preambleRadius - 6) * backCount / total)
-                    .attr("fill", 'none')
-                    .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
-
-                // draw preamble glyph
-                for (let i = 0; i < pattern['preamble'].length; i++) {
-                    let regionId = pattern['preamble'][i];
-                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
-                    let y = cy + patternHeight / 2;
-                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
-
-                    svg.append('text')
-                        .attr("class", "pattern")
-                        .attr("y", y + radius + 10)
-                        .attr("x", x)
-                        .attr('text-anchor', 'middle')
-                        .text("R" + regionId)
-                        .style("font-size", 8)
-                }
-
-                // draw destination glyph
-                order = 0
-                for (let i = 0; i < pattern['destinations'].length; i++) {
-                    let regionId = pattern['destinations'][i]['regionId'];
-                    // 遇到回去的regionId则跳过不画glyph
-                    if (regionId === startId) {
-                        continue;
-                    }
-                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
-                    let y = cy + margin.top + destHeight * order + destHeight / 2;
-                    order++;
-                    this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
-                }
-            } else if (patternType === 2) {
-                // reset columnWidth
-                columnNumber--;
-                columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
-
-                // draw preamble flow
-                for (let i = 0; i < pattern['preamble'].length - 2; i++) {
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", preambleRadius - 6)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
-                        .attr("y2", cy + patternHeight / 2)
-                }
-
-                // draw backFlow
-                let lineGenerator = d3.line()
-                    .x(function (d) {
-                        return d[0];
-                    })
-                    .y(function (d) {
-                        return d[1];
-                    })
-
-                let curvePoints = [
-                    [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
-                    [cx + margin.left + columnWidth, cy + patternHeight / 4],
-                    [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
-                ];
-
-                const lines = svg.append('path')
-                    .attr("class", "backFlow")
-                    .attr("stroke", 'lightsteelblue')
-                    .attr("stroke-width", preambleRadius - 6)
-                    .attr("fill", 'none')
-                    .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
-
-                // draw destinations flow
-                let destinations = pattern['destinations'];
-                if (destinations.length === 1) {
-                    curvePoints = [
-                        [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
-                        [cx + margin.left + columnWidth + columnWidth / 2, cy + 3 * patternHeight / 4],
-                        [cx + margin.left + columnWidth * 2 + columnWidth / 2, cy + patternHeight / 2],
-                    ];
-
-                    let flow = destinations[0]['count'];
-
-                    const jumpLine = svg.append('path')
-                        .attr("class", "jumpFlow")
-                        .attr("stroke", 'lightsteelblue')
-                        .attr("stroke-width", (preambleRadius - 6) * flow / total)
-                        .attr("fill", 'none')
-                        .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
-                } else {
-                    // 如果目的地有两条
-                    curvePoints = [
-                        [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
-                        [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight],
-                        [cx + margin.left + columnWidth * 2 + columnWidth / 2, margin.top + destHeight / 2],
-                    ];
-
-                    let flow1 = destinations[0]['count'];
-
-                    const jumpLine1 = svg.append('path')
-                        .attr("class", "jumpFlow")
-                        .attr("stroke", 'lightsteelblue')
-                        .attr("stroke-width", (preambleRadius - 6) * flow1 / total)
-                        .attr("fill", 'none')
-                        .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
-
-                    curvePoints = [
-                        [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
-                        [cx + margin.left + columnWidth + columnWidth / 2, cy + 3 * patternHeight / 4],
-                        [cx + margin.left + columnWidth * 2, cy + patternHeight / 2],
-                        [cx + margin.left + columnWidth * 2 + columnWidth / 2, margin.top + destHeight + destHeight / 2],
-                    ];
-
-                    let flow2 = destinations[1]['count'];
-
-                    const jumpLine2 = svg.append('path')
-                        .attr("class", "jumpFlow")
-                        .attr("stroke", 'lightsteelblue')
-                        .attr("stroke-width", (preambleRadius - 6) * flow2 / total)
-                        .attr("fill", 'none')
-                        .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
-                }
-
-                // draw preamble glyph
-                for (let i = 0; i < pattern['preamble'].length - 1; i++) {
-                    let regionId = pattern['preamble'][i];
-                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
-                    let y = cy + patternHeight / 2;
-                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
-
-                    svg.append('text')
-                        .attr("class", "pattern")
-                        .attr("y", y + radius + 10)
-                        .attr("x", x)
-                        .attr('text-anchor', 'middle')
-                        .text("R" + regionId)
-                        .style("font-size", 8)
-                }
-
-                // draw destination glyph
-                for (let i = 0; i < pattern['destinations'].length; i++) {
-                    let regionId = pattern['destinations'][i]['regionId'];
-                    let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
-                    let y = cy + margin.top + destHeight * i + destHeight / 2;
-                    this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
-                }
-            }
-
-            // draw time axis
-            let axisLength = patternWidth - margin.left * 4 - margin.right * 4;
-            let y = cy + patternHeight - margin.bottom / 2;
-            let x = cx + margin.left * 4;
-            let startTime = this.generateTimeText(this.startTime);
-            let endTime = this.generateTimeText(this.startTime + this.timeLength);
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", x)
-                .attr("y1", y)
-                .attr("x2", x + axisLength)
-                .attr("y2", y)
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", x)
-                .attr("y1", y - 5)
-                .attr("x2", x)
-                .attr("y2", y + 5)
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", x + axisLength)
-                .attr("y1", y - 5)
-                .attr("x2", x + axisLength)
-                .attr("y2", y + 5)
-
-            svg.append('text')
-                .attr("y", y + 3)
-                .attr("x", x - 3)
-                .attr('text-anchor', 'end')
-                .attr("class", 'timeText')
-                .text("00:00")
-                .style("font-size", 8)
-
-            svg.append('text')
-                .attr("y", y + 3)
-                .attr("x", x + axisLength + 3)
-                .attr('text-anchor', 'start')
-                .attr("class", 'timeText')
-                .text("24:00")
-                .style("font-size", 8)
-
-            // draw timeRects
-            let timeInterval = svg.append("rect")
-                .attr("class", "interval")
-                .attr("x", x + this.startTime / 48 * axisLength)
-                .attr("y", y - 5)
-                .attr("rx", 2)
-                .attr("ry", 2)
-                .attr("width", axisLength / 48 * this.timeLength)
-                .attr("height", 10)
-                .attr("fill", 'red')
-                .attr("opacity", 1)
-                .attr("stroke", '#505254')
-                .attr("stroke-width", 1)
-
-            svg.append('text')
-                .attr("y", y + 8)
-                .attr("x", x + this.startTime / 48 * axisLength - 3)
-                .attr('text-anchor', 'end')
-                .attr("class", 'timeText')
-                .text(startTime)
-                .style("font-size", 8)
-
-            svg.append('text')
-                .attr("y", y + 8)
-                .attr("x", x + this.startTime / 48 * axisLength + axisLength / 48 * this.timeLength + 3)
-                .attr('text-anchor', 'start')
-                .attr("class", 'timeText')
-                .text(endTime)
-                .style("font-size", 8)
-
-        },
-
-        drawOverviewPattern: function (index) {
-            let moduleWidth = 600;
-            let moduleHeight = 250;
-            let patternWidth = moduleWidth / 2;
-            let patternHeight = moduleHeight / 2;
-            let cx = index % 2 * patternWidth;
-            let cy = Math.floor(index / 2) * patternHeight;
-
-            let svg = this.svg;
-            let margin = {left: 10, right: 10, top: 20, bottom: 20}
-
-            // data
-            let patternId = this.fourPatternsId[index];
-            let pattern = this.fourPatterns[index];
-            let regionsFlow = this.fourRegionsFlow[index];
-
-            // detect pattern type
-            let patternType = 0;
-            if (pattern.length === 3) {
-                if (pattern[0] === pattern[2]) {
-                    // A->B->A
-                    patternType = 1;
-                }
-            } else {
-                // A->B->A->B
-                patternType = 2;
-            }
-
-            // glyph半径保持一致
-            let padding = 2
-            let radius = ((patternHeight - margin.top - margin.bottom) / 2 - padding * 2) / 2;
-            // draw pattern
-            if (patternType === 0) {
-                let columnNumber = 3
-                let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
-
-                // draw flow
-                for (let i = 0; i < pattern.length - 1; i++) {
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", radius - 10)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
-                        .attr("y2", cy + patternHeight / 2)
-                }
-
-                // draw glyph
-                for (let i = 0; i < pattern.length; i++) {
-                    let regionId = pattern[i];
-                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
-                    let y = cy + patternHeight / 2;
-                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
-
-                    svg.append('text')
-                        .attr("class", "pattern")
-                        .attr("y", y + radius + 10)
-                        .attr("x", x)
-                        .attr('text-anchor', 'middle')
-                        .text("R" + regionId)
-                        .style("font-size", 8)
-                }
-            } else if (patternType === 1) {
-                let columnNumber = 2
-                let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
-
-                // draw flow
-                for (let i = 0; i < pattern.length - 2; i++) {
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", radius - 10)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
-                        .attr("y2", cy + patternHeight / 2)
-                }
-
-                // draw back flow
-                let lineGenerator = d3.line()
-                    .x(function (d) {
-                        return d[0];
-                    })
-                    .y(function (d) {
-                        return d[1];
-                    })
-
-                const curvePoints = [
-                    [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
-                    [cx + margin.left + columnWidth, cy + patternHeight / 4],
-                    [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
-                ];
-
-                const lines = svg.append('path')
-                    .attr("class", "backFlow")
-                    .attr("stroke", 'lightsteelblue')
-                    .attr("stroke-width", radius - 10)
-                    .attr("fill", 'none')
-                    .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
-
-                // draw glyph
-                for (let i = 0; i < pattern.length - 1; i++) {
-                    let regionId = pattern[i];
-                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
-                    let y = cy + patternHeight / 2;
-                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
-
-                    svg.append('text')
-                        .attr("class", "pattern")
-                        .attr("y", y + radius + 10)
-                        .attr("x", x)
-                        .attr('text-anchor', 'middle')
-                        .text("R" + regionId)
-                        .style("font-size", 8)
-                }
-            } else {
-                let columnNumber = 2
-                let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
-
-                // draw flow
-                for (let i = 0; i < pattern.length - 3; i++) {
-                    svg.append('line')
-                        .attr("class", 'pattern')
-                        .style("Stroke", "lightsteelblue")
-                        .attr("stroke-width", radius - 10)
-                        .style("opacity", 1)
-                        .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
-                        .attr("y1", cy + patternHeight / 2)
-                        .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
-                        .attr("y2", cy + patternHeight / 2)
-                }
-
-                // draw back flow
-                let lineGenerator = d3.line()
-                    .x(function (d) {
-                        return d[0];
-                    })
-                    .y(function (d) {
-                        return d[1];
-                    })
-
-                const curvePoints = [
-                    [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
-                    [cx + margin.left + columnWidth, cy + patternHeight / 4],
-                    [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
-                ];
-
-                const lines = svg.append('path')
-                    .attr("class", "backFlow")
-                    .attr("stroke", 'lightsteelblue')
-                    .attr("stroke-width", radius - 10)
-                    .attr("fill", 'none')
-                    .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
-
-                // draw glyph
-                for (let i = 0; i < pattern.length - 2; i++) {
-                    let regionId = pattern[i];
-                    let x = cx + margin.left + i * columnWidth + columnWidth / 2;
-                    let y = cy + patternHeight / 2;
-                    this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
-
-                    svg.append('text')
-                        .attr("class", "pattern")
-                        .attr("y", y + radius + 10)
-                        .attr("x", x)
-                        .attr('text-anchor', 'middle')
-                        .text("R" + regionId)
-                        .style("font-size", 8)
-                }
-            }
-
-            // draw time axis
-            let axisLength = patternWidth - margin.left * 4 - margin.right * 4;
-            let y = cy + patternHeight - margin.bottom / 2;
-            let x = cx + margin.left * 4;
-            let startTime = this.generateTimeText(this.overviewStart);
-            let endTime = this.generateTimeText(this.overviewStart + this.overviewLength);
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", x)
-                .attr("y1", y)
-                .attr("x2", x + axisLength)
-                .attr("y2", y)
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", x)
-                .attr("y1", y - 5)
-                .attr("x2", x)
-                .attr("y2", y + 5)
-            svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("x1", x + axisLength)
-                .attr("y1", y - 5)
-                .attr("x2", x + axisLength)
-                .attr("y2", y + 5)
-
-            svg.append('text')
-                .attr("y", y + 3)
-                .attr("x", x - 3)
-                .attr('text-anchor', 'end')
-                .attr("class", 'timeText')
-                .text("00:00")
-                .style("font-size", 8)
-
-            svg.append('text')
-                .attr("y", y + 3)
-                .attr("x", x + axisLength + 3)
-                .attr('text-anchor', 'start')
-                .attr("class", 'timeText')
-                .text("24:00")
-                .style("font-size", 8)
-
-            // draw timeRects
-            let timeInterval = svg.append("rect")
-                .attr("class", "interval")
-                .attr("x", x + this.overviewStart / 48 * axisLength)
-                .attr("y", y - 5)
-                .attr("rx", 2)
-                .attr("ry", 2)
-                .attr("width", axisLength / 48 * this.overviewLength)
-                .attr("height", 10)
-                .attr("fill", 'red')
-                .attr("opacity", 1)
-                .attr("stroke", '#505254')
-                .attr("stroke-width", 1)
-
-            svg.append('text')
-                .attr("y", y + 8)
-                .attr("x", x + this.overviewStart / 48 * axisLength - 3)
-                .attr('text-anchor', 'end')
-                .attr("class", 'timeText')
-                .text(startTime)
-                .style("font-size", 8)
-
-            svg.append('text')
-                .attr("y", y + 8)
-                .attr("x", x + this.overviewStart / 48 * axisLength + axisLength / 48 * this.overviewLength + 3)
-                .attr('text-anchor', 'start')
-                .attr("class", 'timeText')
-                .text(endTime)
-                .style("font-size", 8)
-        },
-
-        findPosition: function (patternId) {
-            // 遍历四个位置
-            for (let i = 0; i < 4; i++) {
-                if (this.isEmpty[i]) {
-                    this.isEmpty[i] = false;
-                    this.fourPatternsId[i] = patternId;
-                    this.fourPatterns[i] = this.patterns[patternId];
-                    this.fourRegionsFlow[i] = this.regionsFlow;
-
-                    this.drawSinglePattern(i);
-                    return 1;
-                }
-            }
-            return -1;
-        },
-
-        drawSingleGlyph(regionId, patternId, cx, cy, type, entropy, innerRadius, outerRadius) {
+        drawSingleGlyph(generate, regionId, patternId, cx, cy, mode, type, entropy, innerRadius, outerRadius) {
             let region = this.regionsFlow[regionId]
             // console.log("--------------StateView---------------");
             // console.log(this.regionsFlow);
@@ -1496,6 +915,15 @@ export default {
                 .attr("stroke", "black")
                 .style("stroke-width", "0.3px")
                 .style("opacity", 1)
+                .on("click", function () {
+                    // mode true:点击统计category分布 false:点击显示pattern
+                    if(mode) {
+                        self.$emit("conveyRegionId", regionId, generate);
+                    } else {
+                        self.patternId = patternId;
+                        // self.findPosition(patternId);
+                    }
+                })
 
             if (type === 'dest'){
                 let myColor = d3.scaleLinear()
@@ -1510,6 +938,16 @@ export default {
                     .attr("stroke-width", "0.3px")
                     .attr("opacity", 1)
                     .style("cursor", 'pointer')
+                    .on("click", function () {
+                        // mode true:点击统计category分布 false:点击显示pattern
+                        if(mode) {
+                            self.$emit("conveyRegionId", regionId, generate);
+                            console.log(generate);
+                        } else {
+                            self.patternId = patternId;
+                            // self.findPosition(patternId);
+                        }
+                    })
             } else {
                 g.append('circle')
                     .attr("class", "circle")
@@ -1520,10 +958,23 @@ export default {
                     .attr("opacity", 1)
                     .style("cursor", 'pointer')
                     .on("click", function () {
-                        self.patternId = patternId;
-                        self.findPosition(patternId);
+                        // mode true:点击统计category分布 false:点击显示pattern
+                        if(mode) {
+                            self.$emit("conveyRegionId", regionId, generate);
+                        } else {
+                            self.patternId = patternId;
+                            // self.findPosition(patternId);
+                        }
                     })
             }
+
+            svg.append('text')
+                .attr("class", "pattern")
+                .attr("y", cy + outerRadius + 10)
+                .attr("x", cx)
+                .attr('text-anchor', 'middle')
+                .text("R" + regionId)
+                .style("font-size", 8)
 
 
             //     if(type === 3){
@@ -1588,6 +1039,673 @@ export default {
             //             .attr("opacity", 1)
             //     }
         },
+
+        // drawSinglePattern: function (index) {
+        //     let moduleWidth = 600;
+        //     let moduleHeight = 250;
+        //     let patternWidth = moduleWidth / 2;
+        //     let patternHeight = moduleHeight / 2;
+        //     let cx = index % 2 * patternWidth;
+        //     let cy = Math.floor(index / 2) * patternHeight;
+        //
+        //     let svg = this.svg;
+        //     // let g = svg.append("g")
+        //     //     .attr("class", 'pattern')
+        //     //     .attr("transform", "translate(" + cx + "," + cy + ")")
+        //
+        //     let margin = {left: 10, right: 10, top: 20, bottom: 20}
+        //
+        //     // data
+        //     let patternId = this.fourPatternsId[index];
+        //     let pattern = this.fourPatterns[index];
+        //     let regionsFlow = this.fourRegionsFlow[index];
+        //
+        //     console.log("-------------Pattern RegionsId-----------------");
+        //     console.log(pattern);
+        //     console.log("-------------Pattern RegionsId-----------------");
+        //
+        //
+        //     let columnNumber = pattern['preamble'].length + 1;
+        //     let destNumber = pattern['destinations'].length;
+        //     let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
+        //
+        //     // draw flow
+        //     let total = 0;
+        //     for (let i = 0; i < pattern['destinations'].length; i++) {
+        //         total += pattern['destinations'][i]['count'];
+        //     }
+        //
+        //     // Find special pattern type by check pattern
+        //     let patternType = 0;    // patternType = 0 means no special
+        //     let preamble = pattern['preamble'];
+        //     let destinations = pattern['destinations'];
+        //
+        //     // Type 1: A->B->A
+        //     if (preamble.length === 2) {
+        //         let s = preamble[0];
+        //         for (let i = 0; i < destinations.length; i++) {
+        //             if (destinations[i]['regionId'] === s) {
+        //                 patternType = 1;
+        //                 destNumber--;
+        //             }
+        //         }
+        //     }
+        //
+        //     // Type 2: A->B->A->C
+        //     if (preamble.length === 3) {
+        //         if (preamble[0] === preamble[2]) {
+        //             patternType = 2;
+        //         }
+        //     }
+        //
+        //     // 所有glyph的半径需要保持一致
+        //     let destHeight = (patternHeight - margin.top - margin.bottom) / destNumber;
+        //     let padding = 2
+        //     let preambleRadius = ((patternHeight - margin.top - margin.bottom) / 2 - padding * 2) / 2;
+        //     let radius = (destNumber > 2) ? (destHeight - padding * 2) / 2 : preambleRadius;
+        //
+        //     if (patternType === 0) {
+        //         // draw preamble flow
+        //         for (let i = 0; i < pattern['preamble'].length - 1; i++) {
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", preambleRadius - 6)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+        //                 .attr("y2", cy + patternHeight / 2)
+        //         }
+        //
+        //         // draw destination flow
+        //         for (let i = 0; i < pattern['destinations'].length; i++) {
+        //             let regionId = pattern['destinations'][i]['regionId'];
+        //             let flow = pattern['destinations'][i]['count'];
+        //             let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+        //             let y = cy + margin.top + destHeight * i + destHeight / 2;
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", (preambleRadius - 6) * flow / total)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", x)
+        //                 .attr("y2", y)
+        //         }
+        //
+        //         // draw preamble glyph
+        //         for (let i = 0; i < pattern['preamble'].length; i++) {
+        //             let regionId = pattern['preamble'][i];
+        //             let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+        //             let y = cy + patternHeight / 2;
+        //             this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+        //
+        //             svg.append('text')
+        //                 .attr("class", "pattern")
+        //                 .attr("y", y + radius + 10)
+        //                 .attr("x", x)
+        //                 .attr('text-anchor', 'middle')
+        //                 .text("R" + regionId)
+        //                 .style("font-size", 8)
+        //         }
+        //
+        //         // draw destination glyph
+        //         for (let i = 0; i < pattern['destinations'].length; i++) {
+        //             let regionId = pattern['destinations'][i]['regionId'];
+        //             let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+        //             let y = cy + margin.top + destHeight * i + destHeight / 2;
+        //             this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
+        //         }
+        //     } else if (patternType === 1) {
+        //         // draw preamble flow
+        //         for (let i = 0; i < pattern['preamble'].length - 1; i++) {
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", preambleRadius - 6)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+        //                 .attr("y2", cy + patternHeight / 2)
+        //         }
+        //
+        //         // draw destination flow
+        //         let order = 0;
+        //         let backCount = 0;
+        //         let startId = preamble[0];
+        //         for (let i = 0; i < pattern['destinations'].length; i++) {
+        //             let regionId = pattern['destinations'][i]['regionId'];
+        //             let flow = pattern['destinations'][i]['count'];
+        //
+        //             // 遇到回去的regionId则跳过不画直线
+        //             if (regionId === startId) {
+        //                 backCount = flow;
+        //                 continue;
+        //             }
+        //             let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+        //             let y = cy + margin.top + destHeight * order + destHeight / 2;
+        //             order++;
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", (preambleRadius - 6) * flow / total)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", x)
+        //                 .attr("y2", y)
+        //         }
+        //
+        //         // draw back flow
+        //         let lineGenerator = d3.line()
+        //             .x(function (d) {
+        //                 return d[0];
+        //             })
+        //             .y(function (d) {
+        //                 return d[1];
+        //             })
+        //
+        //         const curvePoints = [
+        //             [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+        //             [cx + margin.left + columnWidth, cy + patternHeight / 4],
+        //             [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
+        //         ];
+        //
+        //         const lines = svg.append('path')
+        //             .attr("class", "backFlow")
+        //             .attr("stroke", 'lightsteelblue')
+        //             .attr("stroke-width", (preambleRadius - 6) * backCount / total)
+        //             .attr("fill", 'none')
+        //             .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+        //
+        //         // draw preamble glyph
+        //         for (let i = 0; i < pattern['preamble'].length; i++) {
+        //             let regionId = pattern['preamble'][i];
+        //             let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+        //             let y = cy + patternHeight / 2;
+        //             this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+        //
+        //             svg.append('text')
+        //                 .attr("class", "pattern")
+        //                 .attr("y", y + radius + 10)
+        //                 .attr("x", x)
+        //                 .attr('text-anchor', 'middle')
+        //                 .text("R" + regionId)
+        //                 .style("font-size", 8)
+        //         }
+        //
+        //         // draw destination glyph
+        //         order = 0
+        //         for (let i = 0; i < pattern['destinations'].length; i++) {
+        //             let regionId = pattern['destinations'][i]['regionId'];
+        //             // 遇到回去的regionId则跳过不画glyph
+        //             if (regionId === startId) {
+        //                 continue;
+        //             }
+        //             let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+        //             let y = cy + margin.top + destHeight * order + destHeight / 2;
+        //             order++;
+        //             this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
+        //         }
+        //     } else if (patternType === 2) {
+        //         // reset columnWidth
+        //         columnNumber--;
+        //         columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
+        //
+        //         // draw preamble flow
+        //         for (let i = 0; i < pattern['preamble'].length - 2; i++) {
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", preambleRadius - 6)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+        //                 .attr("y2", cy + patternHeight / 2)
+        //         }
+        //
+        //         // draw backFlow
+        //         let lineGenerator = d3.line()
+        //             .x(function (d) {
+        //                 return d[0];
+        //             })
+        //             .y(function (d) {
+        //                 return d[1];
+        //             })
+        //
+        //         let curvePoints = [
+        //             [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+        //             [cx + margin.left + columnWidth, cy + patternHeight / 4],
+        //             [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
+        //         ];
+        //
+        //         const lines = svg.append('path')
+        //             .attr("class", "backFlow")
+        //             .attr("stroke", 'lightsteelblue')
+        //             .attr("stroke-width", preambleRadius - 6)
+        //             .attr("fill", 'none')
+        //             .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+        //
+        //         // draw destinations flow
+        //         let destinations = pattern['destinations'];
+        //         if (destinations.length === 1) {
+        //             curvePoints = [
+        //                 [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+        //                 [cx + margin.left + columnWidth + columnWidth / 2, cy + 3 * patternHeight / 4],
+        //                 [cx + margin.left + columnWidth * 2 + columnWidth / 2, cy + patternHeight / 2],
+        //             ];
+        //
+        //             let flow = destinations[0]['count'];
+        //
+        //             const jumpLine = svg.append('path')
+        //                 .attr("class", "jumpFlow")
+        //                 .attr("stroke", 'lightsteelblue')
+        //                 .attr("stroke-width", (preambleRadius - 6) * flow / total)
+        //                 .attr("fill", 'none')
+        //                 .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+        //         } else {
+        //             // 如果目的地有两条
+        //             curvePoints = [
+        //                 [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+        //                 [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight],
+        //                 [cx + margin.left + columnWidth * 2 + columnWidth / 2, margin.top + destHeight / 2],
+        //             ];
+        //
+        //             let flow1 = destinations[0]['count'];
+        //
+        //             const jumpLine1 = svg.append('path')
+        //                 .attr("class", "jumpFlow")
+        //                 .attr("stroke", 'lightsteelblue')
+        //                 .attr("stroke-width", (preambleRadius - 6) * flow1 / total)
+        //                 .attr("fill", 'none')
+        //                 .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+        //
+        //             curvePoints = [
+        //                 [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+        //                 [cx + margin.left + columnWidth + columnWidth / 2, cy + 3 * patternHeight / 4],
+        //                 [cx + margin.left + columnWidth * 2, cy + patternHeight / 2],
+        //                 [cx + margin.left + columnWidth * 2 + columnWidth / 2, margin.top + destHeight + destHeight / 2],
+        //             ];
+        //
+        //             let flow2 = destinations[1]['count'];
+        //
+        //             const jumpLine2 = svg.append('path')
+        //                 .attr("class", "jumpFlow")
+        //                 .attr("stroke", 'lightsteelblue')
+        //                 .attr("stroke-width", (preambleRadius - 6) * flow2 / total)
+        //                 .attr("fill", 'none')
+        //                 .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+        //         }
+        //
+        //         // draw preamble glyph
+        //         for (let i = 0; i < pattern['preamble'].length - 1; i++) {
+        //             let regionId = pattern['preamble'][i];
+        //             let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+        //             let y = cy + patternHeight / 2;
+        //             this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+        //
+        //             svg.append('text')
+        //                 .attr("class", "pattern")
+        //                 .attr("y", y + radius + 10)
+        //                 .attr("x", x)
+        //                 .attr('text-anchor', 'middle')
+        //                 .text("R" + regionId)
+        //                 .style("font-size", 8)
+        //         }
+        //
+        //         // draw destination glyph
+        //         for (let i = 0; i < pattern['destinations'].length; i++) {
+        //             let regionId = pattern['destinations'][i]['regionId'];
+        //             let x = cx + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+        //             let y = cy + margin.top + destHeight * i + destHeight / 2;
+        //             this.drawSingleGlyph(regionId, index, x, y, 'patterns', radius - 6, radius);
+        //         }
+        //     }
+        //
+        //     // draw time axis
+        //     let axisLength = patternWidth - margin.left * 4 - margin.right * 4;
+        //     let y = cy + patternHeight - margin.bottom / 2;
+        //     let x = cx + margin.left * 4;
+        //     let startTime = this.generateTimeText(this.startTime);
+        //     let endTime = this.generateTimeText(this.startTime + this.timeLength);
+        //     svg.append('line')
+        //         .style("Stroke", "black")
+        //         .style("opacity", 0.5)
+        //         .attr("x1", x)
+        //         .attr("y1", y)
+        //         .attr("x2", x + axisLength)
+        //         .attr("y2", y)
+        //     svg.append('line')
+        //         .style("Stroke", "black")
+        //         .style("opacity", 0.5)
+        //         .attr("x1", x)
+        //         .attr("y1", y - 5)
+        //         .attr("x2", x)
+        //         .attr("y2", y + 5)
+        //     svg.append('line')
+        //         .style("Stroke", "black")
+        //         .style("opacity", 0.5)
+        //         .attr("x1", x + axisLength)
+        //         .attr("y1", y - 5)
+        //         .attr("x2", x + axisLength)
+        //         .attr("y2", y + 5)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 3)
+        //         .attr("x", x - 3)
+        //         .attr('text-anchor', 'end')
+        //         .attr("class", 'timeText')
+        //         .text("00:00")
+        //         .style("font-size", 8)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 3)
+        //         .attr("x", x + axisLength + 3)
+        //         .attr('text-anchor', 'start')
+        //         .attr("class", 'timeText')
+        //         .text("24:00")
+        //         .style("font-size", 8)
+        //
+        //     // draw timeRects
+        //     let timeInterval = svg.append("rect")
+        //         .attr("class", "interval")
+        //         .attr("x", x + this.startTime / 48 * axisLength)
+        //         .attr("y", y - 5)
+        //         .attr("rx", 2)
+        //         .attr("ry", 2)
+        //         .attr("width", axisLength / 48 * this.timeLength)
+        //         .attr("height", 10)
+        //         .attr("fill", 'red')
+        //         .attr("opacity", 1)
+        //         .attr("stroke", '#505254')
+        //         .attr("stroke-width", 1)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 8)
+        //         .attr("x", x + this.startTime / 48 * axisLength - 3)
+        //         .attr('text-anchor', 'end')
+        //         .attr("class", 'timeText')
+        //         .text(startTime)
+        //         .style("font-size", 8)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 8)
+        //         .attr("x", x + this.startTime / 48 * axisLength + axisLength / 48 * this.timeLength + 3)
+        //         .attr('text-anchor', 'start')
+        //         .attr("class", 'timeText')
+        //         .text(endTime)
+        //         .style("font-size", 8)
+        //
+        // },
+
+        // drawOverviewPattern: function (index) {
+        //     let moduleWidth = 600;
+        //     let moduleHeight = 250;
+        //     let patternWidth = moduleWidth / 2;
+        //     let patternHeight = moduleHeight / 2;
+        //     let cx = index % 2 * patternWidth;
+        //     let cy = Math.floor(index / 2) * patternHeight;
+        //
+        //     let svg = this.svg;
+        //     let margin = {left: 10, right: 10, top: 20, bottom: 20}
+        //
+        //     // data
+        //     let patternId = this.fourPatternsId[index];
+        //     let pattern = this.fourPatterns[index];
+        //     let regionsFlow = this.fourRegionsFlow[index];
+        //
+        //     // detect pattern type
+        //     let patternType = 0;
+        //     if (pattern.length === 3) {
+        //         if (pattern[0] === pattern[2]) {
+        //             // A->B->A
+        //             patternType = 1;
+        //         }
+        //     } else {
+        //         // A->B->A->B
+        //         patternType = 2;
+        //     }
+        //
+        //     // glyph半径保持一致
+        //     let padding = 2
+        //     let radius = ((patternHeight - margin.top - margin.bottom) / 2 - padding * 2) / 2;
+        //     // draw pattern
+        //     if (patternType === 0) {
+        //         let columnNumber = 3
+        //         let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
+        //
+        //         // draw flow
+        //         for (let i = 0; i < pattern.length - 1; i++) {
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", radius - 10)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+        //                 .attr("y2", cy + patternHeight / 2)
+        //         }
+        //
+        //         // draw glyph
+        //         for (let i = 0; i < pattern.length; i++) {
+        //             let regionId = pattern[i];
+        //             let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+        //             let y = cy + patternHeight / 2;
+        //             this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+        //
+        //             svg.append('text')
+        //                 .attr("class", "pattern")
+        //                 .attr("y", y + radius + 10)
+        //                 .attr("x", x)
+        //                 .attr('text-anchor', 'middle')
+        //                 .text("R" + regionId)
+        //                 .style("font-size", 8)
+        //         }
+        //     } else if (patternType === 1) {
+        //         let columnNumber = 2
+        //         let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
+        //
+        //         // draw flow
+        //         for (let i = 0; i < pattern.length - 2; i++) {
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", radius - 10)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+        //                 .attr("y2", cy + patternHeight / 2)
+        //         }
+        //
+        //         // draw back flow
+        //         let lineGenerator = d3.line()
+        //             .x(function (d) {
+        //                 return d[0];
+        //             })
+        //             .y(function (d) {
+        //                 return d[1];
+        //             })
+        //
+        //         const curvePoints = [
+        //             [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+        //             [cx + margin.left + columnWidth, cy + patternHeight / 4],
+        //             [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
+        //         ];
+        //
+        //         const lines = svg.append('path')
+        //             .attr("class", "backFlow")
+        //             .attr("stroke", 'lightsteelblue')
+        //             .attr("stroke-width", radius - 10)
+        //             .attr("fill", 'none')
+        //             .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+        //
+        //         // draw glyph
+        //         for (let i = 0; i < pattern.length - 1; i++) {
+        //             let regionId = pattern[i];
+        //             let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+        //             let y = cy + patternHeight / 2;
+        //             this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+        //
+        //             svg.append('text')
+        //                 .attr("class", "pattern")
+        //                 .attr("y", y + radius + 10)
+        //                 .attr("x", x)
+        //                 .attr('text-anchor', 'middle')
+        //                 .text("R" + regionId)
+        //                 .style("font-size", 8)
+        //         }
+        //     } else {
+        //         let columnNumber = 2
+        //         let columnWidth = (patternWidth - margin.left - margin.right) / columnNumber;
+        //
+        //         // draw flow
+        //         for (let i = 0; i < pattern.length - 3; i++) {
+        //             svg.append('line')
+        //                 .attr("class", 'pattern')
+        //                 .style("Stroke", "lightsteelblue")
+        //                 .attr("stroke-width", radius - 10)
+        //                 .style("opacity", 1)
+        //                 .attr("x1", cx + margin.left + i * columnWidth + columnWidth / 2)
+        //                 .attr("y1", cy + patternHeight / 2)
+        //                 .attr("x2", cx + margin.left + (i + 1) * columnWidth + columnWidth / 2)
+        //                 .attr("y2", cy + patternHeight / 2)
+        //         }
+        //
+        //         // draw back flow
+        //         let lineGenerator = d3.line()
+        //             .x(function (d) {
+        //                 return d[0];
+        //             })
+        //             .y(function (d) {
+        //                 return d[1];
+        //             })
+        //
+        //         const curvePoints = [
+        //             [cx + margin.left + columnWidth / 2, cy + patternHeight / 2],
+        //             [cx + margin.left + columnWidth, cy + patternHeight / 4],
+        //             [cx + margin.left + columnWidth + columnWidth / 2, cy + patternHeight / 2],
+        //         ];
+        //
+        //         const lines = svg.append('path')
+        //             .attr("class", "backFlow")
+        //             .attr("stroke", 'lightsteelblue')
+        //             .attr("stroke-width", radius - 10)
+        //             .attr("fill", 'none')
+        //             .attr('d', lineGenerator.curve(d3['curveCardinal'])(curvePoints))
+        //
+        //         // draw glyph
+        //         for (let i = 0; i < pattern.length - 2; i++) {
+        //             let regionId = pattern[i];
+        //             let x = cx + margin.left + i * columnWidth + columnWidth / 2;
+        //             let y = cy + patternHeight / 2;
+        //             this.drawSingleGlyph(regionId, patternId, x, y, 'patterns', radius - 6, radius);
+        //
+        //             svg.append('text')
+        //                 .attr("class", "pattern")
+        //                 .attr("y", y + radius + 10)
+        //                 .attr("x", x)
+        //                 .attr('text-anchor', 'middle')
+        //                 .text("R" + regionId)
+        //                 .style("font-size", 8)
+        //         }
+        //     }
+        //
+        //     // draw time axis
+        //     let axisLength = patternWidth - margin.left * 4 - margin.right * 4;
+        //     let y = cy + patternHeight - margin.bottom / 2;
+        //     let x = cx + margin.left * 4;
+        //     let startTime = this.generateTimeText(this.overviewStart);
+        //     let endTime = this.generateTimeText(this.overviewStart + this.overviewLength);
+        //     svg.append('line')
+        //         .style("Stroke", "black")
+        //         .style("opacity", 0.5)
+        //         .attr("x1", x)
+        //         .attr("y1", y)
+        //         .attr("x2", x + axisLength)
+        //         .attr("y2", y)
+        //     svg.append('line')
+        //         .style("Stroke", "black")
+        //         .style("opacity", 0.5)
+        //         .attr("x1", x)
+        //         .attr("y1", y - 5)
+        //         .attr("x2", x)
+        //         .attr("y2", y + 5)
+        //     svg.append('line')
+        //         .style("Stroke", "black")
+        //         .style("opacity", 0.5)
+        //         .attr("x1", x + axisLength)
+        //         .attr("y1", y - 5)
+        //         .attr("x2", x + axisLength)
+        //         .attr("y2", y + 5)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 3)
+        //         .attr("x", x - 3)
+        //         .attr('text-anchor', 'end')
+        //         .attr("class", 'timeText')
+        //         .text("00:00")
+        //         .style("font-size", 8)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 3)
+        //         .attr("x", x + axisLength + 3)
+        //         .attr('text-anchor', 'start')
+        //         .attr("class", 'timeText')
+        //         .text("24:00")
+        //         .style("font-size", 8)
+        //
+        //     // draw timeRects
+        //     let timeInterval = svg.append("rect")
+        //         .attr("class", "interval")
+        //         .attr("x", x + this.overviewStart / 48 * axisLength)
+        //         .attr("y", y - 5)
+        //         .attr("rx", 2)
+        //         .attr("ry", 2)
+        //         .attr("width", axisLength / 48 * this.overviewLength)
+        //         .attr("height", 10)
+        //         .attr("fill", 'red')
+        //         .attr("opacity", 1)
+        //         .attr("stroke", '#505254')
+        //         .attr("stroke-width", 1)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 8)
+        //         .attr("x", x + this.overviewStart / 48 * axisLength - 3)
+        //         .attr('text-anchor', 'end')
+        //         .attr("class", 'timeText')
+        //         .text(startTime)
+        //         .style("font-size", 8)
+        //
+        //     svg.append('text')
+        //         .attr("y", y + 8)
+        //         .attr("x", x + this.overviewStart / 48 * axisLength + axisLength / 48 * this.overviewLength + 3)
+        //         .attr('text-anchor', 'start')
+        //         .attr("class", 'timeText')
+        //         .text(endTime)
+        //         .style("font-size", 8)
+        // },
+
+        // findPosition: function (patternId) {
+        //     // 遍历四个位置
+        //     for (let i = 0; i < 4; i++) {
+        //         if (this.isEmpty[i]) {
+        //             this.isEmpty[i] = false;
+        //             this.fourPatternsId[i] = patternId;
+        //             this.fourPatterns[i] = this.patterns[patternId];
+        //             this.fourRegionsFlow[i] = this.regionsFlow;
+        //
+        //             this.drawSinglePattern(i);
+        //             return 1;
+        //         }
+        //     }
+        //     return -1;
+        // },
 
         compute: function () {
             let regionNum;    //HighOrder所涉及的region数目

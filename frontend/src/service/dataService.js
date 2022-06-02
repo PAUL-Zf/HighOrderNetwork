@@ -30,8 +30,8 @@ function request(url, params, type, callback) {
     })
 }
 
-function initialization(videoId, callback) {
-    const url = `${dataServerUrl}/initialization/${videoId}`
+function initialization(callback) {
+    const url = `${dataServerUrl}/initialization`
     const params = {}
     request(url, params, GET_REQUEST, callback)
 }
@@ -123,6 +123,12 @@ function getBoundary(callback){
 // 取checkin数据
 function getCheckin(date, callback){
     const url = `${dataServerUrl}/getCheckin/${date}`
+    const params = {}
+    request(url, params, GET_REQUEST, callback)
+}
+
+function getRegionCategory(index, regionId, callback){
+    const url = `${dataServerUrl}/getRegionCategory/${index}/${regionId}`
     const params = {}
     request(url, params, GET_REQUEST, callback)
 }
@@ -270,5 +276,6 @@ export default {
     getPattern,
     getMap,
     getSelfOrganization,
+    getRegionCategory,
 }
 
