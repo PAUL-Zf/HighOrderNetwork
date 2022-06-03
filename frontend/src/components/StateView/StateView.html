@@ -2,15 +2,22 @@
     <div class="card">
         <div class="card-header">
             <div style="float: left; margin-right:40px">
-                <el-image :src="require('@/assets/stateview.png')" style="width:20%;height:20%;left: -55px;bottom: 3px;"></el-image>
-                <h6 style="display: inline;font-weight: bolder; position: absolute; left: 40px;top: 7px">State Transition View</h6>
+                <el-image :src="require('@/assets/stateview.png')"
+                          style="width:20%;height:20%;left: -55px;bottom: 3px;"></el-image>
+                <h6 style="display: inline;font-weight: bolder; position: absolute; left: 40px;top: 7px">State
+                    Transition View</h6>
                 <el-button type="info" plain size="mini" v-on:click="clearPatterns"
                            style="position: absolute;width: 80px;height: 30px;left: 1000px;top: 2px">Clear
                 </el-button>
             </div>
         </div>
         <div class="card-block" id="audioContainer">
-            <div id='sankey'></div>
+            <div id="parentDiv">
+                <div id='sankey'>
+                </div>
+            </div>
+            <div id="octopus">
+            </div>
         </div>
     </div>
 </div>
