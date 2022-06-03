@@ -18,7 +18,7 @@ export default {
     props: ['content', 'region', 'number', 'index', 'finish', 'glyphs', 'links', 'destLinks', 'startTime',
         'timeLength', 'drawSignal', 'overviewPattern', 'flowCounts', 'categoryDistribution',
         'overviewStart', 'overviewLength', 'heatMap', 'mapviewPatternId', 'drawMapviewSignal',
-        'patternType', 'glyphIndex', 'generate'],
+        'patternType', 'glyphIndex', 'generate', 'overviewPatternId'],
 
     watch: {
         drawSignal(val) {
@@ -27,7 +27,7 @@ export default {
             for (let i = 0; i < 4; i++) {
                 if (this.isEmpty[i]) {
                     this.isEmpty[i] = false;
-                    this.fourPatternsId[i] = val;
+                    this.fourPatternsId[i] = this.overviewPatternId;
                     this.fourPatterns[i] = this.overviewPattern;
                     this.fourRegionsFlow[i] = this.categoryDistribution;
 
@@ -36,6 +36,17 @@ export default {
                     time.push(this.startTime);
                     time.push(this.timeLength);
                     this.fourPatternsTime[i] = time;
+
+                    if(!this.isExist){
+                        const svg = d3.select("#sankey")
+                            .append('svg')
+                            .attr("class", "state")
+                            .attr("width", 600)
+                            .attr("height", this.height * 2)
+
+                        this.svg = svg;
+                        this.isExist = true;
+                    }
 
                     this.drawOverview(i);
                     break;
@@ -59,6 +70,17 @@ export default {
                     time.push(this.timeLength);
                     this.fourPatternsTime[i] = time;
 
+                    if(!this.isExist){
+                        const svg = d3.select("#sankey")
+                            .append('svg')
+                            .attr("class", "state")
+                            .attr("width", 600)
+                            .attr("height", this.height * 2)
+
+                        this.svg = svg;
+                        this.isExist = true;
+                    }
+
                     this.drawMapviewPattern(i);
                     break;
                 }
@@ -77,7 +99,7 @@ export default {
                 console.log("--------------StateView---------------");
 
                 this.update();
-                // this.drawDendrogram();
+                this.drawDendrogram();
             })
         },
     },
@@ -89,6 +111,7 @@ export default {
             indexMapKey: [],
             patterns: null,
 
+            isExist: false,
             patternId: null,
             fourPatterns: [],    //用来记录四个位置对应的pattern信息
             fourPatternsId: [],    //用来记录四个位置对应的patternId
@@ -98,7 +121,7 @@ export default {
             isEmpty: [],    //用来判断四个位置是否为空
             allData: [],    //用来存储最多四个region的所有轨迹数据
             width: 1123,
-            height: 250,
+            height: 265,
             regionsFlow: null,
             column: 0,
             row: 0,
@@ -108,6 +131,7 @@ export default {
             nextLinks: [],
             lastLinks: [],
             svg: null,
+            octopusSvg: null,
             total: 0,
             cx: 0,
             cy: 0,
@@ -117,13 +141,13 @@ export default {
     },
 
     mounted: function () {
-        const svg = d3.select("#sankey")
+        const svg = d3.select("#octopus")
             .append('svg')
-            .attr("class", "state")
-            .attr("width", this.width)
+            .attr("class", "oct")
+            .attr("width", 483)
             .attr("height", this.height)
 
-        this.svg = svg;
+        this.octopusSvg = svg;
 
         // 初始四个空位
         for (let i = 0; i < 4; i++) {
@@ -150,8 +174,8 @@ export default {
             const svg = d3.select("#sankey")
                 .append('svg')
                 .attr("class", "state")
-                .attr("width", this.width)
-                .attr("height", this.height)
+                .attr("width", 600)
+                .attr("height", this.height * 2)
 
             this.svg = svg;
         },
@@ -197,16 +221,20 @@ export default {
         },
 
         drawOverview: function (index) {
-            let moduleWidth = 1123;
+            // let moduleWidth = 1123;
+            let moduleWidth = 600;
             let moduleHeight = 250;
-            let patternWidth = moduleWidth / 2;
+            // let patternWidth = moduleWidth / 2;
+            let patternWidth = moduleWidth;
             let patternHeight = moduleHeight / 2;
             let moduleLeft = 20;
-            let cx = index % 2 * patternWidth + moduleLeft;
-            let cy = Math.floor(index / 2) * patternHeight;
+            // let cx = index % 2 * patternWidth + moduleLeft;
+            let cx = moduleLeft;
+            // let cy = Math.floor(index / 2) * patternHeight;
+            let cy = index * patternHeight;
 
             let svg = this.svg;
-            let margin = {left: 20, right: 40, top: 20, bottom: 20}
+            let margin = {left: 20, right: 60, top: 20, bottom: 20}
 
             // data
             let patternId = this.fourPatternsId[index];
@@ -246,7 +274,9 @@ export default {
                 let flowHeight = flowCount / maxFlow * maxFlowHeight;
                 let flowData = [];
                 let min, max;
-                for(let j = patternId * 24; j < patternId * 24 + 24; j++){
+
+                let order = (patternId + i) % 10
+                for(let j = order * 24; j < order * 24 + 24; j++){
                     flowData.push(this.heatMap[j].count);
                     min = this.heatMap[j].min;
                     max = this.heatMap[j].max;
@@ -326,9 +356,9 @@ export default {
 
             // draw time axis
             let number = pattern.length;
-            let axisLength = (number === 3) ? 295 : 457;
+            let axisLength = (number === 3) ? 363 : 530;
             let y = cy + patternHeight - margin.bottom / 2;
-            let x = cx + 43;
+            let x = cx + 16;
             let startTime = this.generateTimeText(this.overviewStart);
             let endTime = this.generateTimeText(this.overviewStart + this.overviewLength);
             svg.append('line')
@@ -402,13 +432,17 @@ export default {
         },
 
         drawMapviewPattern: function (index) {
-            let moduleWidth = 1123;
+            // let moduleWidth = 1123;
+            let moduleWidth = 600;
             let moduleHeight = 250;
-            let patternWidth = moduleWidth / 2;
+            // let patternWidth = moduleWidth / 2;
+            let patternWidth = moduleWidth;
             let patternHeight = moduleHeight / 2;
             let moduleLeft = 20;
-            let cx = index % 2 * patternWidth + moduleLeft;
-            let cy = Math.floor(index / 2) * patternHeight;
+            // let cx = index % 2 * patternWidth + moduleLeft;
+            let cx = moduleLeft;
+            // let cy = Math.floor(index / 2) * patternHeight;
+            let cy = index * patternHeight;
             let svg = this.svg;
             let margin = {left: 20, right: 40, top: 20, bottom: 20}
 
@@ -659,9 +693,9 @@ export default {
 
             // draw time axis
             let number = pattern['preamble'].length + 1;
-            let axisLength = (number === 3) ? 295 : 457;
+            let axisLength = (number === 3) ? 363 : 530;
             let y = cy + patternHeight - margin.bottom / 2;
-            let x = cx + 43;
+            let x = cx + 16;
             let startTime = this.generateTimeText(this.startTime);
             let endTime = this.generateTimeText(this.startTime + this.timeLength);
             svg.append('line')
@@ -734,12 +768,12 @@ export default {
         },
 
         drawDendrogram: function () {
-            let svg = this.svg;
+            let svg = this.octopusSvg;
             let margin = {top: 10, bottom: 10, left: 10, right: 10};
 
             this.patterns = this.content['patterns'];
 
-            let dendrogram = {left: 650, width: 500, height: 250};
+            let dendrogram = {left: 0, width: 483, height: 250};
             let columnNumber = this.content.columnNumber;
             let patternNumber = this.content.patternNumber;
             let destinationNumber = this.content.destinationNumber;
@@ -754,24 +788,27 @@ export default {
             let columnWidth = (dendrogram.width - margin.left - margin.right) / columnNumber;
             let rowHeight = (dendrogram.height - margin.top - margin.bottom) / patternNumber;
             let rowPadding = 4;
-            let centerRadius = dendrogram.height / patternNumber / 2;
-            let preambleRadius = centerRadius / 2;
+            let centerRadius = dendrogram.height / patternNumber / 3;
+            let preambleRadius = centerRadius / 3;
             let destRow = rowHeight / destinationNumber;
             let destRadius = destRow / 2 - 4;
+            let tab = 30;
+            let heatWidth = 30;
 
-            // Add divider
-            let line = svg.append('line')
-                .style("Stroke", "black")
-                .style("opacity", 0.5)
-                .attr("class", "dendrogram")
-                .attr("x1", 650)
-                .attr("y1", 10)
-                .attr("x2", 650)
-                .attr("y2", this.height - 10)
+            // // Add divider
+            // let line = svg.append('line')
+            //     .style("Stroke", "black")
+            //     .style("opacity", 0.5)
+            //     .attr("class", "dendrogram")
+            //     .attr("x1", 650)
+            //     .attr("y1", 10)
+            //     .attr("x2", 650)
+            //     .attr("y2", this.height - 10)
 
             // Build the links
             let links = this.links;
             let link = d3.linkHorizontal();
+
             let svgLinks = svg.append("g")
                 .attr("class", "dendrogram")
                 .selectAll("path")
@@ -781,7 +818,7 @@ export default {
                 .attr("class", d => "link" + d.startRow)
                 .attr("d", d => {
                     let l = {source: [0, 0], target: [0, 0]};
-                    l.source[0] = dendrogram.left + margin.left + d.startColumn * columnWidth + columnWidth / 2;
+                    l.source[0] = dendrogram.left + margin.left + d.startColumn * columnWidth + columnWidth / 2 + tab;
                     l.source[1] = margin.top + d.startRow * rowHeight + rowHeight / 2;
                     if (d.endType === 3) {
                         l.target[0] = dendrogram.left + margin.left + d.endColumn * columnWidth + columnWidth / 2;
@@ -796,6 +833,72 @@ export default {
                 .attr("stroke", 'lightsteelblue')
                 .attr("stroke-width", 4)
                 .attr("opacity", 1)
+
+            let svgHLinks = svg.append("g")
+                .attr("class", "dendrogram")
+                .selectAll("path")
+                .data(links)
+                .enter()
+                .append("path")
+                .attr("class", d => "link" + d.startRow)
+                .attr("d", d => {
+                    let l = {source: [0, 0], target: [0, 0]};
+                    l.source[0] = dendrogram.left + margin.left + d.startColumn * columnWidth + columnWidth / 2 - heatWidth;
+                    l.source[1] = margin.top + d.startRow * rowHeight + rowHeight / 2;
+                    l.target[0] = dendrogram.left + margin.left + d.startColumn * columnWidth + columnWidth / 2 + tab;
+                    l.target[1] = margin.top + d.startRow * rowHeight + rowHeight / 2;
+                    return link(l);
+                })
+                .attr("fill", "none")
+                .attr("stroke", 'lightsteelblue')
+                .attr("stroke-width", 4)
+                .attr("opacity", 1)
+
+            // draw heatmap
+            for (let i = 0; i < links.length; i++) {
+                let flowData = [];
+                let min, max;
+                let data = links[i];
+                let id = data.startRow;
+                let order = (i + id) % 10;
+                let flowHeight = 20;
+                for(let j = order * 24; j < order * 24 + 24; j++){
+                    flowData.push(this.heatMap[j].count);
+                    min = this.heatMap[j].min;
+                    max = this.heatMap[j].max;
+                }
+
+                svg.append('rect')
+                    .attr("x", dendrogram.left + margin.left + data.startColumn * columnWidth
+                        + columnWidth / 2 + tab - heatWidth)
+                    .attr("y", margin.top + data.startRow * rowHeight + rowHeight / 2 - flowHeight / 2)
+                    .attr('rx', 2)
+                    .attr('ry', 2)
+                    .attr("width", heatWidth)
+                    .attr("height", flowHeight)
+                    .attr("fill", 'white')
+                    .attr("opacity", 1)
+                    .attr("stroke", 'black')
+                    .attr("stroke-width", 1)
+
+                let heatMap = svg.append("g")
+                    .selectAll('whatever')
+                    .data(flowData)
+                    .enter()
+                    .append("rect")
+                    .attr("x", (d,i) => dendrogram.left + margin.left + data.startColumn * columnWidth
+                        + columnWidth / 2 + tab - heatWidth + heatWidth / 24 * i)
+                    .attr("y", margin.top + data.startRow * rowHeight + rowHeight / 2 - flowHeight / 2)
+                    .attr("width", heatWidth / 24)
+                    .attr("height", flowHeight)
+                    .attr("fill", function (d) {
+                        let myColor = d3.scaleLinear()
+                            .range(["#FFF7BC", "#FD5D5D"])
+                            .domain([min, max])
+                        return myColor(d);
+                    })
+                    .attr("opacity", 1)
+            }
 
             // draw centerLinks
             let centerLinksData = []
@@ -813,7 +916,7 @@ export default {
                     let l = {source: [0, 0], target: [0, 0]};
                     l.source[0] = dendrogram.left + margin.left + (columnNumber - 2) * columnWidth + columnWidth / 2;
                     l.source[1] = dendrogram.height / 2;
-                    l.target[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 4;
+                    l.target[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 4 - tab;
                     l.target[1] = margin.top + d * rowHeight + rowHeight / 2;
                     return link(l);
                 })
@@ -832,9 +935,9 @@ export default {
                 .attr("class", d => "link" + d.row)
                 .attr("d", d => {
                     let l = {source: [0, 0], target: [0, 0]};
-                    l.source[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 4;
+                    l.source[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 4 - tab;
                     l.source[1] = margin.top + d.row * rowHeight + rowHeight / 2;
-                    l.target[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2;
+                    l.target[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2 - tab;
                     l.target[1] = margin.top + rowHeight * d.row + d.destCount * destRow + rowPadding + destRadius;
                     return link(l);
                 })
@@ -842,6 +945,71 @@ export default {
                 .attr("stroke", 'lightsteelblue')
                 .attr("stroke-width", 4)
                 .attr("opacity", 1)
+
+            let destHLinks = svg.append("g")
+                .attr("class", "dendrogram")
+                .selectAll("path")
+                .data(this.destLinks)
+                .enter()
+                .append("path")
+                .attr("class", d => "link" + d.row)
+                .attr("d", d => {
+                    let l = {source: [0, 0], target: [0, 0]};
+                    l.source[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2 - tab;
+                    l.source[1] = margin.top + rowHeight * d.row + d.destCount * destRow + rowPadding + destRadius;
+                    l.target[0] = dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2 + heatWidth;
+                    l.target[1] = margin.top + rowHeight * d.row + d.destCount * destRow + rowPadding + destRadius;
+                    return link(l);
+                })
+                .attr("fill", "none")
+                .attr("stroke", 'lightsteelblue')
+                .attr("stroke-width", 4)
+                .attr("opacity", 1)
+
+            // draw heatmap
+            for (let i = 0; i < this.destLinks.length; i++) {
+                let flowData = [];
+                let min, max;
+                let data = this.destLinks[i];
+                let id = data.row + data.destCont;
+                let order = (i + id) % 10;
+                let flowHeight = 20;
+                for(let j = order * 24; j < order * 24 + 24; j++){
+                    flowData.push(this.heatMap[j].count);
+                    min = this.heatMap[j].min;
+                    max = this.heatMap[j].max;
+                }
+
+                svg.append('rect')
+                    .attr("x", dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2 - tab)
+                    .attr("y", margin.top + rowHeight * data.row + data.destCount * destRow + rowPadding + destRadius - flowHeight / 2)
+                    .attr('rx', 2)
+                    .attr('ry', 2)
+                    .attr("width", heatWidth)
+                    .attr("height", flowHeight)
+                    .attr("fill", 'white')
+                    .attr("opacity", 1)
+                    .attr("stroke", 'black')
+                    .attr("stroke-width", 1)
+
+                let heatMap = svg.append("g")
+                    .selectAll('whatever')
+                    .data(flowData)
+                    .enter()
+                    .append("rect")
+                    .attr("x", (d,i) => dendrogram.left + margin.left + (columnNumber - 1) * columnWidth
+                        + columnWidth / 2 - tab + heatWidth / 24 * i)
+                    .attr("y", margin.top + rowHeight * data.row + data.destCount * destRow + rowPadding + destRadius - flowHeight / 2)
+                    .attr("width", heatWidth / 24)
+                    .attr("height", flowHeight)
+                    .attr("fill", function (d) {
+                        let myColor = d3.scaleLinear()
+                            .range(["#FFF7BC", "#FD5D5D"])
+                            .domain([min, max])
+                        return myColor(d);
+                    })
+                    .attr("opacity", 1)
+            }
 
             // draw glyphs
             for (let i = 0; i < this.glyphs.length; i++) {
@@ -855,12 +1023,12 @@ export default {
                 let cx, cy, innerRadius, outerRadius;
                 // compute glyph position
                 if (type === 1) {
-                    cx = dendrogram.left + margin.left + column * columnWidth + columnWidth / 2;
+                    cx = dendrogram.left + margin.left + column * columnWidth + columnWidth / 2 + heatWidth;
                     cy = margin.top + rowHeight * row + glyph.destCount * destRow + rowPadding + destRadius;
                     innerRadius = destRadius - patternNumber * 2;
                     outerRadius = destRadius;
                 } else if (type === 2) {
-                    cx = dendrogram.left + margin.left + column * columnWidth + columnWidth / 2;
+                    cx = dendrogram.left + margin.left + column * columnWidth + columnWidth / 2 - heatWidth;
                     cy = margin.top + rowHeight * row + rowHeight / 2;
                     innerRadius = destRadius - patternNumber * 2;
                     outerRadius = destRadius;
@@ -870,7 +1038,8 @@ export default {
                     innerRadius = centerRadius - patternNumber * 4;
                     outerRadius = centerRadius;
                 }
-                this.drawSingleGlyph(this.generate, regionId, patternId, cx, cy, false, 'dendrogram', innerRadius, outerRadius);
+
+                this.drawSingleGlyph(this.generate, regionId, patternId, cx, cy, false, 'dendrogram', 0, innerRadius, outerRadius);
             }
         },
 
@@ -882,8 +1051,12 @@ export default {
             // console.log(region)
             // console.log("--------------StateView---------------");
 
-            let svg = this.svg;
             let self = this;
+            let svg;
+            if(type === 'dendrogram')
+                svg = this.octopusSvg;
+            else
+                svg = this.svg;
 
             let g = svg.append("g")
                 .attr("class", type)
@@ -968,13 +1141,15 @@ export default {
                     })
             }
 
-            svg.append('text')
-                .attr("class", "pattern")
-                .attr("y", cy + outerRadius + 10)
-                .attr("x", cx)
-                .attr('text-anchor', 'middle')
-                .text("R" + regionId)
-                .style("font-size", 8)
+            if(type !== 'dendrogram'){
+                svg.append('text')
+                    .attr("class", "pattern")
+                    .attr("y", cy + outerRadius + 10)
+                    .attr("x", cx)
+                    .attr('text-anchor', 'middle')
+                    .text("R" + regionId)
+                    .style("font-size", 8)
+            }
 
 
             //     if(type === 3){

@@ -555,10 +555,10 @@ export default {
             let start = this.timeRects[d.id].time * 2 - this.timeRects[d.id].length;
             let length = this.timeRects[d.id].length * 2;
 
+            this.$emit("conveyPatternId", d.id);
             this.$emit("conveyOverviewPattern", this.drawSignal, this.overviewPattern, this.flows,
                 this.heatMap, this.categoryDistribution, start, length);
             this.$emit("conveyTimeInterval", d.time, d.length);
-            this.$emit("conveyPatternId", d.id);
         },
 
         resetSlideWindow: function () {
@@ -942,7 +942,7 @@ export default {
         this.gridView = gridView;
         this.temporalView = temporalView;
         this.drawLegend();
-        this.drawGrids();
+        // this.drawGrids();
     },
 
 

@@ -62,7 +62,7 @@
                      v-bind:categoryDistribution="categoryDistribution" v-bind:flowCounts="flowCounts"
                      v-bind:overviewStart="overviewStart" v-bind:overviewLength="overviewLength"
                      v-bind:drawSignal="drawSignal" v-bind:overviewPattern="overviewPattern"
-                     v-bind:patternType="patternType" v-bind:glyphIndex="glyphIndex"
+                     v-bind:patternType="patternType" v-bind:glyphIndex="glyphIndex" v-bind:overviewPatternId="patternId"
                      v-bind:mapviewPatternId="mapviewPatternId" v-bind:drawMapviewSignal="drawMapviewSignal"
                      v-bind:content="content" v-bind:region="region" v-bind:number="number" v-bind:index="index"
                      v-bind:finish="finish" v-bind:glyphs="glyphs" v-bind:links="links" v-bind:destLinks="destLinks"

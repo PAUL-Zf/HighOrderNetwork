@@ -50,4 +50,31 @@
         pointer-events: none;
     }
 
+    #parentDiv{
+      position: relative;
+      float: left;
+      width: 640px;
+      height: 265px;
+      overflow-y: hidden;
+    }
+
+    #sankey {
+      position: relative;
+      float: left;
+      width: 620px;
+      height: 265px;
+      overflow-y: auto;
+    }
+
+    #octopus {
+      position: relative;
+      float: left;
+      width: 483px;
+      height: 265px;
+    }
+
+    /*.state {*/
+    /*  overflow-y:auto;*/
+    /*}*/
+
 </style>
