@@ -226,29 +226,35 @@ def getHighOrder(start, length, region, groupId):
                 valid_order[k] = v
                 valid_kld[k] = KLD[k]
 
-    # # 统计四阶数据
-    # order_4 = {}
-    # for k, v in abstract_data.items():
-    #     dest = v[max_order]
-    #     path = ''
-    #     for i in range(max_order-4, max_order):
-    #         if(v[i] == -1):
-    #             break
-    #         path += str(v[i]) + '_'
-    #     if path:
-    #         if path not in order_4:
-    #             order_4[path] = [0 for x in range(region_number)]
-    #         order_4[path][id_to_index[dest]] += 1
+    # 统计四阶数据
+    order_4 = {}
+    for k, v in abstract_data.items():
+        dest = v[max_order]
+        path = ''
+        for i in range(max_order-4, max_order):
+            if(v[i] == -1):
+                break
+            path += str(v[i]) + '_'
+        if path:
+            if path not in order_4:
+                order_4[path] = [0 for x in range(region_number)]
+            order_4[path][id_to_index[dest]] += 1
 
-    # # 计算四阶KLD
-    # for k, v in order_4.items():
-    #     pre = k.split('_', 1)[1]
-    #     if pre in valid_order:
-    #         KLD[k] = computeKLD(v, valid_order[pre])
-    #         # 根据KLD更新数据
-    #         if(KLD[k] > threshold):
-    #             valid_order[k] = v
-    #             valid_kld[k] = KLD[k]
+    # 计算四阶KLD
+    for k, v in order_4.items():
+        pre = k.split('_', 1)[1]
+        if pre in valid_order:
+            KLD[k] = computeKLD(v, valid_order[pre])
+            # 根据KLD更新数据
+            if(KLD[k] > threshold):
+                valid_order[k] = v
+                valid_kld[k] = KLD[k]
+
+    print("-------Before Filter-------")
+    print(len(order_2))
+    print(len(order_3))
+    print(len(order_4))
+    print("-------Before Filter-------")
 
     # 遍历 valid_order，计算所有entropy
     valid_entropy = {}
@@ -265,6 +271,14 @@ def getHighOrder(start, length, region, groupId):
             break
         result[k] = valid_order[k]
         index += 1
+
+    # statistic count function
+    statisticCount = [0 for x in range(6)]
+    for k, v in sort_entropy.items():
+        r = k.split("_")[:-1]
+        statisticCount[len(r)] += 1
+    print(statisticCount)
+
 
     # check entropy
     result_entropy = {}
@@ -657,9 +671,9 @@ def computeEntropy(data):
     if sum == 0:
         return 0
 
-    # 通过将sum < 3的方式过滤轨迹
-    if sum < 3:
-        return 0
+    # # 通过将sum < 3的方式过滤轨迹
+    # if sum < 3:
+    #     return 0
     for d in nonzero_data:
         entropy += (-1) * (d / sum) * math.log(d / sum, 2)
     return entropy

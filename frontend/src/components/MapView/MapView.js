@@ -119,7 +119,7 @@ export default {
             }
         },
 
-        signal(val) {
+        start(val) {
             let self = this;
             this.endTime = this.startTime + this.timeLength;
 
@@ -154,13 +154,32 @@ export default {
 
                 let segmentationLayer = L.geoJson(segmentation, {
                         style: function (feature) {
-                            return {
-                                weight: 0.1,
-                                color: 'black',
-                                fill: true,
-                                fillColor: self.colors[self.category_map[feature.properties.category]],
-                                fillOpacity: 0.8,
+                            let exist = false;
+                            for (let key in self.category_map) {
+                                if(key === feature.properties.category){
+                                    exist = true;
+                                    break;
+                                }
                             }
+
+                            if(exist){
+                                return {
+                                    weight: 0.1,
+                                    color: 'black',
+                                    fill: true,
+                                    fillColor: self.colors[self.category_map[feature.properties.category]],
+                                    fillOpacity: 0.9,
+                                }
+                            } else {
+                                return {
+                                    weight: 0.1,
+                                    color: 'black',
+                                    fill: true,
+                                    fillColor: '#fdb462',
+                                    fillOpacity: 0.9,
+                                }
+                            }
+
                         },
                         onEachFeature: self.onEachFeature,
                     }).addTo(self.mymap);
@@ -385,7 +404,7 @@ export default {
                     if(!isClicked){
                         this.setStyle({
                             fillColor:'grey',
-                            fillOpacity: 0.8,
+                            fillOpacity: 0.9,
                         });
                     }
                 },

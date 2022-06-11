@@ -6,6 +6,7 @@ import DrawAudio from './drawAudio.js'
 import dataService from "@/service/dataService";
 import col from "element-ui/packages/col/src/col";
 import he from "element-ui/src/locale/lang/he";
+import {cos} from "d3-shape/src/math";
 // import * as d3Lasso from 'd3-lasso/build/d3-lasso.min.js';
 // import dataService from '../../service/dataService.js'
 // import pipeService from '../../service/pipeService'
@@ -792,8 +793,8 @@ export default {
             let preambleRadius = centerRadius / 3;
             let destRow = rowHeight / destinationNumber;
             let destRadius = destRow / 2 - 4;
-            let tab = 30;
-            let heatWidth = 30;
+            let tab = 50;
+            let heatWidth = 50;
 
             // // Add divider
             // let line = svg.append('line')
@@ -860,7 +861,7 @@ export default {
                 let min, max;
                 let data = links[i];
                 let id = data.startRow;
-                let order = (i + id) % 10;
+                let order = id % 10;
                 let flowHeight = 20;
                 for(let j = order * 24; j < order * 24 + 24; j++){
                     flowData.push(this.heatMap[j].count);
@@ -972,13 +973,15 @@ export default {
                 let min, max;
                 let data = this.destLinks[i];
                 let id = data.row + data.destCont;
-                let order = (i + id) % 10;
+                let order = id % 10;
                 let flowHeight = 20;
                 for(let j = order * 24; j < order * 24 + 24; j++){
                     flowData.push(this.heatMap[j].count);
                     min = this.heatMap[j].min;
                     max = this.heatMap[j].max;
                 }
+
+                console.log(flowData);
 
                 svg.append('rect')
                     .attr("x", dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2 - tab)
