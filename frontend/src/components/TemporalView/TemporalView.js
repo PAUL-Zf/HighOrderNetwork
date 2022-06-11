@@ -7,7 +7,6 @@
 // import * as d3 from "d3";
 import dataService from "@/service/dataService";
 import * as d3Color from "d3-scale-chromatic";
-import attr from "d3-selection/src/selection/attr";
 import response from "vue-resource/src/http/response";
 
 export default {

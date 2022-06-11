@@ -6,7 +6,6 @@ import DrawAudio from './drawAudio.js'
 import dataService from "@/service/dataService";
 import col from "element-ui/packages/col/src/col";
 import he from "element-ui/src/locale/lang/he";
-import {cos} from "d3-shape/src/math";
 // import * as d3Lasso from 'd3-lasso/build/d3-lasso.min.js';
 // import dataService from '../../service/dataService.js'
 // import pipeService from '../../service/pipeService'
