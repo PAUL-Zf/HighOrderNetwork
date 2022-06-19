@@ -132,9 +132,9 @@ export default {
             // map value to real entropy
             let entropy;
             if(this.entropy === 1){
-                entropy = 1.0;
+                entropy = 1.6;
             } else if(this.entropy === 2){
-                entropy = 1.8;
+                entropy = 1.9;
             } else if(this.entropy === 3){
                 entropy = 2.2;
             } else if(this.entropy === 4){
@@ -168,7 +168,7 @@ export default {
                                     color: 'black',
                                     fill: true,
                                     fillColor: self.colors[self.category_map[feature.properties.category]],
-                                    fillOpacity: 0.9,
+                                    fillOpacity: 1,
                                 }
                             } else {
                                 return {
@@ -176,7 +176,7 @@ export default {
                                     color: 'black',
                                     fill: true,
                                     fillColor: '#fdb462',
-                                    fillOpacity: 0.9,
+                                    fillOpacity: 1,
                                 }
                             }
 
@@ -404,7 +404,7 @@ export default {
                     if(!isClicked){
                         this.setStyle({
                             fillColor:'grey',
-                            fillOpacity: 0.9,
+                            fillOpacity: 1,
                         });
                     }
                 },
@@ -1004,7 +1004,8 @@ export default {
 
         init(id) {
             let map = new L.map(id, {
-                center: new L.LatLng(40.7243528, -73.9559731),
+                // center: new L.LatLng(40.7243528, -73.9559731),
+                center: new L.LatLng(40.7383528, -73.947731),
                 zoom: 13,
                 preferCanvas: true
             });

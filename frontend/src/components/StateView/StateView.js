@@ -792,7 +792,7 @@ export default {
             let preambleRadius = centerRadius / 3;
             let destRow = rowHeight / destinationNumber;
             let destRadius = destRow / 2 - 4;
-            let tab = 50;
+            let tab = 30;
             let heatWidth = 50;
 
             // // Add divider
@@ -971,7 +971,7 @@ export default {
                 let flowData = [];
                 let min, max;
                 let data = this.destLinks[i];
-                let id = data.row + data.destCont;
+                let id = data.row + data.destCount;
                 let order = id % 10;
                 let flowHeight = 20;
                 for(let j = order * 24; j < order * 24 + 24; j++){
@@ -980,7 +980,7 @@ export default {
                     max = this.heatMap[j].max;
                 }
 
-                console.log(flowData);
+                console.log(data);
 
                 svg.append('rect')
                     .attr("x", dendrogram.left + margin.left + (columnNumber - 1) * columnWidth + columnWidth / 2 - tab)
