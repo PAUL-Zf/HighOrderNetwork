@@ -43,7 +43,7 @@ text {
 
 #StatisticViewContainer {
   /* height: 243px; */
-  height: 600px;
+  height: 630px;
 }
 
 #my-player {
@@ -59,6 +59,22 @@ text {
   width: 100%;
 
 }
+
+#regionContainer {
+  position: relative;
+  float: left;
+  width: 279px;
+  height: 315px;
+}
+
+#nodeContainer {
+  position: relative;
+  float: left;
+  width: 279px;
+  height: 315px;
+  overflow-y: hidden;
+}
+
 
 span {
   font-weight: bold;

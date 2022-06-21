@@ -41,7 +41,7 @@
 
     #faceContainer {
         /* height: 243px; */
-        height: 600px;
+        height: 630px;
     }
 
     #mapDiv {

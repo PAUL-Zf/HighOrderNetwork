@@ -11,7 +11,7 @@ export default {
             gridView: null,
             temporalView: null,
             dataset: '',
-            datasets: ['NYC', 'Manhattan'],
+            datasets: ['New York'],
             value: [0, 6],
             number: 10,
             marks: {
