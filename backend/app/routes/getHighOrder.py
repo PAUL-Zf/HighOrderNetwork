@@ -250,12 +250,6 @@ def getHighOrder(start, length, region, groupId):
                 valid_order[k] = v
                 valid_kld[k] = KLD[k]
 
-    print("-------Before Filter-------")
-    print(len(order_2))
-    print(len(order_3))
-    print(len(order_4))
-    print("-------Before Filter-------")
-
     # 遍历 valid_order，计算所有entropy
     valid_entropy = {}
     for k, v in valid_order.items():
@@ -277,7 +271,6 @@ def getHighOrder(start, length, region, groupId):
     for k, v in sort_entropy.items():
         r = k.split("_")[:-1]
         statisticCount[len(r)] += 1
-    print(statisticCount)
 
 
     # check entropy

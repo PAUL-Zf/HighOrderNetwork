@@ -144,7 +144,7 @@ export default {
         const svg = d3.select("#octopus")
             .append('svg')
             .attr("class", "oct")
-            .attr("width", 483)
+            .attr("width", 480)
             .attr("height", this.height)
 
         this.octopusSvg = svg;
@@ -212,12 +212,14 @@ export default {
         },
 
         update: function () {
-            d3.selectAll(".dendrogram").remove();
+            d3.selectAll(".oct").remove();
+            const svg = d3.select("#octopus")
+                .append('svg')
+                .attr("class", "oct")
+                .attr("width", 480)
+                .attr("height", this.height)
 
-            // 更新allData数据
-            // this.allData[index] = this.content;
-            // 更新indexMapKey
-            // this.mapIndexToKey();
+            this.octopusSvg = svg;
         },
 
         drawOverview: function (index) {
@@ -444,7 +446,7 @@ export default {
             // let cy = Math.floor(index / 2) * patternHeight;
             let cy = index * patternHeight;
             let svg = this.svg;
-            let margin = {left: 20, right: 40, top: 20, bottom: 20}
+            let margin = {left: 20, right: 60, top: 20, bottom: 20}
 
             // data
             let patternId = this.fourPatternsId[index];
@@ -460,7 +462,7 @@ export default {
             // let radius = (rowNumber === 2) ? 16 : 14;
             let radius = 14;
             // let innerRadius = (rowNumber === 2) ? 10 : 8;
-            let innerRadius = 6;
+            let innerRadius = 8;
 
             let flowWidth = ((patternWidth - margin.left - margin.right)
                 - regionWidth * columnNumber) / (columnNumber - 1);

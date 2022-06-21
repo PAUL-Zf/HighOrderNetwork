@@ -10,16 +10,17 @@ export default {
     data() {
         return {
             width: 279,
-            height: 600,
-            svg: null,
+            height: 630 / 2,
+            nodeSvg: null,
+            regionSvg: null,
             POIOrder_poi: null,
             POIOrder_access: null,
             accessOrder_poi: null,
             accessOrder_access: null,
-            history_POIOrder_poi: null,
-            history_POIOrder_access: null,
-            history_accessOrder_poi: null,
-            history_accessOrder_access: null,
+            node_POIOrder_poi: null,
+            node_POIOrder_access: null,
+            node_accessOrder_poi: null,
+            node_accessOrder_access: null,
             inOrder: false,
             category_map: {'Food': 0,
                 'Shop & Service': 1,
@@ -38,10 +39,6 @@ export default {
     watch: {
         generate(val) {
             let params = {selects: this.selects, startTime: this.startTime, timeLength: this.timeLength};
-            this.history_POIOrder_poi = this.POIOrder_poi;
-            this.history_POIOrder_access = this.POIOrder_access;
-            this.history_accessOrder_poi = this.accessOrder_poi;
-            this.history_accessOrder_access = this.accessOrder_access;
             dataService.getStatistic(params, response => {
                 this.POIOrder_poi = response.data[0];
                 this.POIOrder_access = response.data[1];
@@ -53,70 +50,81 @@ export default {
                 console.log(this.accessOrder_poi);
                 console.log(this.accessOrder_access);
                 console.log("------------Statistic View-------------");
-                this.updateSvg();
+                this.updateRegionSvg();
                 this.drawBarchart(this.POIOrder_poi, this.POIOrder_access, 0);
-                if(val > 1) this.drawBarchart(this.history_POIOrder_poi, this.history_POIOrder_access, 1);
             })
         },
 
         regionId(val) {
-            this.history_POIOrder_poi = this.POIOrder_poi;
-            this.history_POIOrder_access = this.POIOrder_access;
-            this.history_accessOrder_poi = this.accessOrder_poi;
-            this.history_accessOrder_access = this.accessOrder_access;
             dataService.getRegionCategory(this.historyGenerate, val, response => {
-                this.POIOrder_poi = response.data[0];
-                this.POIOrder_access = response.data[1];
-                this.accessOrder_poi = response.data[2];
-                this.accessOrder_access = response.data[3];
+                this.node_POIOrder_poi = response.data[0];
+                this.node_POIOrder_access = response.data[1];
+                this.node_accessOrder_poi = response.data[2];
+                this.node_accessOrder_access = response.data[3];
                 console.log("------------Statistic View-------------");
                 console.log(this.POIOrder_poi);
                 console.log(this.POIOrder_access);
                 console.log(this.accessOrder_poi);
                 console.log(this.accessOrder_access);
                 console.log("------------Statistic View-------------");
-                this.updateSvg();
-                this.drawBarchart(this.POIOrder_poi, this.POIOrder_access, 0);
-                if(val > 1) this.drawBarchart(this.history_POIOrder_poi, this.history_POIOrder_access, 1);
+                this.updateNodeSvg();
+                this.drawBarchart(this.node_POIOrder_poi, this.node_POIOrder_access, 1);
             })
         },
 
         inOrder(value) {
-            this.updateSvg();
+            this.updateNodeSvg();
+            this.updateRegionSvg();
             if (value) {
                 this.drawBarchart(this.accessOrder_poi, this.accessOrder_access, 0);
-                if(this.generate > 1) {
-                    this.drawBarchart(this.history_accessOrder_poi, this.history_accessOrder_access, 1);
+                if(this.node_accessOrder_access !== null) {
+                    this.drawBarchart(this.node_accessOrder_poi, this.node_accessOrder_access, 1);
                 }
             }
             else {
                 this.drawBarchart(this.POIOrder_poi, this.POIOrder_access, 0);
-                if(this.generate > 1) {
-                    this.drawBarchart(this.history_POIOrder_poi, this.history_POIOrder_access, 1);
+                if(this.node_POIOrder_poi !== null) {
+                    this.drawBarchart(this.node_POIOrder_poi, this.node_POIOrder_access, 1);
                 }
             }
         },
     },
 
     mounted: function () {
-        const svg = d3.select("#comparison")
+        const regionSvg = d3.select("#regionComparison")
             .attr("width", this.width)
             .attr("height", this.height);
-        this.svg = svg;
+        this.regionSvg = regionSvg;
+
+        const nodeSvg = d3.select("#nodeComparison")
+            .attr("width", this.width)
+            .attr("height", this.height);
+        this.nodeSvg = nodeSvg;
 
         // this.drawLine()
     },
 
     methods: {
-        updateSvg: function () {
-            d3.select('#comparison').remove();
-            const svg = d3.select("#StatisticViewContainer")
+        updateNodeSvg: function () {
+            d3.select('#nodeComparison').remove();
+            const svg = d3.select("#nodeContainer")
                 .append('svg')
-                .attr("id", "comparison")
+                .attr("id", "nodeComparison")
                 .attr("width", this.width)
                 .attr("height", this.height);
 
-            this.svg = svg;
+            this.nodeSvg = svg;
+        },
+
+        updateRegionSvg: function () {
+            d3.select('#regionComparison').remove();
+            const svg = d3.select("#regionContainer")
+                .append('svg')
+                .attr("id", "regionComparison")
+                .attr("width", this.width)
+                .attr("height", this.height);
+
+            this.regionSvg = svg;
         },
 
         findMax: function (a) {
@@ -128,12 +136,12 @@ export default {
             return max;
         },
 
-        drawLine: function (cy) {
-            let svg = this.svg;
-            const topMargin = 40;
+        drawLine: function (cy, index) {
+            let svg = index === 0 ? this.regionSvg : this.nodeSvg;
+            const topMargin = 55;
             const leftMargin = 20;
             const tableWidth = this.width - leftMargin * 2;
-            const tableHeight = this.height / 2;
+            const tableHeight = this.height;
             const columnWidth = tableWidth / 3;
             const rowHeight = (tableHeight - topMargin) / 9;
 
@@ -151,7 +159,7 @@ export default {
                 .style("stroke-width", 1)
                 .style("opacity", 1)
                 .attr("x1", leftMargin + columnWidth)
-                .attr("y1", cy + topMargin / 2)
+                .attr("y1", cy + topMargin / 2 + 5)
                 .attr("x2", leftMargin + columnWidth)
                 .attr("y2", cy + topMargin)
 
@@ -160,7 +168,7 @@ export default {
                 .style("stroke-width", 1)
                 .style("opacity", 1)
                 .attr("x1", leftMargin + columnWidth * 2)
-                .attr("y1", cy + topMargin / 2)
+                .attr("y1", cy + topMargin / 2 + 5)
                 .attr("x2", leftMargin + columnWidth * 2)
                 .attr("y2", cy + topMargin)
 
@@ -187,27 +195,45 @@ export default {
                 .text("Access")
                 .style("font-size", 12)
 
+            let title;
+            if (index === 0){
+                if(this.selects.length > 1){
+                    title = "Regions: " + this.selects;
+                } else
+                    title = "Region: " + this.selects;
+            } else {
+                title = "Region: " + this.regionId;
+            }
+
+            svg.append('text')
+                .attr("y", 20)
+                .attr("x", this.width / 2)
+                .attr('text-anchor', 'middle')
+                .attr("class", 'Text')
+                .text(title)
+                .style("font-size", 14)
+                .style("font-weight", "bold")
         },
 
         drawBarchart: function (poi, access, index){
-            let svg = this.svg;
-            const topMargin = 40;
+            let svg = index === 0 ? this.regionSvg : this.nodeSvg;
+            const topMargin = 55;
             const leftMargin = 20;
             const tableWidth = this.width - leftMargin * 2;
-            const tableHeight = this.height / 2;
+            const tableHeight = this.height;
             const columnWidth = tableWidth / 3;
             const rowHeight = (tableHeight - topMargin) / 9;
             const baseWidth = 10;
-            let cy = index * tableHeight - 5;
+            let cy = -5;
 
             let max1 = this.POIOrder_poi[0]['count'];
-            if (index === 1) max1 = this.history_POIOrder_poi[0]['count'];
+            if (index === 1) max1 = this.node_POIOrder_poi[0]['count'];
             let max2 = this.accessOrder_access[0]['count'];
-            if (index === 1) max2 = this.history_accessOrder_access[0]['count'];
+            if (index === 1) max2 = this.node_accessOrder_access[0]['count'];
             let scale1 = (columnWidth - baseWidth) / max1;
             let scale2 = (columnWidth - baseWidth) / max2;
 
-            this.drawLine(cy);
+            this.drawLine(cy, index);
 
             let grids = svg.append("g")
                 .selectAll('whatever')
