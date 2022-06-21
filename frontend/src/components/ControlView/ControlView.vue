@@ -59,7 +59,7 @@ text {
   /* height: 243px; */
   /*height: 167px;*/
   /*height: 1005px;*/
-  height: 905px;
+  height: 935px;
 }
 
 
