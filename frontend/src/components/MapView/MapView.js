@@ -76,7 +76,7 @@ export default {
     },
 
     props: ['date', 'startTime', 'timeLength', 'highlight', 'select', 'selectedData',
-        'level', 'pattern', 'type', 'patternId', 'load', 'start'],
+        'level', 'pattern', 'type', 'patternId', 'load', 'start', 'scale'],
 
     computed: {
         info() {
@@ -131,13 +131,13 @@ export default {
 
             // map value to real entropy
             let entropy;
-            if(this.entropy === 1){
+            if(this.scale === 1){
                 entropy = 1.6;
-            } else if(this.entropy === 2){
+            } else if(this.scale === 2){
                 entropy = 1.9;
-            } else if(this.entropy === 3){
+            } else if(this.scale === 3){
                 entropy = 2.2;
-            } else if(this.entropy === 4){
+            } else if(this.scale === 4){
                 entropy = 2.5;
             }
 

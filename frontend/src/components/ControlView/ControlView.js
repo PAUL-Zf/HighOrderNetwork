@@ -13,7 +13,7 @@ export default {
             dataset: '',
             datasets: ['New York'],
             value: [0, 6],
-            scaleValue: [0, 3],
+            scaleValue: 0,
             number: 10,
             marks: {
                 0: {style: "font-size: 8px", label: 'min'},
@@ -38,7 +38,7 @@ export default {
             patterns: null,
             flows: null,
             type: false,    // false: heatMap  true: barchart
-            level: 1,
+            scale: 1,
 
             // signal
             load: 0,    // 每次点击load都自增
@@ -65,6 +65,10 @@ export default {
     props: ['generate', 'selects'],
 
     watch: {
+        scaleValue(val) {
+            this.scale = val + 1;
+        },
+
         load(val) {
             dataService.getCheckin(this.valueOfDate, response => {
                 this.checkin = response.data;
@@ -110,7 +114,7 @@ export default {
     methods: {
         startAlgorithm(){
             this.start++;
-            this.$emit("conveyStart", this.start);
+            this.$emit("conveyStart", this.start, this.scale);
         },
 
 

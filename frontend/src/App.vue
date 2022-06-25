@@ -45,7 +45,7 @@
                        v-bind:date="date" v-bind:startTime="startTime" v-bind:timeLength="timeLength"
                        v-bind:highlight="highlight" v-bind:select="select" v-bind:selectedData="selectedData"
                        v-bind:level="level" v-bind:pattern="pattern" v-bind:patternId="patternId" v-bind:load="load"
-                       v-bind:start="start"
+                       v-bind:start="start" v-bind:scale="scale"
                        :videoId="videoId" :videoData="videoData"
                        :dir="dir" v-bind:type="type"
                        @changeData='initdraw'></MapView>
@@ -128,6 +128,7 @@ export default {
       },
       startTime: 16,
       timeLength: 4,
+      scale: 1,
       content: null,
       glyphs: null,
       links: null,
@@ -168,8 +169,9 @@ export default {
       this.finish = finish;
     },
 
-    conveyStart(start){
+    conveyStart(start, scale){
       this.start = start;
+      this.scale = scale;
     },
 
     conveySelects(selects){
