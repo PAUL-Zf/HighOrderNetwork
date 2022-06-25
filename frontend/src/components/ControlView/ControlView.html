@@ -42,7 +42,7 @@
                                 :max="6"
                                 :show-tooltip="false"
                                 :marks="marks"
-                                style="margin-top:8px; margin-left: 12%; margin-right: 12%;height: 50px;">
+                                style="margin-top:3px; margin-left: 12%; margin-right: 12%;height: 50px;">
                         </el-slider>
                     </div>
                     <el-button type="info" plain size="mini" v-on:click="display"
@@ -54,16 +54,27 @@
                         <line x1="0" x2="340" y1="15" y2="15" style="stroke:grey;stroke-width: 1px;opacity: 0.5;"></line>
                     </svg>
                 </div>
+                <div class="scales" v-show="isDisplay">
+                    <span class="toolName">Scale</span>
+                    <el-slider
+                            v-model="scaleValue"
+                            :step="1"
+                            :max="3"
+                            :show-tooltip="false"
+                            :marks="scaleMarks"
+                            style="margin-top:3px; margin-left: 12%; margin-right: 12%;height: 50px;">
+                    </el-slider>
+                </div>
                 <div class="timeDiv" v-show="isDisplay">
                     <svg id="temporalView"></svg>
                 </div>
                 <el-button type="info" plain size="mini" v-on:click="startAlgorithm" v-show="isDisplay"
-                           style="position:absolute;top:610px;left:10%;width: 80%;height: 30px">Start
+                           style="position:absolute;top:690px;left:10%;width: 80%;height: 30px">Start
                 </el-button>
                 <div class="gridDiv" v-show="isDisplay">
                     <svg id="gridView"></svg>
                 </div>
-                <div class="divider" style="top:8%" v-show="isDisplay">
+                <div class="divider" style="top:5%" v-show="isDisplay">
                     <svg width="340" height="30">
                         <line x1="0" x2="340" y1="15" y2="15" style="stroke:grey;stroke-width: 1px;opacity: 0.5;"></line>
                     </svg>

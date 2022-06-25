@@ -92,7 +92,7 @@ text {
   float: left;
   width: 100%;
   height: 20%;
-  top: 9%;
+  top: 8%;
 }
 
 .gridDiv {
@@ -105,9 +105,17 @@ text {
 .legendDiv {
   position: relative;
   float: left;
-  top: 8%;
+  top: 6%;
   width: 100%;
   height: 20%;
+}
+
+.scales {
+  position: relative;
+  float: left;
+  top: 8%;
+  width: 100%;
+  height: 8%;
 }
 
 .select {
@@ -122,6 +130,7 @@ text {
   float: left;
   height: 50%;
   width: 100%;
+  top: 3%;
   /*background-color: #0f6674;*/
 }
 

@@ -13,6 +13,7 @@ export default {
             dataset: '',
             datasets: ['New York'],
             value: [0, 6],
+            scaleValue: [0, 3],
             number: 10,
             marks: {
                 0: {style: "font-size: 8px", label: 'min'},
@@ -21,6 +22,12 @@ export default {
                 3: {style: "font-size: 8px", label: '15'},
                 5: {style: "font-size: 8px", label: '60'},
                 6: {style: "font-size: 8px", label: 'max'}
+            },
+            scaleMarks: {
+                0: {style: "font-size: 8px", label: '1'},
+                1: {style: "font-size: 8px", label: '2'},
+                2: {style: "font-size: 8px", label: '3'},
+                3: {style: "font-size: 8px", label: '4'},
             },
             users: [],
             dates: ['Weekdays', 'Holidays'],
@@ -156,13 +163,13 @@ export default {
             for(let i = 0; i < keys.length; i++){
                 svg.append("circle")
                     .attr("cx", (i % 2 === 0) ? 50 : 230)
-                    .attr("cy", Math.floor(i / 2) * 30 + 40)
+                    .attr("cy", Math.floor(i / 2) * 30 + 15)
                     .attr("r", 4)
                     .style("fill", colors[i])
 
                 svg.append("text")
                     .attr("x", ((i % 2 === 0) ? 50 : 230) + 8)
-                    .attr("y", Math.floor(i / 2) * 30 + 40)
+                    .attr("y", Math.floor(i / 2) * 30 + 15)
                     .style("fill", colors[i])
                     .text(keys[i])
                     .attr("text-anchor", "left")
@@ -173,7 +180,7 @@ export default {
 
         drawGrids: function (){
             let svg = this.gridView;
-            let margin = {top: 20, bottom: 30, left: 32, right: 32}
+            let margin = {top: 10, bottom: 30, left: 32, right: 32}
             let height = 301 - margin.top - margin.bottom;
             let width = 373 - margin.left - margin.right;
             let columnNumber = 24;
@@ -284,7 +291,7 @@ export default {
         drawHeatMap: function(){
             let svg = this.temporalView;
             let margin = {top: 0, bottom: 70, left: 32, right: 32}
-            let height = 201 - margin.top - margin.bottom;
+            let height = 190 - margin.top - margin.bottom;
             let width = 373 - margin.left - margin.right;
             let columnNumber = 48;
 
