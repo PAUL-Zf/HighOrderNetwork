@@ -886,16 +886,16 @@ def _getRegionInOut():
 
 @app.route('/getSelfOrganization/<start>/<end>/<entropy>', methods=['GET'])
 def _getSelfOrganization(start, end, entropy):
-    # start = int(start)
-    # end = int(end)
-    # entropy = float(entropy)
-    # global dateType
+    start = int(start)
+    end = int(end)
+    entropy = float(entropy)
+    global dateType
 
-    # merged_df_od_duration, merged_area = SO.Self_Organization(
-    #     start, end, entropy_threshold=entropy, dateType=dateType)
+    merged_df_od_duration, merged_area = SO.Self_Organization(
+        start, end, entropy_threshold=entropy, dateType=dateType)
 
-    # merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
-    # merged_area.to_csv("app/static/merged_area.csv")
+    merged_df_od_duration.to_csv("app/static/merged_df_od_duration.csv")
+    merged_area.to_csv("app/static/merged_area.csv")
 
     with open("app/static/merged_area.geojson", "r") as f:
         area = json.load(f)
