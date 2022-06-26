@@ -45,8 +45,8 @@ def statistic(regionsId, startTime, timeLength):
     POI = POI.to_dict()
 
     # Remove Event
-    POI.pop('Event')
-    access.pop('Event')
+    POI.pop('Event', 0)
+    access.pop('Event', 0)
 
     return POI, access
 
