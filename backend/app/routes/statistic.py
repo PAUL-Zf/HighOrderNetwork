@@ -44,6 +44,10 @@ def statistic(regionsId, startTime, timeLength):
         'previous_category'].value_counts()
     POI = POI.to_dict()
 
+    # Remove Event
+    POI.pop('Event')
+    access.pop("Event")
+
     return POI, access
 
 
