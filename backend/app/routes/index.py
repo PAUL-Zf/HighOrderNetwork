@@ -63,13 +63,19 @@ groupId = 0
 group = []
 
 # compute offset point
+# 向量逆时针旋转公式
+# (x*cosA - y*sinA, x*sinA + y*cosA)
 
 
-def computeCurvePoint(x, y):
+def computeCurvePoint(x, y, index):
     x0 = (y[0] - x[0]) / 2
     y0 = (y[1] - x[1]) / 2
-    x1 = 3 ** 0.5 / 2 * x0 - y0 / 2
-    y1 = 3 ** 0.5 / 2 * y0 + x0 / 2
+    if index == 0:
+        angle = math.pi / 6
+    else:
+        angle = math.pi / 4
+    x1 = math.cos(angle) * x0 - y0 * math.sin(angle)
+    y1 = math.cos(angle) * y0 + x0 * math.sin(angle)
     return [x[0] + x1, x[1] + y1]
 
 
@@ -364,11 +370,16 @@ def _getPattern(patternId):
             line['id'] = pattern[0]
             lines.append(line)
 
+    startRegion = []
     for i in range(len(pattern) - 1):
         last = centroids[pattern[i]]
         next = centroids[pattern[i+1]]
-        p = computeCurvePoint(last, next)
+        if last in startRegion:
+            p = computeCurvePoint(last, next, 1)
+        else:
+            p = computeCurvePoint(last, next, 0)
         coordinates = [last, p, next]
+        startRegion.append(last)
         line = {}
         line['coordinate'] = coordinates
         line['id'] = pattern[i]
