@@ -771,7 +771,7 @@ export default {
 
         drawDendrogram: function () {
             let svg = this.octopusSvg;
-            let margin = {top: 10, bottom: 10, left: 10, right: 10};
+            let margin = {top: 10, bottom: 10, left: 10, right: 20};
 
             this.patterns = this.content['patterns'];
 
