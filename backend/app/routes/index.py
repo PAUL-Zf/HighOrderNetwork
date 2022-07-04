@@ -362,14 +362,6 @@ def _getPattern(patternId):
 
     # 添加曲线信息
     lines = []
-    if len(pattern) == 4:
-        if pattern[1] == pattern[3]:
-            coordinates = [centroids[pattern[0]], centroids[pattern[1]]]
-            line = {}
-            line['coordinate'] = coordinates
-            line['id'] = pattern[0]
-            lines.append(line)
-
     startRegion = []
     for i in range(len(pattern) - 1):
         last = centroids[pattern[i]]

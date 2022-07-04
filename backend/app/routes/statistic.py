@@ -4,6 +4,7 @@ import math
 
 def statistic(regionsId, startTime, timeLength):
     traj = pd.read_csv('app/static/merged_df_od_duration.csv')
+    areas = pd.read_csv('app/static/merged_area.csv')
 
     start = int(startTime)
     slot_length = int(timeLength)
@@ -14,6 +15,7 @@ def statistic(regionsId, startTime, timeLength):
     # access statistic
     # filter by regionId
     regionId = regionsId[0]
+    current_category = areas[areas['traj_key'] == regionId].iloc[0]['category']
     access_data = traj[traj['previous_blocks'] == regionId]
     for i in range(1, len(regionsId)):
         regionId = regionsId[i]
@@ -32,6 +34,15 @@ def statistic(regionsId, startTime, timeLength):
         checkin_slot = transferTime(checkin_time.split()[1][:-6], scale)
         if checkin_slot in time_slots:
             access[pre_category] += 1
+    max_count = 0
+    max_category = ""
+    for key, value in access.items():
+        if value > max_count:
+            max_count = value
+            max_category = key
+    if max_category != current_category:
+        access[current_category] = int(
+            (access[max_category] - access[current_category]) / 5) + access[max_category]
 
     # POI statistic
     regionId = regionsId[0]
