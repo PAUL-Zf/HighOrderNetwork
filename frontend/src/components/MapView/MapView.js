@@ -487,7 +487,7 @@ export default {
                 .attr("stroke", 'black')
                 .attr("stroke-width", 6)
                 .attr("fill", 'none')
-                .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
             const lines = svg.selectAll('whatever')
                 .data(this.highOrder)
@@ -497,7 +497,7 @@ export default {
                 .attr("stroke", d => self.overviewColors[d.id])
                 .attr("stroke-width", 5)
                 .attr("fill", 'none')
-                .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
 
             // draw circles
@@ -517,10 +517,10 @@ export default {
 
             const update = (level) => {
                 borders
-                    .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                    .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
                 lines
-                    .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                    .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
                 nodes
                     .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
@@ -727,7 +727,7 @@ export default {
                 .attr("stroke", 'black')
                 .attr("stroke-width", d => lineWidth[d.id] + 1)
                 .attr("fill", 'none')
-                .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
             const lines = svg.selectAll('whatever')
                 .data(this.highOrder)
@@ -737,7 +737,7 @@ export default {
                 .attr("stroke", d => color[d.id])
                 .attr("stroke-width", d => lineWidth[d.id])
                 .attr("fill", 'none')
-                .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
             // let lineData = lineGenerator.curve(d3['curveCardinal'])
 
@@ -795,10 +795,10 @@ export default {
 
             const update = (level) => {
                 borders
-                    .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                    .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
                 lines
-                    .attr('d', d => lineGenerator.curve(d3['curveCardinal'])(d.coordinate))
+                    .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
 
                 nodes
                     .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)

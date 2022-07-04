@@ -295,7 +295,7 @@ export default {
                 .enter()
                 .append("rect")
                 .attr("class", "tables")
-                .attr("x", leftMargin + columnWidth)
+                .attr("x", d => leftMargin + columnWidth * 2 - (d.count * scale1 + baseWidth))
                 .attr("y", (d, i) => cy + topMargin + i * rowHeight + 4)
                 .attr("rx", 4)
                 .attr("ry", 4)
@@ -312,7 +312,7 @@ export default {
                 .enter()
                 .append("rect")
                 .attr("class", "tables")
-                .attr("x", d => leftMargin + columnWidth * 3 - (d.count * scale2 + baseWidth))
+                .attr("x", leftMargin + columnWidth * 2)
                 .attr("y", (d, i) => cy + topMargin + i * rowHeight + 4)
                 .attr("rx", 4)
                 .attr("ry", 4)
@@ -322,6 +322,15 @@ export default {
                 .attr("opacity", 1)
                 .attr("stroke", '#505254')
                 .attr("stroke-width", 1)
+
+            let VLine = svg.append('line')
+                .style("Stroke", "grey")
+                .style("stroke-width", 1)
+                .style("opacity", 1)
+                .attr("x1", leftMargin + columnWidth * 2)
+                .attr("y1", cy + topMargin + 2)
+                .attr("x2", leftMargin + columnWidth * 2)
+                .attr("y2", cy + topMargin + poi.length * rowHeight)
         },
 
         computePosition: function (inData, outData, scale1, scale2, zero) {
