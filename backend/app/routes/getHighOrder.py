@@ -368,6 +368,7 @@ def getHighOrder(start, length, region, groupId):
                 h['id'] = count
                 h['order'] = len(c) - 1
                 h['coordinate'] = c
+                h['destCount'] = destCount
                 highOrder.append(h)
 
                 dest = {}
