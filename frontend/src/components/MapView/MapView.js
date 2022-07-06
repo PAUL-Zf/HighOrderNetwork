@@ -223,10 +223,11 @@ export default {
 
         showFlow(value) {
             if (value){
+                this.removeHFlow();
                 if(this.isOverview){this.drawOverview();}
                 else {this.drawKelp();}
             } else {
-                this.removeHFlow();
+                // this.removeHFlow();
             }
         },
 
@@ -717,7 +718,7 @@ export default {
                 })
                 .y(function(d) {
                     return map.latLngToLayerPoint(d).y;
-                })
+                })   
 
             const borders = svg.selectAll('whatever')
                 .data(this.highOrder)
@@ -755,6 +756,7 @@ export default {
                 .attr("r", d => radius[d.radius])
                 .on("click", function(d){
                     if(d.type !== 1){
+                        self.showClicked(d.radius, d.type, d.index);
                         self.drawMapviewSignal++;
                         self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.type, d.index, d.radius);
                     }
@@ -783,6 +785,7 @@ export default {
                 .attr("r", d => (d.type === 2) ? 3 : 0)
                 .on("click", function(d){
                     if(d.type !== 1){
+                        self.showClicked(d.radius, d.type, d.index);
                         self.drawMapviewSignal++;
                         self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.type, d.index, d.radius);
                     }
@@ -1045,6 +1048,183 @@ export default {
 
             return map
         },
+
+        showClicked(index, type, destCount) {
+            let self = this;
+            let svg = this.svg;
+            let map = this.mymap;
+            
+            self.showFlow = false;
+            this.removeHFlow();
+
+            let color = ['#8dd3c7', '#ffffb3', '#bebada', '#fb8072']
+            let radius = [12, 9, 6, 3]
+            let lineWidth = [4, 3, 2, 1]
+
+            // draw lines
+            let lineGenerator = d3.line()
+                .x(function(d) {
+                    return map.latLngToLayerPoint(d).x;
+                })
+                .y(function(d) {
+                    return map.latLngToLayerPoint(d).y;
+                })
+
+            const borders = svg.selectAll('whatever')
+                .data(this.highOrder)
+                .enter()
+                .append('path')
+                .attr("class", "HFlow")
+                .attr("stroke", 'black')
+                .attr("stroke-width", d => {
+                    if (type === 0) {
+                        if(d.id === index){
+                            return lineWidth[d.id] + 1;
+                        } else {
+                            return 0
+                        }
+                } else {
+                    if(d.index === destCount && d.id === index){
+                        return lineWidth[d.id] + 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            })
+                .attr("fill", 'none')
+                .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
+
+            const lines = svg.selectAll('whatever')
+                .data(this.highOrder)
+                .enter()
+                .append('path')
+                .attr("class", "HFlow")
+                .attr("stroke", d => color[d.id])
+                .attr("stroke-width", d => {
+                    if (type === 0) {
+                        if(d.id === index){
+                            return lineWidth[d.id];
+                        } else {
+                            return 0
+                        }
+                } else {
+                    console.log(d.destCount);
+                    if(d.index === destCount && d.id === index){
+                        return lineWidth[d.id];
+                    } else {
+                        return 0;
+                    }
+                }
+            })
+                .attr("fill", 'none')
+                .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
+
+            // draw circles
+            const nodes = svg.selectAll('whatever')
+                .data(this.circles)
+                .enter()
+                .append('circle')
+                .attr("class", "HFlow")
+                .attr("fill", d => color[d.radius])
+                .attr("stroke", "black")
+                .attr("stroke-width", d => (d.type === 0) ? 2 : 1)
+                .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
+                .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
+                .attr("r", d => {
+                    if (type === 0) {
+                        if(d.radius === index){
+                            return radius[d.radius];
+                        } else {
+                            return 0
+                        }
+                } else {
+                    if(d.radius === index && (d.index === undefined || d.index === destCount)){
+                        return radius[d.radius];
+                    } else {
+                        return 0;
+                    }
+                }
+            })
+                .on("click", function(d){
+                    if(d.type !== 1){
+                        self.showFlow = false;
+                        self.showClicked(d.radius, d.type, d.index);
+                        self.drawMapviewSignal++;
+                        self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.type, d.index, d.radius);
+                    }
+                    console.log("--------Here is information----------");
+                    console.log(d.type);
+                    console.log(d.index);
+                    console.log(d.entropy);
+                    console.log("--------Here is information----------");
+                })
+
+            // draw entropy circle
+            let myColor = d3.scaleLinear()
+                .range(["#CCF3EE", "#0AA1DD"])
+                .domain([0, 1])
+
+            const entropyCircle = svg.selectAll('whatever')
+                .data(this.circles)
+                .enter()
+                .append('circle')
+                .attr("class", "HFlow")
+                .attr("fill", d => myColor(d.entropy))
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+                .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
+                .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
+                .attr("r", d => {
+                    if (type === 0) {
+                        if(d.radius === index){
+                            return (d.type === 2) ? 3 : 0
+                        } else {
+                            return 0
+                        }
+                } else {
+                    if(d.radius === index && (d.index === undefined || d.index === destCount)){
+                        return (d.type === 2) ? 3 : 0
+                    } else {
+                        return 0;
+                    }
+                }
+            })
+                .on("click", function(d){
+                    if(d.type !== 1){
+                        self.showFlow = false;
+                        self.showClicked(d.radius, d.type, d.index);
+                        self.drawMapviewSignal++;
+                        self.$emit("conveyMapviewPatternId", self.drawMapviewSignal, d.type, d.index, d.radius);
+                    }
+                    console.log("--------Here is information----------");
+                    console.log(d.type);
+                    console.log(d.index);
+                    console.log(d.entropy);
+                    console.log("--------Here is information----------");
+                })
+
+            const update = (level) => {
+                borders
+                    .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
+
+                lines
+                    .attr('d', d => lineGenerator.curve(d3['curveBasis'])(d.coordinate))
+
+                nodes
+                    .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
+                    .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
+
+                entropyCircle
+                    .attr("cx", d => map.latLngToLayerPoint(d.coordinate).x)
+                    .attr("cy", d => map.latLngToLayerPoint(d.coordinate).y)
+            }
+
+            map.on("zoomend", (e) => {
+                let level = e.target.getZoom();
+                update(level);
+                // console.log("Zoom Level is: " + e.target.getZoom());
+            })
+        }
         // changeData() {
         //     this.$emit('changeData', this.coords);
         // },

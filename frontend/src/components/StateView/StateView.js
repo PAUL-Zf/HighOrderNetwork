@@ -38,6 +38,7 @@ export default {
                     this.fourPatternsTime[i] = time;
 
                     if(!this.isExist){
+                        d3.select(".state").remove();
                         const svg = d3.select("#sankey")
                             .append('svg')
                             .attr("class", "state")
@@ -71,6 +72,7 @@ export default {
                     this.fourPatternsTime[i] = time;
 
                     if(!this.isExist){
+                        d3.select(".state").remove();
                         const svg = d3.select("#sankey")
                             .append('svg')
                             .attr("class", "state")

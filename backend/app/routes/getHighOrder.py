@@ -368,7 +368,7 @@ def getHighOrder(start, length, region, groupId):
                 h['id'] = count
                 h['order'] = len(c) - 1
                 h['coordinate'] = c
-                h['destCount'] = destCount
+                h['index'] = destCount
                 highOrder.append(h)
 
                 dest = {}
@@ -456,6 +456,7 @@ def getHighOrder(start, length, region, groupId):
             line = {}
             line['coordinate'] = coordinates
             line['id'] = h['id']
+            line['index'] = h['index']
             lines.append(line)
 
     # # 统计所有参与绘制的region，以及最大半径的级别
