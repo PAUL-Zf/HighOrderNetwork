@@ -1,5 +1,6 @@
 # coding=gbk
 
+from numpy import angle
 import pandas as pd
 import json
 import math
@@ -226,29 +227,29 @@ def getHighOrder(start, length, region, groupId):
                 valid_order[k] = v
                 valid_kld[k] = KLD[k]
 
-    # 统计四阶数据
-    order_4 = {}
-    for k, v in abstract_data.items():
-        dest = v[max_order]
-        path = ''
-        for i in range(max_order-4, max_order):
-            if(v[i] == -1):
-                break
-            path += str(v[i]) + '_'
-        if path:
-            if path not in order_4:
-                order_4[path] = [0 for x in range(region_number)]
-            order_4[path][id_to_index[dest]] += 1
+    # # 统计四阶数据
+    # order_4 = {}
+    # for k, v in abstract_data.items():
+    #     dest = v[max_order]
+    #     path = ''
+    #     for i in range(max_order-4, max_order):
+    #         if(v[i] == -1):
+    #             break
+    #         path += str(v[i]) + '_'
+    #     if path:
+    #         if path not in order_4:
+    #             order_4[path] = [0 for x in range(region_number)]
+    #         order_4[path][id_to_index[dest]] += 1
 
-    # 计算四阶KLD
-    for k, v in order_4.items():
-        pre = k.split('_', 1)[1]
-        if pre in valid_order:
-            KLD[k] = computeKLD(v, valid_order[pre])
-            # 根据KLD更新数据
-            if(KLD[k] > threshold):
-                valid_order[k] = v
-                valid_kld[k] = KLD[k]
+    # # 计算四阶KLD
+    # for k, v in order_4.items():
+    #     pre = k.split('_', 1)[1]
+    #     if pre in valid_order:
+    #         KLD[k] = computeKLD(v, valid_order[pre])
+    #         # 根据KLD更新数据
+    #         if(KLD[k] > threshold):
+    #             valid_order[k] = v
+    #             valid_kld[k] = KLD[k]
 
     # 遍历 valid_order，计算所有entropy
     valid_entropy = {}
@@ -367,6 +368,7 @@ def getHighOrder(start, length, region, groupId):
                 h['id'] = count
                 h['order'] = len(c) - 1
                 h['coordinate'] = c
+                h['index'] = destCount
                 highOrder.append(h)
 
                 dest = {}
@@ -439,14 +441,22 @@ def getHighOrder(start, length, region, groupId):
 
     for h in highOrder:
         points = h['coordinate']
+        # startRegion用来记录所有起始点，用来决定旋转的角度
+        startRegion = []
         for i in range(len(points) - 1):
             last = points[i]
             next = points[i+1]
-            p = computeCurvePoint(last, next)
+            # 第二次作为起始点
+            if last in startRegion:
+                p = computeCurvePoint(last, next, 1)
+            else: 
+                p = computeCurvePoint(last, next, 0)
+            startRegion.append(last)
             coordinates = [last, p, next]
             line = {}
             line['coordinate'] = coordinates
             line['id'] = h['id']
+            line['index'] = h['index']
             lines.append(line)
 
     # # 统计所有参与绘制的region，以及最大半径的级别
@@ -565,27 +575,31 @@ def getHighOrder(start, length, region, groupId):
 
     return result
 
-
-def computeCurvePoint(x, y):
+# 向量逆时针旋转公式
+# (x*cosA - y*sinA, x*sinA + y*cosA)
+def computeCurvePoint(x, y, index):
     x0 = (y[0] - x[0]) / 2
     y0 = (y[1] - x[1]) / 2
-    x1 = 3 ** 0.5 / 2 * x0 - y0 / 2
-    y1 = 3 ** 0.5 / 2 * y0 + x0 / 2
+    if index == 0:
+        angle = math.pi / 6
+    else:
+        angle = math.pi / 4
+    x1 = math.cos(angle) * x0 - y0 * math.sin(angle)
+    y1 = math.cos(angle) * y0 + x0 * math.sin(angle)
     return [x[0] + x1, x[1] + y1]
 
 
-# compute offset point
-def computeOffset(x, y, r, w, u):
-    # x0,y0是终点到起点的向量绕终点顺时针旋转90度的坐标
-    x0 = x[1] - y[1]
-    y0 = y[0] - x[0]
-    scale = (r + w + u) / computeDistance(x, y)
-    x1 = x0 * scale + y[0]
-    y1 = y0 * scale + y[1]
-    return [x1, y1]
+# # compute offset point
+# def computeOffset(x, y, r, w, u):
+#     # x0,y0是终点到起点的向量绕终点顺时针旋转90度的坐标
+#     x0 = x[1] - y[1]
+#     y0 = y[0] - x[0]
+#     scale = (r + w + u) / computeDistance(x, y)
+#     x1 = x0 * scale + y[0]
+#     y1 = y0 * scale + y[1]
+#     return [x1, y1]
 
 # 判断直线和圆是否相交
-
 
 def checkIntersection(c, r, x, y, width):
     c = Point(c[0], c[1]).buffer(r)
