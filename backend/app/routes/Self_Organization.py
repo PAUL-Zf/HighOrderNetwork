@@ -140,6 +140,17 @@ def Self_Organization(start_time, end_time, entropy_threshold, dateType):
             'app/static/df_od_duration_large_nyc_holidays.csv')
         print('Here is holidays!')
 
+    # Set the scales array according to the entropy threshold
+    if entropy_threshold == 2.5:
+        scales = [2.5]
+    elif entropy_threshold == 2.2:
+        scales = [2.5, 2.2]
+    elif entropy_threshold == 1.9:
+        scales = [2.5, 2.2, 1.9]
+    else:
+        scales = [2.5, 2.2, 1.9, 1.6]
+
+    # Match each point to the corresponding region
     blocks = matching_point_to_region(
         df_od_duration, 'longitude', 'latitude', ST_tree)
     df_od_duration['previous_blocks'] = blocks.values()
@@ -153,6 +164,7 @@ def Self_Organization(start_time, end_time, entropy_threshold, dateType):
     df_od_duration['next_hop_category'] = df_od_duration.next_hop_venue_id.apply(
         lambda x: venue_to_category[x])
 
+    #  Calculate and count entropy information
     entropy = {}
     for _, tdf in df_stop.groupby('blocks'):
         counts = tdf.category.value_counts().values
@@ -163,6 +175,7 @@ def Self_Organization(start_time, end_time, entropy_threshold, dateType):
             entropy[i] = max(list(entropy.values()))
     area1['entropy'] = [entropy[x] for x in sorted(entropy)]
 
+    # Calculate and count category information
     category = []
     for _, cdf in tqdm(area1.iterrows(), total=area1.shape[0]):
         tdf = df_stop[df_stop.blocks.isin([_])]
@@ -171,6 +184,7 @@ def Self_Organization(start_time, end_time, entropy_threshold, dateType):
         else:
             category.append(-1)
 
+    # Reset index and recode
     area1['category'] = category
     centroid_np = np.array([list(x.centroid.coords)
                            for x in area1.centroid]).reshape(-1, 2)
@@ -178,74 +192,127 @@ def Self_Organization(start_time, end_time, entropy_threshold, dateType):
     area1['category'] = area1.reset_index().progress_apply(
         lambda x: neast_blocks(x), axis=1)
     dynamic_deep = dict(zip(np.argsort(area1.geometry.area.values)[
-                        ::-1].tolist(), np.linspace(3, 10, len(area1))))
+                        ::-1].tolist(), np.linspace(3, 9, len(area1))))
 
-    df_copy = df_stop.copy()
-    neighbors_copy = neighbors.copy()
-    visited = set()  # Set to keep track of visited nodes of graph.
-    aggregate_node = dict((i, [])for i in np.arange(area1.shape[0]))
-
-    def dfs(visited, graph, node, deepth=0, pre=-1,):  # function for dfs
+    # Function for depth-first search
+    def dfs(visited, graph, node, deepth=0, pre=-1, factor=1):
         if node not in visited:
             if deepth < dynamic_deep[node]:
                 if pre != -1:
-                    factor = entropy_threshold
                     tdf = df_copy[df_copy.blocks.isin([node, pre])]
                     counts = tdf.category.value_counts().values
                     counts = counts/counts.sum()
                     entropy_values = (-counts*np.log(counts)).sum()
-                    # print(entropy_values*factor,entropy[node]+entropy[pre])
                     if entropy_values*factor < entropy[node]+entropy[pre]:
                         df_copy.blocks = df_copy.blocks.replace(
                             [node, pre], node)
                         graph[node] = list(set(graph[pre]+graph[node]))
                         visited.add(node)
-                        # print(visited)
                         aggregate_node[pre] += [node]
                         for neighbour in graph[node]:
-                            dfs(visited, graph, neighbour, deepth+1, node)
+                            dfs(visited, graph, neighbour,
+                                deepth+1, node, factor)
                 else:
-                    # visited.add(node)
                     for neighbour in graph[node]:
-                        dfs(visited, graph, neighbour, deepth+1, node)
+                        dfs(visited, graph, neighbour, deepth+1, node, factor)
 
-    # Driver Code
-    print("Following is the Depth-First Search")
-    for i in tqdm(np.arange(area1.shape[0])):
-        dfs(visited, neighbors_copy, i)
+    def search_union(aggregate_node, node, new_visit, visited, deepth=0):
+        if node not in visited:
+            union = [node]
+            new_visit.add(node)
 
-    total_union, visited = [], []
-    for i in tqdm(np.arange(area1.shape[0])):
-        if i not in visited:
-            new_visit = set()
-            res = list(_flatten(search_union(aggregate_node, i, new_visit)))
-            if res:
-                total_union.append(res)
-            visited += list(_flatten(total_union))
-            visited = list(set(visited))
+            for i in aggregate_node[node]:
+                if (i not in new_visit) and (i not in visited):
+                    res = search_union(aggregate_node, i,
+                                       new_visit, visited, deepth+1)
+                    if res:
+                        union += res
+            return union
+        else:
+            return None
 
+    df_stop.index = np.arange((len(df_stop)))
+    df_copy = df_stop.copy()
+    neighbors_copy = neighbors.copy()
     area2 = area1.copy()
+    pre_max_id = 0
+    dynamic_deep = dict(zip(np.argsort(area1.geometry.area.values)[
+                        ::-1].tolist(), np.linspace(3, 9, len(area1))))
+    print("Following is the Depth-First Search")
 
-    for i, x in enumerate(tqdm(total_union)):
-        geometry = unary_union(area2.iloc[x].geometry)
-        tdf = df_copy[df_copy.blocks.isin(x)]
-        if len(tdf) > 0:
+    # The process of deep search
+    for k, factor in enumerate(scales):
+        # Driver Code
+        visited = set()  # Set to keep track of visited nodes of graph.
+        aggregate_node = dict((i, [])for i in list(neighbors_copy.keys()))
+        for i in tqdm(list(neighbors_copy.keys())):
+            dfs(visited, neighbors_copy, i, factor)
+        total_union, visited = [], []
+        max_id = max(neighbors_copy)+1
+        for i in list(neighbors_copy.keys()):
+            if i not in visited:
+                new_visit = set()
+                res = list(_flatten(search_union(
+                    aggregate_node, i, new_visit, visited)))
+                if res:
+                    total_union.append(res)
+                visited += res
+        visited = list(set(visited))
+        new_id = np.zeros((len(df_copy)))
+        for i, x in enumerate(tqdm(total_union)):
+            # The process of reorganization
+            geometry = unary_union(area2.iloc[x].geometry)
+            tdf = df_copy[df_copy.blocks.isin(x)]
+            new_id[list(df_copy[df_copy.blocks.isin(x)].index)] = max_id+i
             counts = tdf.category.value_counts().values
             counts = counts/counts.sum()
-            entropy_values = (-counts*np.log(counts)).sum()
-            category = tdf.category.value_counts().index[0]
-        category = area2.iloc[x].category.value_counts().index[0]
-        area2 = area2.append({'geometry': geometry, 'centroid': geometry.centroid,
-                             'category': category, 'index': x, 'entropy': entropy_values}, ignore_index=True)
-    merged_area = pd.concat([area2.iloc[area1.shape[0]:], area2.iloc[list(
-        set(np.arange(len(area1)).tolist())-set(visited))]])  # .drop('index',axis=1)
-    # union_user_id={}
+            entropy[max_id+i] = (-counts*np.log(counts)).sum()
+            if len(tdf) > 0:
+                counts = tdf.category.value_counts().values
+                counts = counts/counts.sum()
+                entropy_values = (-counts*np.log(counts)).sum()
+                category = tdf.category.value_counts().index[0]
+
+            # Update information in area data and track data
+            category = area2.iloc[x].category.value_counts().index[0]
+            df_od_duration.loc[df_od_duration.previous_blocks ==
+                               max_id+i, 'previous_category'] = category
+            df_od_duration.loc[df_od_duration.next_hop_blocks ==
+                               max_id+i, 'next_hop_category'] = category
+            area2 = area2.append({'geometry': geometry, 'centroid': geometry.centroid, 'category': category, 'index': [
+                                 max_id+i], 'entropy': entropy_values, 'iteration': k}, ignore_index=True)
+            neighbors_copy[max_id+i] = _flatten([neighbors_copy[i] for i in x])
+            df_od_duration.previous_blocks = df_od_duration.previous_blocks.replace(
+                x, max_id+i)
+            df_od_duration.next_hop_blocks = df_od_duration.next_hop_blocks.replace(
+                x, max_id+i)
+        df_copy['blocks'] = new_id.astype(int)
+        dynamic_deep = dict(zip(np.argsort(area2.geometry.area.values)[
+                            ::-1].tolist(), np.linspace(3, 9, len(area2))))
+        # multi-level nesting
+        if k != len(scales)-1:
+            neighbors_flatten = np.array(
+                _flatten([x for x in neighbors_copy.values()]))
+            for i, x in enumerate(tqdm(total_union)):
+                neighbors_flatten[np.isin(neighbors_flatten, x)] = max_id+i
+            cumsum_idx = np.cumsum([0]+[len(x)
+                                   for x in neighbors_copy.values()])
+            for n, (i, j) in enumerate(zip(cumsum_idx[:-1], cumsum_idx[1:])):
+                neighbors_copy[pre_max_id +
+                               n] = list(set(neighbors_flatten[i:j].tolist()))
+            for i in range(max_id):
+                if i in neighbors_copy.keys():
+                    del neighbors_copy[i]
+            pre_max_id = max_id
+    merged_area = area2[area2['iteration'] == len(scales)-1]
     for idx, tdf in tqdm(merged_area[merged_area['index'].isna()].iterrows(), total=merged_area[merged_area['index'].isna()].shape[0]):
         merged_area['index'].loc[idx] = [idx]
     merged_geometry = []
     for x in tqdm(merged_area.geometry):
         merged_geometry.append(cascaded_union(
             x.buffer(0.0005)).buffer(-0.0005))
+
+    # Update information in merged_area
     merged_area['geometry'] = merged_geometry
     merged_area['traj_key'] = merged_area.index
     for _, tdf in tqdm(merged_area.groupby('traj_key')):
